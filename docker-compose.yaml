@@ -1,0 +1,47 @@
+version: '3'
+
+# This docker-compose is for developer convenience, not for running in production.
+
+services:
+
+  # For running the Flask server
+  web:
+    build:
+      context: .
+      args:
+        DEVELOPMENT: 1
+    volumes:
+      - ${PWD}/src:/app
+    env_file:
+      - test-config.ini
+    environment:
+      - DEVELOPMENT=1
+      - PYTHONUNBUFFERED=true
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper:12888:13888
+
+  kafka:
+    image: confluentinc/cp-kafka:5.0.0
+    hostname: kafka
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_HEAP_OPTS: -Xmx512m -Xms512m
+    deploy:
+      resources:
+        limits:
+          memory: 550M
