@@ -3,5 +3,5 @@ kbase_workspace_client==0.0.1
 confluent-kafka==0.11.6
 docker==3.7.0
 elasticsearch==5.5.3
-PyYAML==3.13
+PyYAML==5.1
 requests==2.21.0
