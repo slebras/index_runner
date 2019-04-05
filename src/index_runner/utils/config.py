@@ -15,7 +15,7 @@ def get_config():
         'kafka_clientgroup': os.environ.get('KAFKA_CLIENTGROUP', 'search_indexer'),
         'topics': {
             'workspace_events': os.environ.get('KAFKA_WORKSPACE_TOPIC', 'workspaceevents'),
-            'generate_idx': os.environ.get('KAFKA_GEN_INDEX_TOPIC', 'elasticsearch_generate_idx'),
-            'save_idx': os.environ.get('KAFKA_SAVE_INDEX_TOPIC', 'elasticsearch_save_idx')
+            'elasticsearch_updates': os.environ.get('KAFKA_ES_UPDATE_TOPIC', 'elasticsearch_updates'),
+            'indexer_logs': os.environ.get('KAFKA_LOGS_TOPIC', 'index_runner_logs')
         }
     }

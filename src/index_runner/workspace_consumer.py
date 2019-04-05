@@ -1,16 +1,13 @@
 """
-Main index runner daemon.
+Consume workspace update events from kafka and publish new indexes.
 """
-import time
-import traceback
 import json
-from threading import Thread
-from confluent_kafka import Consumer, Producer, KafkaError
+from confluent_kafka import Producer
 
+from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
+from .utils.threadify import threadify
 from .indexers.main import index_obj
-# from .event_handlers.new_object_version import new_object_version
-
 
 config = get_config()
 producer = Producer({'bootstrap.servers': config['kafka_server']})
@@ -18,47 +15,21 @@ producer = Producer({'bootstrap.servers': config['kafka_server']})
 
 def main():
     """
-    Main event loop for consuming messages from Kafka and generating indexes from workspace events.
+    Main consumer of Kafka messages from workspace updates, generating new indexes.
     """
-    consumer = Consumer({
-        'bootstrap.servers': config['kafka_server'],
-        'group.id': config['kafka_clientgroup'],
-        'auto.offset.reset': 'earliest'
-    })
-    consumer.subscribe([config['topics']['workspace_events']])
-    print(f"Listening to {config['kafka_server']} in group {config['kafka_clientgroup']}")  # noqa
-    while True:
-        msg = consumer.poll(0.5)
-        if msg is None:
-            continue
-        if msg.error():
-            if msg.error().code() == KafkaError._PARTITION_EOF:
-                print("Reached end of the stream.")
-            else:
-                print("Error:", msg.error())
-            continue
-        print('New message:', msg.value())
-        try:
-            data = json.loads(msg.value().decode('utf-8'))
-        except ValueError as err:
-            # JSON parsing error
-            print('JSON message error:', err)
-            continue
-        try:
-            _process_event(data, producer)
-        except Exception:
-            traceback.print_exc()
-    consumer.close()
+    topics = [config['topics']['workspace_events']]
+    for msg_data in kafka_consumer(topics):
+        threadify(_process_event, [msg_data])
 
 
-def _process_event(event_data, producer):
+def _process_event(msg_data):
     """
     Process a new workspace event. This is the main switchboard for handling
     new workspace events. Dispatches to modules in ./event_handlers
 
     Args:
-        event_data - json data received in the kafka event
-    Valid events for event_data['evtype'] include:
+        msg_data - json data received in the kafka event
+    Valid events for msg_data['evtype'] include:
         NEW_VERSION - a new version has been created for an existing object
         NEW_ALL_VERSIONS - a brand new object is created
         PUBLISH - object is made public
@@ -69,18 +40,18 @@ def _process_event(event_data, producer):
     """
     # Workspace events reference:
     # https://github.com/kbase/workspace_deluxe/blob/8a52097748ef31b94cdf1105766e2c35108f4c41/src/us/kbase/workspace/modules/SearchPrototypeEventHandlerFactory.java#L58  # noqa
-    event_type = event_data.get('evtype')
-    ws_id = event_data.get('wsid')
+    event_type = msg_data.get('evtype')
+    ws_id = msg_data.get('wsid')
     if not ws_id:
         raise RuntimeError(f'Invalid wsid in event: {ws_id}')
     if not event_type:
-        raise RuntimeError(f"Missing 'evtype' in event: {event_data}")
+        raise RuntimeError(f"Missing 'evtype' in event: {msg_data}")
     if event_type == 'NEW_VERSION':
         print(f"New object verson event for workspace {ws_id}")
         # Generate the index and mapping for the new object
-        _threadify(_run_indexer, [index_obj, event_data])
+        _run_indexer(msg_data)
     elif event_type == 'PUBLISH':
-        # publish(event_data['wsid'])
+        # publish(msg_data['wsid'])
         pass
     elif event_type.startswith('DELETE_'):
         # delete(evt)
@@ -97,18 +68,22 @@ def _process_event(event_data, producer):
     else:
         # TODO Kafka logger
         raise RuntimeError(f"Invalid workspace event: {event_type}")
-    print(f"Handler finished for event {event_data['evtype']}")
+    print(f"Handler finished for event {msg_data['evtype']}")
 
 
-def _run_indexer(func, event_data):
+def _run_indexer(msg_data):
     """
-    Run the indexer for a workspace evnet and produce an event for it.
+    Run the indexer for a workspace event message and produce an event for it.
     This will be threaded and backgrounded.
     """
-    result = index_obj(event_data)
+    result = index_obj(msg_data)
     # Produce an event in Kafka to save the index to elasticsearch
-    print('producing to', config['topics']['save_idx'])
-    producer.produce(config['topics']['save_idx'], json.dumps(result), callback=_delivery_report)
+    print('producing to', config['topics']['elasticsearch_updates'])
+    producer.produce(
+        config['topics']['elasticsearch_updates'],
+        json.dumps(result),
+        callback=_delivery_report
+    )
     producer.poll(60)
 
 
@@ -121,22 +96,3 @@ def _delivery_report(err, msg):
         print(f'Message delivery failed on {msg.topic()}: {err}')
     else:
         print(f'Message delivered to {msg.topic()}')
-
-
-def _threadify(func, args):
-    """
-    Standardized way to start a thread from the event processor.
-    """
-    t = Thread(target=func, args=args)
-    t.daemon = True
-    t.start()
-    return t
-
-
-if __name__ == '__main__':
-    print('Starting workspace consumer')
-    thread = _threadify(main, [])
-    while True:
-        if not thread.is_alive():
-            thread = _threadify(main, [])
-        time.sleep(10)

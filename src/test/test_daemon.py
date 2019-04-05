@@ -11,7 +11,7 @@ test_events = {
     },
     'narrative_save': {
         "wsid": 41347,
-        "ver": 14,
+        "ver": 16,
         "perm": None,
         "evtype": "NEW_VERSION",
         "objid": 1,
@@ -59,8 +59,8 @@ def consume_idx_events():
         'group.id': 'test_only',
         'auto.offset.reset': 'earliest'
     })
-    consumer.subscribe([config['topics']['save_idx']])
-    # partition = TopicPartition(config['topics']['save_idx'], 0)
+    consumer.subscribe([config['topics']['elasticsearch_updates']])
+    # partition = TopicPartition(config['topics']['elasticsearch_updates'], 0)
     # consumer.seek(0)
     while True:
         msg = consumer.poll(0.5)

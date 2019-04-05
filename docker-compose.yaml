@@ -4,7 +4,7 @@ version: '3'
 
 services:
 
-  # For running the Flask server
+  # For running the python consumers
   web:
     build:
       context: .

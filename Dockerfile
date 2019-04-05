@@ -35,4 +35,4 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       maintainer="KBase Team"
 
 ENTRYPOINT ["/usr/local/bin/dockerize"]
-CMD ["python", "-m", "index_runner.workspace_consumer"]
+CMD ["python", "-m", "index_runner.main"]
