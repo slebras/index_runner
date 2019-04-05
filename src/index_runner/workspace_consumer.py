@@ -1,6 +1,7 @@
 """
 Main index runner daemon.
 """
+import time
 import traceback
 import json
 from threading import Thread
@@ -129,7 +130,13 @@ def _threadify(func, args):
     t = Thread(target=func, args=args)
     t.daemon = True
     t.start()
+    return t
 
 
 if __name__ == '__main__':
-    main()
+    print('Starting workspace consumer')
+    thread = _threadify(main, [])
+    while True:
+        if not thread.is_alive():
+            thread = _threadify(main, [])
+        time.sleep(10)
