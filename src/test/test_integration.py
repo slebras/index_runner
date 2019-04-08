@@ -1,3 +1,4 @@
+import unittest
 import json
 from confluent_kafka import Producer, Consumer, KafkaError
 
@@ -52,14 +53,14 @@ def delivery_report(err, msg):
         print('Message delivered to', msg.topic(), msg.partition())
 
 
-def consume_idx_events():
+def consume_last(topic):
     """Consume the most recent message from the topic stream."""
     consumer = Consumer({
         'bootstrap.servers': config['kafka_server'],
         'group.id': 'test_only',
         'auto.offset.reset': 'earliest'
     })
-    consumer.subscribe([config['topics']['elasticsearch_updates']])
+    consumer.subscribe([topic])
     # partition = TopicPartition(config['topics']['elasticsearch_updates'], 0)
     # consumer.seek(0)
     while True:
@@ -72,24 +73,45 @@ def consume_idx_events():
             else:
                 print(f"Error: {msg.error()}")
             continue
-        print('new msg!', msg.value())
-    consumer.close()
+        # We got a message
+        consumer.close()
+        return json.loads(msg.value())
 
 
-def produce_events():
-    print('producing to', config['topics']['workspace_events'])
-    producer = Producer({
-        'bootstrap.servers': config['kafka_server']
-    })
-    producer.produce(
-        config['topics']['workspace_events'],
-        json.dumps(test_events['narrative_save']),
-        callback=delivery_report
-    )
-    producer.poll(60)
-    print('..produced')
+class TestIntegration(unittest.TestCase):
 
+    def test_narrative_update_event(self):
+        print('producing to', config['topics']['workspace_events'])
+        producer = Producer({
+            'bootstrap.servers': config['kafka_server']
+        })
+        producer.produce(
+            config['topics']['workspace_events'],
+            json.dumps(test_events['narrative_save']),
+            callback=delivery_report
+        )
+        producer.poll(60)
+        print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
+        msg_data = consume_last(config['topics']['elasticsearch_updates'])
+        # b'{"mapping": , "doc": }'
 
-if __name__ == '__main__':
-    produce_events()
-    consume_idx_events()
+        self.assertEqual(msg_data['mapping'], {
+            "name": {"type": "text"},
+            "markdown_text": {"type": "text"},
+            "app_names": {"type": "text"},
+            "creator": {"type": "text"},
+            "total_cells": {"type": "short"},
+            "epoch": {"type": "date"}
+        })
+
+        self.assertEqual(msg_data['doc'], {
+            "name": "wat",
+            "markdown_text": ["Testing"],
+            "app_names": [
+                "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
+                "kb_uploadmethods/import_gff_fasta_as_genome_from_staging"
+            ],
+            "creator": "jayrbolton",
+            "total_cells": 5,
+            "epoch": 1554408998887
+        })
