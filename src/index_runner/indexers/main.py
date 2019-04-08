@@ -72,6 +72,7 @@ def index_narrative(obj_data):
     #  - creator
     data = obj_data['data'][0]
     obj_info = data['info']
+    upa = ':'.join([str(data['info'][6]), str(data['info'][0]), str(data['info'][4])])
     cell_text = []
     app_names = []
     cells = data['data']['cells']
@@ -91,6 +92,7 @@ def index_narrative(obj_data):
     return {
         'mapping': {
             'name': {'type': 'text'},
+            'upa': {'type': 'text'},
             'markdown_text': {'type': 'text'},
             'app_names': {'type': 'text'},
             'creator': {'type': 'text'},
@@ -99,12 +101,14 @@ def index_narrative(obj_data):
         },
         'doc': {
             'name': narr_name,
+            'upa':upa,
             'markdown_text': cell_text,
             'app_names': app_names,
             'creator': creator,
             'total_cells': len(cells),
             'epoch': data['epoch']
-        }
+        },
+        'index': 'narratives'
     }
 
 
