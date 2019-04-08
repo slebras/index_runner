@@ -3,7 +3,7 @@ Consume elasticsearch save events from kafka.
 """
 import json
 from confluent_kafka import Producer
-from elasticsearch import ElasticSearch
+from elasticsearch import Elasticsearch
 
 from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
@@ -15,7 +15,7 @@ producer = Producer({'bootstrap.servers': config['kafka_server']})
 es_host = config.get('elasticsearch_host')
 es_port = config.get('elasticsearch_port')
 
-es = ElasticSearch([{'host': es_host, 'port':es_port}])
+es = Elasticsearch([{'host': es_host, 'port':es_port}])
 
 def main():
     """
@@ -35,7 +35,7 @@ def _validate_message(msg_data):
     if not msg_data.get('mapping'):
         raise RuntimeError("Message to ElasticSearch malformed, does not contain \'mapping\'")
     if not msg_data['doc'].get('upa'):
-        raise RuntimeError("Message to ElasticSearch malfomred, does not contain UPA")
+        raise RuntimeError("Message to ElasticSearch malformed, does not contain UPA")
 
 def _save_to_elastic(msg_data):
     """
@@ -44,7 +44,7 @@ def _save_to_elastic(msg_data):
     msg_data: 
         {
             'doc': elasticsearch index document
-                json like object
+                   - json like object
             'mapping': elasticsearch type mapping schema thing
         }
     """    
@@ -59,18 +59,17 @@ def _save_to_elastic(msg_data):
     except e:
         # log the error
         producer.produce(
-            config[topics]['error_logs'],
-            json.dumps(mgs_data),
+            config['topics']['error_logs'],
+            json.dumps(msg_data),
             callback=_delivery_report
         )
         producer.poll(60)
 
-    upa_id = 'upa'
     es.index(
         doc_type=msg_data['mapping'],
         index=msg_data['index'],
         body=msg_data['doc'],
-        id=msg_data['doc'][upa_id]
+        id=msg_data['doc']['upa']
     )
 
 

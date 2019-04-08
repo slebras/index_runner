@@ -4,7 +4,6 @@ from confluent_kafka import Producer, Consumer, KafkaError
 
 from index_runner.utils.config import get_config
 
-
 config = get_config()
 
 test_events = {
@@ -97,6 +96,7 @@ class TestIntegration(unittest.TestCase):
 
         self.assertEqual(msg_data['mapping'], {
             "name": {"type": "text"},
+            "upa": {"type": "text"},
             "markdown_text": {"type": "text"},
             "app_names": {"type": "text"},
             "creator": {"type": "text"},
@@ -106,6 +106,7 @@ class TestIntegration(unittest.TestCase):
 
         self.assertEqual(msg_data['doc'], {
             "name": "wat",
+            "upa": "41347:1:16",
             "markdown_text": ["Testing"],
             "app_names": [
                 "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
