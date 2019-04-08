@@ -105,13 +105,10 @@ class TestIntegration(unittest.TestCase):
         })
 
         self.assertEqual(msg_data['doc'], {
-            "name": "wat",
+            "name": "Test Narrative Name",
             "markdown_text": ["Testing"],
-            "app_names": [
-                "kb_uploadmethods/import_gff_fasta_as_genome_from_staging",
-                "kb_uploadmethods/import_gff_fasta_as_genome_from_staging"
-            ],
-            "creator": "jayrbolton",
-            "total_cells": 5,
+            "app_names": ["kb_uploadmethods/import_gff_fasta_as_genome_from_staging"],
+            "creator": "username",
+            "total_cells": 3,
             "epoch": 1554408998887
         })
