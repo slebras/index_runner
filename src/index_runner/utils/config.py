@@ -13,9 +13,12 @@ def get_config():
         'kafka_indexer_topic': os.environ.get('KAFKA_INDEXER_TOPIC', 'idxevents'),
         'kafka_server': os.environ.get('KAFKA_SERVER', 'kafka'),
         'kafka_clientgroup': os.environ.get('KAFKA_CLIENTGROUP', 'search_indexer'),
+        'elasticsearch_host': os.environ.get("ELASTICSEARCH_HOST", 'elasticsearch')
+        'elasticsearch_port': os.environ.get("ELASTICSEARCH_PORT", 9200)
         'topics': {
             'workspace_events': os.environ.get('KAFKA_WORKSPACE_TOPIC', 'workspaceevents'),
             'elasticsearch_updates': os.environ.get('KAFKA_ES_UPDATE_TOPIC', 'elasticsearch_updates'),
-            'indexer_logs': os.environ.get('KAFKA_LOGS_TOPIC', 'index_runner_logs')
+            'indexer_logs': os.environ.get('KAFKA_LOGS_TOPIC', 'index_runner_logs'),
+            'error_logs': os.environ.get('KAFKA_ERROR_TOPIC', 'index_runner_error_logs')
         }
     }

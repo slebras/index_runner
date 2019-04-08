@@ -11,6 +11,7 @@ COPY requirements.txt dev-requirements.txt /tmp/
 # Install pip requirements
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r /tmp/requirements.txt && \
+    pip install elasticsearch && \
     if [ "$DEVELOPMENT" ]; then pip install --no-cache-dir -r /tmp/dev-requirements.txt; fi && \
     rm /tmp/*requirements.txt
 
