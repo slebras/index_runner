@@ -19,7 +19,6 @@ def index_obj(msg_data):
     upa = _get_upa_from_msg_data(msg_data)
     config = get_config()
     ws_url = config['workspace_url']
-    print("XYZ", ws_url)
     ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
     upa = _get_upa_from_msg_data(msg_data)
     try:
