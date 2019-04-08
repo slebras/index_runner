@@ -15,7 +15,8 @@ producer = Producer({'bootstrap.servers': config['kafka_server']})
 es_host = config.get('elasticsearch_host')
 es_port = config.get('elasticsearch_port')
 
-es = Elasticsearch([{'host': es_host, 'port':es_port}])
+es = Elasticsearch([{'host': es_host, 'port': es_port}])
+
 
 def main():
     """
@@ -37,17 +38,15 @@ def _validate_message(msg_data):
     if not msg_data['doc'].get('upa'):
         raise RuntimeError("Message to ElasticSearch malformed, does not contain UPA")
 
+
 def _save_to_elastic(msg_data):
     """
     Save the indexed doc to elasticsearch.
 
-    msg_data: 
-        {
-            'doc': elasticsearch index document
-                   - json like object
-            'mapping': elasticsearch type mapping schema thing
-        }
-    """    
+    msg_data is a python dict of:
+        doc - elasticsearch index document (json like object)
+        mapping - elasticsearch type mapping
+    """
     try:
         _validate_message(msg_data)
         producer.produce(
@@ -56,7 +55,7 @@ def _save_to_elastic(msg_data):
             callback=_delivery_report
         )
         producer.poll(60)
-    except e:
+    except Exception:
         # log the error
         producer.produce(
             config['topics']['error_logs'],
@@ -71,7 +70,6 @@ def _save_to_elastic(msg_data):
         body=msg_data['doc'],
         id=msg_data['doc']['upa']
     )
-
 
 
 def _delivery_report(err, msg):

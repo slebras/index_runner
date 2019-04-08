@@ -101,7 +101,7 @@ def index_narrative(obj_data):
         },
         'doc': {
             'name': narr_name,
-            'upa':upa,
+            'upa': upa,
             'markdown_text': cell_text,
             'app_names': app_names,
             'creator': creator,
