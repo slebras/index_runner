@@ -2,6 +2,7 @@
 Indexer logic based on type
 """
 from kbase_workspace_client import WorkspaceClient
+from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from ..utils.config import get_config
 
@@ -17,12 +18,17 @@ def index_obj(msg_data):
     # Fetch the object data from the workspace API
     upa = _get_upa_from_msg_data(msg_data)
     config = get_config()
-    ws_url = config['kbase_endpoint'] + '/ws'
+    ws_url = config['workspace_url']
+    print("XYZ", ws_url)
     ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
     upa = _get_upa_from_msg_data(msg_data)
-    obj_data = ws_client.admin_req('getObjects', {
-        'objects': [{'ref': upa}]
-    })
+    try:
+        obj_data = ws_client.admin_req('getObjects', {
+            'objects': [{'ref': upa}]
+        })
+    except WorkspaceResponseError as err:
+        print('Workspace response error:', err.resp_data)
+        raise err
     # Dispatch to a specific type handler to produce the search document
     (type_module_name, type_version) = msg_data['objtype'].split('-')
     (type_module, type_name) = type_module_name.split('.')

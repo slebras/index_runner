@@ -12,11 +12,11 @@ services:
         DEVELOPMENT: 1
     volumes:
       - ${PWD}/src:/app
-    env_file:
-      - test-config.ini
     environment:
       - DEVELOPMENT=1
       - PYTHONUNBUFFERED=true
+      - KBASE_WORKSPACE_URL=http://workspace:5000
+      - WORKSPACE_TOKEN=valid_admin_token
 
   elasticsearch:
     image: elasticsearch:6.7.0
@@ -62,6 +62,12 @@ services:
       resources:
         limits:
           memory: 550M
+
+  # Mock workspace server (see src/test/mock_workspace/endpoints.json)
+  workspace:
+    image: mockservices/mock_json_service
+    volumes:
+      - ${PWD}/src/test/mock_workspace:/config
 
 volumes:
   esdata1:
