@@ -92,8 +92,6 @@ class TestIntegration(unittest.TestCase):
         producer.poll(60)
         print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
         msg_data = consume_last(config['topics']['elasticsearch_updates'])
-        # b'{"mapping": , "doc": }'
-
         self.assertEqual(msg_data['mapping'], {
             "name": {"type": "text"},
             "upa": {"type": "text"},
@@ -103,7 +101,6 @@ class TestIntegration(unittest.TestCase):
             "total_cells": {"type": "short"},
             "epoch": {"type": "date"}
         })
-
         self.assertEqual(msg_data['doc'], {
             "name": "Test Narrative Name",
             "upa": "41347:1:16",
@@ -113,3 +110,5 @@ class TestIntegration(unittest.TestCase):
             "total_cells": 3,
             "epoch": 1554408998887
         })
+        # TODO test for msg on indexer_logs topioc
+        # TODO test for doc on elasticsearch

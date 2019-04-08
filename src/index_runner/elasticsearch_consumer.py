@@ -49,12 +49,6 @@ def _save_to_elastic(msg_data):
     """
     try:
         _validate_message(msg_data)
-        producer.produce(
-            config['topics']['indexer_logs'],
-            json.dumps(msg_data),
-            callback=_delivery_report
-        )
-        producer.poll(60)
     except Exception:
         # log the error
         producer.produce(
@@ -63,13 +57,19 @@ def _save_to_elastic(msg_data):
             callback=_delivery_report
         )
         producer.poll(60)
-
+        raise e
     es.index(
         doc_type=msg_data['mapping'],
         index=msg_data['index'],
         body=msg_data['doc'],
         id=msg_data['doc']['upa']
     )
+    producer.produce(
+        config['topics']['indexer_logs'],
+        json.dumps(msg_data),
+        callback=_delivery_report
+    )
+    producer.poll(60)
 
 
 def _delivery_report(err, msg):
