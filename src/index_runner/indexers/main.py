@@ -67,7 +67,8 @@ def index_narrative(obj_data):
     #  - creator
     data = obj_data['data'][0]
     obj_info = data['info']
-    cell_text = ""
+    cell_text = []
+    app_names = []
     cells = data['data']['cells']
     creator = data['creator']
     for cell in cells:
@@ -75,14 +76,18 @@ def index_narrative(obj_data):
                 and cell.get('source')
                 and not cell['source'].startswith('## Welcome to KBase')):
             # ---
-            cell_text += cell.get('source', '')
-            cell_text += "\n"
+            cell_text.append(cell['source'])
+        # for an app cell the module/method name lives in metadata/kbase/appCell/app/id
+        if (cell.get('cell_type') == 'code'
+                and cell['metadata']['kbase'].get('appCell')):
+            app_names.append(cell['metadata']['kbase']['appCell']['app']['id'])
     metadata = obj_info[-1]  # last elem of obj info is a metadata dict
     narr_name = metadata['name']
     return {
         'mapping': {
             'name': {'type': 'text'},
             'markdown_text': {'type': 'text'},
+            'app_names': {'type': 'text'},
             'creator': {'type': 'text'},
             'total_cells': {'type': 'short'},
             'epoch': {'type': 'date'}
@@ -90,6 +95,7 @@ def index_narrative(obj_data):
         'doc': {
             'name': narr_name,
             'markdown_text': cell_text,
+            'app_names': app_names,
             'creator': creator,
             'total_cells': len(cells),
             'epoch': data['epoch']
