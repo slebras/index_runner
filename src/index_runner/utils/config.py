@@ -7,9 +7,15 @@ def get_config():
     """
     if not os.environ.get('WORKSPACE_TOKEN'):
         raise RuntimeError('WORKSPACE_TOKEN env var is not set.')
+    kbase_endpoint = os.environ.get('KBASE_ENDPOINT', 'https://ci.kbase.us/services').strip('/')
+    workspace_url = os.environ.get(
+        'KBASE_WORKSPACE_URL',
+        kbase_endpoint + '/ws'
+    )
     return {
         'ws_token': os.environ['WORKSPACE_TOKEN'],
-        'kbase_endpoint': os.environ.get('KBASE_ENDPOINT', 'https://ci.kbase.us/services'),
+        'kbase_endpoint': kbase_endpoint,
+        'workspace_url': workspace_url,
         'kafka_indexer_topic': os.environ.get('KAFKA_INDEXER_TOPIC', 'idxevents'),
         'kafka_server': os.environ.get('KAFKA_SERVER', 'kafka'),
         'kafka_clientgroup': os.environ.get('KAFKA_CLIENTGROUP', 'search_indexer'),

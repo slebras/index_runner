@@ -40,34 +40,16 @@ def _process_event(msg_data):
     """
     # Workspace events reference:
     # https://github.com/kbase/workspace_deluxe/blob/8a52097748ef31b94cdf1105766e2c35108f4c41/src/us/kbase/workspace/modules/SearchPrototypeEventHandlerFactory.java#L58  # noqa
+    # TODO error loggers to kafka/file/etc
     event_type = msg_data.get('evtype')
     ws_id = msg_data.get('wsid')
     if not ws_id:
         raise RuntimeError(f'Invalid wsid in event: {ws_id}')
     if not event_type:
         raise RuntimeError(f"Missing 'evtype' in event: {msg_data}")
-    if event_type == 'NEW_VERSION':
-        print(f"New object verson event for workspace {ws_id}")
-        # Generate the index and mapping for the new object
-        _run_indexer(msg_data)
-    elif event_type == 'PUBLISH':
-        # publish(msg_data['wsid'])
-        pass
-    elif event_type.startswith('DELETE_'):
-        # delete(evt)
-        pass
-    elif event_type == 'COPY_ACCESS_GROUP':
-        # _index_workspace(ws)
-        pass
-    elif event_type == 'RENAME_ALL_VERSIONS':
-        raise NotImplementedError('RENAME_ALL_VERSIONS not yet implemented')
-    elif event_type in ['REINDEX_WORKSPACE']:
-        # Pseudo event
-        # _index_workspace(ws)
-        pass
-    else:
-        # TODO Kafka logger
-        raise RuntimeError(f"Invalid workspace event: {event_type}")
+    if event_type not in event_type_handlers:
+        raise RuntimeError(f"Unrecognized event {event_type}.")
+    event_type_handlers[event_type](msg_data)
     print(f"Handler finished for event {msg_data['evtype']}")
 
 
@@ -85,6 +67,12 @@ def _run_indexer(msg_data):
         callback=_delivery_report
     )
     producer.poll(60)
+
+
+# Handler functions for each event type ('evtype' key)
+event_type_handlers = {
+    'NEW_VERSION': _run_indexer
+}
 
 
 def _delivery_report(err, msg):
