@@ -1,10 +1,17 @@
 import unittest
+import time
 import json
+import elasticsearch
 from confluent_kafka import Producer, Consumer, KafkaError
 
 from index_runner.utils.config import get_config
 
 config = get_config()
+
+es_host = config.get('elasticsearch_host')
+es_port = config.get('elasticsearch_port')
+
+es = elasticsearch.Elasticsearch([{'host': es_host, 'port':es_port}])
 
 test_events = {
     'new_object': {
@@ -113,3 +120,21 @@ class TestIntegration(unittest.TestCase):
             "total_cells": 3,
             "epoch": 1554408998887
         })
+        print("sleeping for 5 seconds to then query elasticsearch for new document.")
+        time.sleep(5)
+
+        resp = es.get(
+            index=msg_data['index'],
+            id="41347:1:16"
+        )
+
+        self.assertEqual(resp['_source'], {
+            "name": "Test Narrative Name",
+            "upa": "41347:1:16",
+            "markdown_text": ["Testing"],
+            "app_names": ["kb_uploadmethods/import_gff_fasta_as_genome_from_staging"],
+            "creator": "username",
+            "total_cells": 3,
+            "epoch": 1554408998887
+        })
+
