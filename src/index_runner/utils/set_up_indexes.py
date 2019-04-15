@@ -63,7 +63,7 @@ def _create_index(index, mapping):
     except requests.exceptions.RequestException as error:
         raise error
 
-    if not (resp.status_code == requests.codes.ok):
+    if not resp.ok:
         raise RuntimeError("Error while creating new index %s: " % index + resp.text +
                            ". Exited with status code %i" % resp.status_code)
 
@@ -76,6 +76,9 @@ def set_up_indexes():
         )
     except requests.exceptions.RequestException as error:
         raise error
+    if not resp.ok:
+        raise RuntimeError("Error while querying for indices: " + resp.text +
+                           ". Exited with status code %i" % resp.status_code)
     indexes_data = resp.json()
 
     indexes = indexes_data.keys()

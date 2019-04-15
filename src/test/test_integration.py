@@ -128,7 +128,7 @@ class TestIntegration(unittest.TestCase):
         except requests.exceptions.RequestException as error:
             raise error
 
-        if not (resp.status_code == requests.codes.ok):
+        if not resp.ok:
             raise RuntimeError("Failed to get id %s from index %s,"
                                " results in error: " % (msg_data['id'], msg_data['index']) + resp.text +
                                ". Exited with status code %i" % resp.status_code)

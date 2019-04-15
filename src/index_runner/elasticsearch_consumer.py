@@ -38,12 +38,10 @@ def _validate_message(msg_data):
     """
     validate the input message
     """
-    if not msg_data.get('doc'):
-        raise RuntimeError("Message to Elasticsearch malformed, does not contain \'doc\'")
-    if not msg_data.get('id'):
-        raise RuntimeError("Message to Elasticsearch malformed, does not contain \'id\' field")
-    if not msg_data.get('index'):
-        raise RuntimeError("Message to Elasticsearch malformed, does not have target elasticsearch index")
+    required_keys = ['doc', 'id', 'index']
+    for key in required_keys:
+        if not msg_data.get(key):
+            raise RuntimeError(f"Message to Elasticsearch malformed, does not contain \'{key}\' field")
 
 
 def _save_to_elastic(msg_data):
@@ -86,7 +84,7 @@ def _save_to_elastic(msg_data):
         )
         producer.poll(60)
         raise error
-    if not (resp.status_code == requests.codes.ok):
+    if not resp.ok:
         # unsuccesful save to elasticsearch.
         raise RuntimeError("Error when saving to elasticsearch index %s: " % msg_data['index'] + resp.text +
                            ". Exited with status code %i" % resp.status_code)
