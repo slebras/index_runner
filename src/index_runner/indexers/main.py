@@ -18,6 +18,7 @@ def index_obj(msg_data):
     # Fetch the object data from the workspace API
     upa = _get_upa_from_msg_data(msg_data)
     config = get_config()
+    es_index_prefix = config.get('elasticsearch_index_prefix')
     ws_url = config['workspace_url']
     ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
     upa = _get_upa_from_msg_data(msg_data)
@@ -32,7 +33,7 @@ def index_obj(msg_data):
     (type_module_name, type_version) = msg_data['objtype'].split('-')
     (type_module, type_name) = type_module_name.split('.')
     indexer = _find_indexer(type_module, type_name, type_version)
-    return indexer(obj_data)
+    return indexer(obj_data, es_index_prefix)
 
 
 def _find_indexer(type_module, type_name, type_version):
@@ -55,7 +56,7 @@ def default_indexer(obj_data):
     return {'schema': {}, 'data': obj_data}
 
 
-def index_narrative(obj_data):
+def index_narrative(obj_data, es_index_prefix):
     """
     Index a narrative object on save.
     We only the latest narratives for:
@@ -72,6 +73,7 @@ def index_narrative(obj_data):
     #  - creator
     data = obj_data['data'][0]
     obj_info = data['info']
+    upa = ':'.join([str(data['info'][6]), str(data['info'][0]), str(data['info'][4])])
     cell_text = []
     app_names = []
     cells = data['data']['cells']
@@ -88,23 +90,30 @@ def index_narrative(obj_data):
             app_names.append(cell['metadata']['kbase']['appCell']['app']['id'])
     metadata = obj_info[-1]  # last elem of obj info is a metadata dict
     narr_name = metadata['name']
+
     return {
-        'mapping': {
-            'name': {'type': 'text'},
-            'markdown_text': {'type': 'text'},
-            'app_names': {'type': 'text'},
-            'creator': {'type': 'text'},
-            'total_cells': {'type': 'short'},
-            'epoch': {'type': 'date'}
-        },
         'doc': {
             'name': narr_name,
+            'upa': upa,
             'markdown_text': cell_text,
             'app_names': app_names,
             'creator': creator,
             'total_cells': len(cells),
-            'epoch': data['epoch']
-        }
+            **_add_default_fields(data)
+        },
+        'index': es_index_prefix + '.' + 'kbasenarrative.narrative-4.0' + "_1",
+        'id': upa
+    }
+
+
+def _add_default_fields(data):
+    """
+    function to add recurring fields
+    """
+    return {
+        "timestamp": data['epoch'],
+        "guid": "WS:" + '/'.join([str(data['info'][6]), str(data['info'][0]), str(data['info'][4])]),
+
     }
 
 
