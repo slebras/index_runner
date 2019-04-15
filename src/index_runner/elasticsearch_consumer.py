@@ -12,10 +12,10 @@ from .utils.threadify import threadify
 config = get_config()
 producer = Producer({'bootstrap.servers': config['kafka_server']})
 
-es_host = config.get('elasticsearch_host')
-es_port = config.get('elasticsearch_port')
+es_host = config['elasticsearch_host']
+es_port = config['elasticsearch_port']
 
-es_data_type = config.get("elasticsearch_data_type")
+es_data_type = config["elasticsearch_data_type"]
 
 es_url = "http://" + es_host + ":" + str(es_port)
 # es = elasticsearch.Elasticsearch([{'host': es_host, 'port': es_port}])
