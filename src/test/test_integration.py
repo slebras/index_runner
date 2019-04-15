@@ -1,17 +1,22 @@
 import unittest
-import time
 import json
-import elasticsearch
+import requests
 from confluent_kafka import Producer, Consumer, KafkaError
 
 from index_runner.utils.config import get_config
 
 config = get_config()
 
+# load elasticsearch options
 es_host = config.get('elasticsearch_host')
 es_port = config.get('elasticsearch_port')
+es_data_type = config.get('elasticsearch_data_type')
 
-es = elasticsearch.Elasticsearch([{'host': es_host, 'port':es_port}])
+es_url = "http://" + es_host + ":" + str(es_port)
+
+headers = {
+    "Content-Type": "application/json"
+}
 
 test_events = {
     'new_object': {
@@ -101,16 +106,6 @@ class TestIntegration(unittest.TestCase):
         msg_data = consume_last(config['topics']['elasticsearch_updates'])
         # b'{"mapping": , "doc": }'
 
-        self.assertEqual(msg_data['mapping'], {
-            "name": {"type": "text"},
-            "upa": {"type": "text"},
-            "markdown_text": {"type": "text"},
-            "app_names": {"type": "text"},
-            "creator": {"type": "text"},
-            "total_cells": {"type": "short"},
-            "epoch": {"type": "date"}
-        })
-
         self.assertEqual(msg_data['doc'], {
             "name": "Test Narrative Name",
             "upa": "41347:1:16",
@@ -118,23 +113,39 @@ class TestIntegration(unittest.TestCase):
             "app_names": ["kb_uploadmethods/import_gff_fasta_as_genome_from_staging"],
             "creator": "username",
             "total_cells": 3,
-            "epoch": 1554408998887
+            "timestamp": 1554408998887,
+            "guid": "WS:41347/1/16"
         })
-        print("sleeping for 5 seconds to then query elasticsearch for new document.")
-        time.sleep(5)
 
-        resp = es.get(
-            index=msg_data['index'],
-            id="41347:1:16"
-        )
+        log_data = consume_last(config['topics']['indexer_logs'])
+        print(log_data)
 
-        self.assertEqual(resp['_source'], {
+        try:
+            resp = requests.get(
+                "/".join([es_url, msg_data['index'], es_data_type, msg_data['id']]),
+                headers=headers
+            )
+        except requests.exceptions.RequestException as error:
+            raise error
+
+        if not (resp.status_code == requests.codes.ok):
+            raise RuntimeError("Failed to get id %s from index %s,"
+                               " results in error: " % (msg_data['id'], msg_data['index']) + resp.text +
+                               ". Exited with status code %i" % resp.status_code)
+        resp_data = resp.json()
+
+        if resp_data.get('error'):
+            raise RuntimeError("Failed to get id %s from index %s,"
+                               " results in error: " % (msg_data['id'], msg_data['index'])
+                               + str(resp_data['error']['root_cause']))
+
+        self.assertEqual(resp_data['_source'], {
             "name": "Test Narrative Name",
             "upa": "41347:1:16",
             "markdown_text": ["Testing"],
             "app_names": ["kb_uploadmethods/import_gff_fasta_as_genome_from_staging"],
             "creator": "username",
             "total_cells": 3,
-            "epoch": 1554408998887
+            "timestamp": 1554408998887,
+            "guid": "WS:41347/1/16"
         })
-
