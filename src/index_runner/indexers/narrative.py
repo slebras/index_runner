@@ -51,5 +51,6 @@ def index_narrative(obj_data, ws_info):
             'islast': True,
             'shared': False
         },
-        'index': 'narratives'
+        'index': 'narrative',
+        'id': upa
     }

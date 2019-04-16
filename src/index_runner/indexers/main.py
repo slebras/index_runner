@@ -19,6 +19,7 @@ def index_obj(msg_data):
     # Fetch the object data from the workspace API
     upa = _get_upa_from_msg_data(msg_data)
     config = get_config()
+    es_index_prefix = config.get('elasticsearch_index_prefix')
     ws_url = config['workspace_url']
     ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
     upa = _get_upa_from_msg_data(msg_data)
@@ -40,7 +41,7 @@ def index_obj(msg_data):
     (type_module_name, type_version) = msg_data['objtype'].split('-')
     (type_module, type_name) = type_module_name.split('.')
     indexer = _find_indexer(type_module, type_name, type_version)
-    return indexer(obj_data, ws_info)
+    return indexer(obj_data, ws_info, es_index_prefix)
 
 
 def _find_indexer(type_module, type_name, type_version):
@@ -56,11 +57,22 @@ def _find_indexer(type_module, type_name, type_version):
     return default_indexer
 
 
-def default_indexer(obj_data):
+def default_indexer(obj_data, ws_info, index_prefix):
     """
     Default indexer fallback, when we don't find a type-specific handler.
     """
     return {'schema': {}, 'data': obj_data}
+
+
+def _add_default_fields(data):
+    """
+    function to add recurring fields
+    """
+    return {
+        "timestamp": data['epoch'],
+        "guid": "WS:" + '/'.join([str(data['info'][6]), str(data['info'][0]), str(data['info'][4])]),
+
+    }
 
 
 # Directory of all indexer functions.
