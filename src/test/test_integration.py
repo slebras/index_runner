@@ -117,7 +117,7 @@ class TestIntegration(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             consume_last(config['topics']['elasticsearch_updates'], timeout=1)
 
-        self.assertTrue("Consumer waited past timeout" in str(context.exception))
+        self.assertIn("Consumer waited past timeout", str(context.exception))
 
     def test_narrative_update_event(self):
         print('producing to', config['topics']['workspace_events'])
