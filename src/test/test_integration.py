@@ -54,8 +54,6 @@ test_events = {
         "objtype": None,
         "permusers": [],
         "user": "username"
-    },
-    'timeout_test_object': {
     }
 }
 
