@@ -28,6 +28,7 @@ mappings = {
         'markdown_text': {'type': 'text'},
         'app_names': {'type': 'text'},
         'creator': {'type': 'text'},
+        'shared_users': {'type': 'text'}
         'total_cells': {'type': 'short'},
         'epoch': {'type': 'date'}
     }

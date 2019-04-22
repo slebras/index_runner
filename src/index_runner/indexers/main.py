@@ -1,6 +1,8 @@
 """
 Indexer logic based on type
 """
+from bs4 import BeautifulSoup
+
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
@@ -83,7 +85,8 @@ def index_narrative(obj_data, es_index_prefix):
                 and cell.get('source')
                 and not cell['source'].startswith('## Welcome to KBase')):
             # ---
-            cell_text.append(cell['source'])
+            cell_soup = BeautifulSoup(cell['source'], 'html.parser')
+            cell_text.append(cell_soup.get_text())
         # for an app cell the module/method name lives in metadata/kbase/appCell/app/id
         if (cell.get('cell_type') == 'code'
                 and cell['metadata']['kbase'].get('appCell')):
@@ -98,6 +101,7 @@ def index_narrative(obj_data, es_index_prefix):
             'markdown_text': cell_text,
             'app_names': app_names,
             'creator': creator,
+            'shared_users': ,
             'total_cells': len(cells),
             **_add_default_fields(data)
         },
