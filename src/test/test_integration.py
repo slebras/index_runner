@@ -130,7 +130,6 @@ class TestIntegration(unittest.TestCase):
         producer.poll(60)
         print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
         msg_data = consume_last(config['topics']['elasticsearch_updates'])
-        # b'{"mapping": , "doc": }'
 
         self.assertEqual(msg_data['doc'], {
             "name": "Test Narrative Name",
@@ -175,3 +174,5 @@ class TestIntegration(unittest.TestCase):
             "timestamp": 1554408998887,
             "guid": "WS:41347/1/16"
         })
+        # TODO test for msg on indexer_logs topioc
+        # TODO test for doc on elasticsearch

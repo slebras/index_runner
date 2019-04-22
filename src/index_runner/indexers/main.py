@@ -7,6 +7,7 @@ from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from ..utils.config import get_config
+from .narrative import index_narrative
 
 
 def index_obj(msg_data):
@@ -31,11 +32,18 @@ def index_obj(msg_data):
     except WorkspaceResponseError as err:
         print('Workspace response error:', err.resp_data)
         raise err
+    try:
+        ws_info = ws_client.admin_req('getWorkspaceInfo', {
+            'ws_id': msg_data['wsid']
+        })
+    except WorkspaceResponseError as err:
+        print('Workspace response error:', err.resp_data)
+        raise err
     # Dispatch to a specific type handler to produce the search document
     (type_module_name, type_version) = msg_data['objtype'].split('-')
     (type_module, type_name) = type_module_name.split('.')
     indexer = _find_indexer(type_module, type_name, type_version)
-    return indexer(obj_data, es_index_prefix)
+    return indexer(obj_data, ws_info, es_index_prefix)
 
 
 def _find_indexer(type_module, type_name, type_version):
@@ -51,63 +59,11 @@ def _find_indexer(type_module, type_name, type_version):
     return default_indexer
 
 
-def default_indexer(obj_data):
+def default_indexer(obj_data, ws_info, index_prefix):
     """
     Default indexer fallback, when we don't find a type-specific handler.
     """
     return {'schema': {}, 'data': obj_data}
-
-
-def index_narrative(obj_data, es_index_prefix):
-    """
-    Index a narrative object on save.
-    We only the latest narratives for:
-        - title and author
-        - markdown cell content (non boilerplate)
-        - created and updated dates
-        - total number cells
-    """
-    # Narrative name
-    # Markdown cells that are not the welcome boilerplate
-    # maybes:
-    #  - app names
-    #  - obj names
-    #  - creator
-    data = obj_data['data'][0]
-    obj_info = data['info']
-    upa = ':'.join([str(data['info'][6]), str(data['info'][0]), str(data['info'][4])])
-    cell_text = []
-    app_names = []
-    cells = data['data']['cells']
-    creator = data['creator']
-    for cell in cells:
-        if (cell.get('cell_type') == 'markdown'
-                and cell.get('source')
-                and not cell['source'].startswith('## Welcome to KBase')):
-            # ---
-            cell_soup = BeautifulSoup(cell['source'], 'html.parser')
-            cell_text.append(cell_soup.get_text())
-        # for an app cell the module/method name lives in metadata/kbase/appCell/app/id
-        if (cell.get('cell_type') == 'code'
-                and cell['metadata']['kbase'].get('appCell')):
-            app_names.append(cell['metadata']['kbase']['appCell']['app']['id'])
-    metadata = obj_info[-1]  # last elem of obj info is a metadata dict
-    narr_name = metadata['name']
-
-    return {
-        'doc': {
-            'name': narr_name,
-            'upa': upa,
-            'markdown_text': cell_text,
-            'app_names': app_names,
-            'creator': creator,
-            'shared_users': ,
-            'total_cells': len(cells),
-            **_add_default_fields(data)
-        },
-        'index': es_index_prefix + '.' + 'kbasenarrative.narrative-4.0' + "_1",
-        'id': upa
-    }
 
 
 def _add_default_fields(data):
