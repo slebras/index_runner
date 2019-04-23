@@ -65,7 +65,7 @@ def delivery_report(err, msg):
         print('Message delivered to', msg.topic(), msg.partition())
 
 
-def consume_last(topic, timeout=60):
+def consume_last(topic, timeout=120):
     """Consume the most recent message from the topic stream."""
     consumer = Consumer({
         'bootstrap.servers': config['kafka_server'],
@@ -131,16 +131,32 @@ class TestIntegration(unittest.TestCase):
         print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
         msg_data = consume_last(config['topics']['elasticsearch_updates'])
 
-        self.assertEqual(msg_data['doc'], {
+        print("="*80)
+        print("="*80)
+        print("="*80)
+        print(msg_data['doc'])
+        print("="*80)
+        print("="*80)
+        print("="*80)
+        # TODO: update missing fields "accgrp", "shared_users", "creation_date", and "public"
+        check_against = {
             "name": "Test Narrative Name",
             "upa": "41347:1:16",
             "markdown_text": ["Testing"],
             "app_names": ["kb_uploadmethods/import_gff_fasta_as_genome_from_staging"],
             "creator": "username",
+            "shared_users": [],
             "total_cells": 3,
+            "accgrp": 1,
+            "public": 1,
+            "islast": True,
+            "shared": False,
             "timestamp": 1554408998887,
-            "guid": "WS:41347/1/16"
-        })
+            "guid": "WS:41347/1/16",
+            "creation_date": 12340982130,
+        }
+
+        self.assertEqual(msg_data['doc'], check_against)
 
         log_data = consume_last(config['topics']['indexer_logs'])
         print(log_data)
@@ -164,15 +180,6 @@ class TestIntegration(unittest.TestCase):
                                " results in error: " % (msg_data['id'], msg_data['index'])
                                + str(resp_data['error']['root_cause']))
 
-        self.assertEqual(resp_data['_source'], {
-            "name": "Test Narrative Name",
-            "upa": "41347:1:16",
-            "markdown_text": ["Testing"],
-            "app_names": ["kb_uploadmethods/import_gff_fasta_as_genome_from_staging"],
-            "creator": "username",
-            "total_cells": 3,
-            "timestamp": 1554408998887,
-            "guid": "WS:41347/1/16"
-        })
+        self.assertEqual(resp_data['_source'], check_against)
         # TODO test for msg on indexer_logs topioc
         # TODO test for doc on elasticsearch

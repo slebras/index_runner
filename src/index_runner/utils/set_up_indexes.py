@@ -18,7 +18,8 @@ headers = {
 
 required_mapping_fields = {
     'timestamp': {'type': 'date'},
-    'guid': {'type': 'keyword'}
+    'guid': {'type': 'keyword'},
+    'creation_date': {'type': 'date'}
 }
 
 mappings = {
@@ -28,9 +29,8 @@ mappings = {
         'markdown_text': {'type': 'text'},
         'app_names': {'type': 'text'},
         'creator': {'type': 'text'},
-        'shared_users': {'type': 'text'}
+        'shared_users': {'type': 'text'},
         'total_cells': {'type': 'short'},
-        'epoch': {'type': 'date'}
     }
 }
 

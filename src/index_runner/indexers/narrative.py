@@ -1,7 +1,12 @@
+from bs4 import BeautifulSoup
+from markdown2 import Markdown
+
 from utils.get_path import get_path
 
+from . import indexer_utils
 
-def index_narrative(obj_data, ws_info):
+
+def index_narrative(obj_data, ws_info, obj_data_v1):
     """
     Index a narrative object on save.
     We only the latest narratives for:
@@ -18,7 +23,12 @@ def index_narrative(obj_data, ws_info):
     #  - creator
     data = obj_data['data'][0]
     obj_info = data['info']
+
     upa = ':'.join([str(data['info'][6]), str(data['info'][0]), str(data['info'][4])])
+
+    shared_users = indexer_utils.get_shared_users(data)
+
+    markdowner = Markdown()
     cell_text = []
     app_names = []
     cells = data['data']['cells']
@@ -28,7 +38,8 @@ def index_narrative(obj_data, ws_info):
                 and cell.get('source')
                 and not cell['source'].startswith('## Welcome to KBase')):
             # ---
-            cell_text.append(cell['source'])
+            cell_soup = BeautifulSoup(markdowner.convert(cell['source']), 'html.parser')
+            cell_text.append(cell_soup.get_text())
         # for an app cell the module/method name lives in metadata/kbase/appCell/app/id
         if cell.get('cell_type') == 'code':
             app_path = get_path(cell, ['metadata', 'kbase', 'appCell', 'app', 'id'])
@@ -44,9 +55,9 @@ def index_narrative(obj_data, ws_info):
             'markdown_text': cell_text,
             'app_names': app_names,
             'creator': creator,
+            'shared_users': shared_users,
             'total_cells': len(cells),
             'accgrp': data['info'][6],
-            'epoch': data['epoch'],
             'public': is_public,
             'islast': True,
             'shared': False

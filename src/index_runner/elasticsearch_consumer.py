@@ -16,7 +16,7 @@ producer = Producer({'bootstrap.servers': config['kafka_server']})
 es_host = config['elasticsearch_host']
 es_port = config['elasticsearch_port']
 
-es_data_type = config["elasticsearch_data_type"]
+_ES_DATA_TYPE = config["elasticsearch_data_type"]
 
 es_url = "http://" + es_host + ":" + str(es_port)
 # es = elasticsearch.Elasticsearch([{'host': es_host, 'port': es_port}])
@@ -69,7 +69,7 @@ def _save_to_elastic(msg_data):
     try:
         # save to elasticsearch index
         resp = requests.put(
-            '/'.join([es_url, msg_data['index'], es_data_type, msg_data['id']]),
+            '/'.join([es_url, msg_data['index'], _ES_DATA_TYPE, msg_data['id']]),
             data=json.dumps(msg_data['doc']),
             headers=headers
         )

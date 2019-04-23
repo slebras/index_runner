@@ -5,3 +5,5 @@ docker==3.7.0
 elasticsearch==5.5.3
 PyYAML==5.1
 requests==2.21.0
+beautifulsoup4==4.6.3
+markdown2==2.3.7
