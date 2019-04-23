@@ -32,7 +32,7 @@ def index_obj(msg_data):
         raise err
     try:
         ws_info = ws_client.admin_req('getWorkspaceInfo', {
-            'ws_id': msg_data['wsid']
+            'id': msg_data['wsid']
         })
     except WorkspaceResponseError as err:
         print('Workspace response error:', err.resp_data)

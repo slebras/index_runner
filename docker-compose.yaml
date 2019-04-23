@@ -10,6 +10,10 @@ services:
       context: .
       args:
         DEVELOPMENT: 1
+    depends_on:
+      - elasticsearch
+      - kafka
+      - workspace
     volumes:
       - ${PWD}/src:/app
     environment:
