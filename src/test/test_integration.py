@@ -65,7 +65,7 @@ def delivery_report(err, msg):
         print('Message delivered to', msg.topic(), msg.partition())
 
 
-def consume_last(topic, timeout=120):
+def consume_last(topic, timeout=180):
     """Consume the most recent message from the topic stream."""
     consumer = Consumer({
         'bootstrap.servers': config['kafka_server'],
@@ -134,7 +134,7 @@ class TestIntegration(unittest.TestCase):
         print("="*80)
         print("="*80)
         print("="*80)
-        print(msg_data['doc'])
+        print("doc message: ", msg_data['doc'])
         print("="*80)
         print("="*80)
         print("="*80)
@@ -142,18 +142,18 @@ class TestIntegration(unittest.TestCase):
         check_against = {
             "name": "Test Narrative Name",
             "upa": "41347:1:16",
-            "markdown_text": ["Testing"],
+            "markdown_text": ["Testing\n"],
             "app_names": ["kb_uploadmethods/import_gff_fasta_as_genome_from_staging"],
             "creator": "username",
-            "shared_users": [],
+            "shared_users": ['username'],
             "total_cells": 3,
-            "accgrp": 1,
-            "public": 1,
+            "accgrp": 41347,
+            "public": True,
             "islast": True,
             "shared": False,
             "timestamp": 1554408998887,
             "guid": "WS:41347/1/16",
-            "creation_date": 12340982130,
+            "creation_date": '2019-04-04T20:16:39+0000',
         }
 
         self.assertEqual(msg_data['doc'], check_against)
