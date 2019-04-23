@@ -1,5 +1,6 @@
 import unittest
 import json
+import time
 import requests
 from confluent_kafka import Producer, Consumer, KafkaError
 
@@ -64,7 +65,7 @@ def delivery_report(err, msg):
         print('Message delivered to', msg.topic(), msg.partition())
 
 
-def consume_last(topic):
+def consume_last(topic, timeout=60):
     """Consume the most recent message from the topic stream."""
     consumer = Consumer({
         'bootstrap.servers': config['kafka_server'],
@@ -74,7 +75,14 @@ def consume_last(topic):
     consumer.subscribe([topic])
     # partition = TopicPartition(config['topics']['elasticsearch_updates'], 0)
     # consumer.seek(0)
+    start_time = time.time()
     while True:
+        # get time elapsed in seconds
+        elapsed = time.time() - start_time
+        if elapsed > timeout:
+            # close consumer before throwing error
+            consumer.close()
+            raise TimeoutError(f"Error: Consumer waited past timeout of {timeout} seconds")
         msg = consumer.poll(0.5)
         if msg is None:
             continue
@@ -90,6 +98,24 @@ def consume_last(topic):
 
 
 class TestIntegration(unittest.TestCase):
+
+    def test_consumer_timout(self):
+        print('producing to', config['topics']['workspace_events'])
+        producer = Producer({
+            'bootstrap.servers': config['kafka_server']
+        })
+        producer.produce(
+            config['topics']['workspace_events'],
+            json.dumps(test_events['narrative_save']),
+            callback=delivery_report
+        )
+        producer.poll(60)
+        print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
+        # We expect this to fail with timeout of 1 second.
+        with self.assertRaises(Exception) as context:
+            consume_last(config['topics']['elasticsearch_updates'], timeout=1)
+
+        self.assertIn("Consumer waited past timeout", str(context.exception))
 
     def test_narrative_update_event(self):
         print('producing to', config['topics']['workspace_events'])
