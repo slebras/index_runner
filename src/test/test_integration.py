@@ -131,13 +131,6 @@ class TestIntegration(unittest.TestCase):
         print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
         msg_data = consume_last(config['topics']['elasticsearch_updates'])
 
-        print("="*80)
-        print("="*80)
-        print("="*80)
-        print("doc message: ", msg_data['doc'])
-        print("="*80)
-        print("="*80)
-        print("="*80)
         # TODO: update missing fields "accgrp", "shared_users", "creation_date", and "public"
         check_against = {
             "name": "Test Narrative Name",
@@ -181,5 +174,5 @@ class TestIntegration(unittest.TestCase):
                                + str(resp_data['error']['root_cause']))
 
         self.assertEqual(resp_data['_source'], check_against)
-        # TODO test for msg on indexer_logs topioc
+        # TODO test for msg on indexer_logs topic
         # TODO test for doc on elasticsearch

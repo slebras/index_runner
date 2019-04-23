@@ -6,7 +6,11 @@ from ..utils.config import get_config
 
 def get_shared_users(data):
     """
-    get shared users
+    returns list of users that have read, write, or author access to a workspace object
+
+    inputs:
+        data: data from workspace_client.getObjects(...)['data'][idx]
+
     """
     config = get_config()
     ws_url = config['workspace_url']
