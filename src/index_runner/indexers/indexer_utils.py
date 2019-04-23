@@ -13,8 +13,8 @@ def get_shared_users(data):
     ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
 
     try:
-        obj_perm = ws_client.get_permissions_mass({
-            'workaspaces': [{'ws_id': data['info'][6]}]
+        obj_perm = ws_client.admin_req("getPermissionsMass", {
+            'workspaces': [{'id': data['info'][6]}]
         })['perms'][0]
     except WorkspaceResponseError as err:
         print("Workspace response error: ", err.resp_data)
