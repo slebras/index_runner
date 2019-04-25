@@ -2,6 +2,7 @@
 kbase_workspace_client==0.0.2
 confluent-kafka==0.11.6
 docker==3.7.0
-elasticsearch==5.5.3
 PyYAML==5.1
 requests==2.21.0
+beautifulsoup4==4.7.1
+markdown2==2.3.7

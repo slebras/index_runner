@@ -65,7 +65,7 @@ def delivery_report(err, msg):
         print('Message delivered to', msg.topic(), msg.partition())
 
 
-def consume_last(topic, timeout=60):
+def consume_last(topic, timeout=120):
     """Consume the most recent message from the topic stream."""
     consumer = Consumer({
         'bootstrap.servers': config['kafka_server'],
@@ -131,16 +131,56 @@ class TestIntegration(unittest.TestCase):
         print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
         msg_data = consume_last(config['topics']['elasticsearch_updates'])
 
-        self.assertEqual(msg_data['doc'], {
+        # TODO: update missing fields "accgrp", "shared_users", "creation_date", and "public"
+        check_against = {
             "name": "Test Narrative Name",
             "upa": "41347:1:16",
-            "markdown_text": ["Testing"],
-            "app_names": ["kb_uploadmethods/import_gff_fasta_as_genome_from_staging"],
+            "data_objects": [
+                {
+                    'name': 'Rhodobacter_CACIA_14H1',
+                    'type': 'KBaseGenomes.Genome-7.0'
+                }, {
+                    'name': '_Nostoc_azollae__0708',
+                    'type': 'KBaseGenomes.Genome-14.2'
+                }, {
+                    'name': 'Acetobacter_aceti_NBRC_14818',
+                    'type': 'KBaseGenomes.Genome-14.1'
+                }, {
+                    'name': '_H9',
+                    'type': 'KBaseBiochem.Media-1.0'
+                }, {
+                    'name': 'KBase_derived_Rhodobacter_CACIA_14H1.gff_genome.assembly',
+                    'type': 'KBaseGenomeAnnotations.Assembly-6.0'
+                }, {
+                    'name': 'KBase_derived_Rhodobacter_CACIA_14H1.gff_genome',
+                    'type': 'KBaseGenomes.Genome-15.1'
+                }
+            ],
+            "cells": [
+                {
+                    'description': 'Testing\n',
+                    'type': 'markdown'
+                }, {
+                    'description': "print('nope')",
+                    'type': 'code_cell'
+                }, {
+                    'description': 'Import GFF3/FASTA file as Genome from Staging Area',
+                    'type': 'kbase_app'
+                }
+            ],
             "creator": "username",
+            "shared_users": ['username'],
             "total_cells": 3,
+            "access_group": 41347,
+            "public": True,
+            "islast": True,
+            "shared": False,
             "timestamp": 1554408998887,
-            "guid": "WS:41347/1/16"
-        })
+            "guid": "WS:41347/1/16",
+            "creation_date": '2019-04-04T20:16:39+0000',
+        }
+
+        self.assertEqual(msg_data['doc'], check_against)
 
         log_data = consume_last(config['topics']['indexer_logs'])
         print(log_data)
@@ -164,15 +204,6 @@ class TestIntegration(unittest.TestCase):
                                " results in error: " % (msg_data['id'], msg_data['index'])
                                + str(resp_data['error']['root_cause']))
 
-        self.assertEqual(resp_data['_source'], {
-            "name": "Test Narrative Name",
-            "upa": "41347:1:16",
-            "markdown_text": ["Testing"],
-            "app_names": ["kb_uploadmethods/import_gff_fasta_as_genome_from_staging"],
-            "creator": "username",
-            "total_cells": 3,
-            "timestamp": 1554408998887,
-            "guid": "WS:41347/1/16"
-        })
-        # TODO test for msg on indexer_logs topioc
+        self.assertEqual(resp_data['_source'], check_against)
+        # TODO test for msg on indexer_logs topic
         # TODO test for doc on elasticsearch

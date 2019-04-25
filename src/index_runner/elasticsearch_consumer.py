@@ -3,7 +3,6 @@ Consume elasticsearch save events from kafka.
 """
 import json
 from confluent_kafka import Producer
-from elasticsearch import Elasticsearch
 import requests
 
 from .utils.kafka_consumer import kafka_consumer
@@ -16,7 +15,7 @@ producer = Producer({'bootstrap.servers': config['kafka_server']})
 es_host = config['elasticsearch_host']
 es_port = config['elasticsearch_port']
 
-es_data_type = config["elasticsearch_data_type"]
+_ES_DATA_TYPE = config["elasticsearch_data_type"]
 
 es_url = "http://" + es_host + ":" + str(es_port)
 # es = elasticsearch.Elasticsearch([{'host': es_host, 'port': es_port}])
@@ -24,8 +23,6 @@ es_url = "http://" + es_host + ":" + str(es_port)
 headers = {
     "Content-Type": "application/json"
 }
-
-es = Elasticsearch([{'host': es_host, 'port': es_port}])
 
 
 def main():
@@ -52,7 +49,6 @@ def _save_to_elastic(msg_data):
     Save the indexed doc to elasticsearch.
     msg_data is a python dict of:
         doc - elasticsearch index document (json like object)
-        mapping - elasticsearch type mapping
     """
     try:
         _validate_message(msg_data)
@@ -69,18 +65,12 @@ def _save_to_elastic(msg_data):
     try:
         # save to elasticsearch index
         resp = requests.put(
-            '/'.join([es_url, msg_data['index'], es_data_type, msg_data['id']]),
+            '/'.join([es_url, msg_data['index'], _ES_DATA_TYPE, msg_data['id']]),
             data=json.dumps(msg_data['doc']),
             headers=headers
         )
     except requests.exceptions.RequestException as error:
         raise error
-    es.index(
-        doc_type=msg_data['mapping'],
-        index=msg_data['index'],
-        body=msg_data['doc'],
-        id=msg_data['doc']['upa']
-    )
     if not resp.ok:
         # unsuccesful save to elasticsearch.
         raise RuntimeError("Error when saving to elasticsearch index %s: " % msg_data['index'] + resp.text +
