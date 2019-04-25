@@ -6,20 +6,17 @@ from confluent_kafka import Producer, Consumer, KafkaError
 
 from index_runner.utils.config import get_config
 
-config = get_config()
+_CONFIG = get_config()
 
 # load elasticsearch options
-es_host = config['elasticsearch_host']
-es_port = config['elasticsearch_port']
-es_data_type = config['elasticsearch_data_type']
+_ES_DATA_TYPE = _CONFIG['elasticsearch_data_type']
+_ES_URL = "http://" + _CONFIG['elasticsearch_host'] + ":" + str(_CONFIG['elasticsearch_port'])
 
-es_url = "http://" + es_host + ":" + str(es_port)
-
-headers = {
+_HEADERS = {
     "Content-Type": "application/json"
 }
 
-test_events = {
+_TEST_EVENTS = {
     'new_object': {
     },
     'narrative_save': {
@@ -68,12 +65,12 @@ def delivery_report(err, msg):
 def consume_last(topic, timeout=120):
     """Consume the most recent message from the topic stream."""
     consumer = Consumer({
-        'bootstrap.servers': config['kafka_server'],
+        'bootstrap.servers': _CONFIG['kafka_server'],
         'group.id': 'test_only',
         'auto.offset.reset': 'earliest'
     })
     consumer.subscribe([topic])
-    # partition = TopicPartition(config['topics']['elasticsearch_updates'], 0)
+    # partition = TopicPartition(_CONFIG['topics']['elasticsearch_updates'], 0)
     # consumer.seek(0)
     start_time = time.time()
     while True:
@@ -100,36 +97,36 @@ def consume_last(topic, timeout=120):
 class TestIntegration(unittest.TestCase):
 
     def test_consumer_timout(self):
-        print('producing to', config['topics']['workspace_events'])
+        print('producing to', _CONFIG['topics']['workspace_events'])
         producer = Producer({
-            'bootstrap.servers': config['kafka_server']
+            'bootstrap.servers': _CONFIG['kafka_server']
         })
         producer.produce(
-            config['topics']['workspace_events'],
-            json.dumps(test_events['narrative_save']),
+            _CONFIG['topics']['workspace_events'],
+            json.dumps(_TEST_EVENTS['narrative_save']),
             callback=delivery_report
         )
         producer.poll(60)
         print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
         # We expect this to fail with timeout of 1 second.
         with self.assertRaises(Exception) as context:
-            consume_last(config['topics']['elasticsearch_updates'], timeout=1)
+            consume_last(_CONFIG['topics']['elasticsearch_updates'], timeout=1)
 
         self.assertIn("Consumer waited past timeout", str(context.exception))
 
     def test_narrative_update_event(self):
-        print('producing to', config['topics']['workspace_events'])
+        print('producing to', _CONFIG['topics']['workspace_events'])
         producer = Producer({
-            'bootstrap.servers': config['kafka_server']
+            'bootstrap.servers': _CONFIG['kafka_server']
         })
         producer.produce(
-            config['topics']['workspace_events'],
-            json.dumps(test_events['narrative_save']),
+            _CONFIG['topics']['workspace_events'],
+            json.dumps(_TEST_EVENTS['narrative_save']),
             callback=delivery_report
         )
         producer.poll(60)
         print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
-        msg_data = consume_last(config['topics']['elasticsearch_updates'])
+        msg_data = consume_last(_CONFIG['topics']['elasticsearch_updates'])
 
         # TODO: update missing fields "accgrp", "shared_users", "creation_date", and "public"
         check_against = {
@@ -182,13 +179,13 @@ class TestIntegration(unittest.TestCase):
 
         self.assertEqual(msg_data['doc'], check_against)
 
-        log_data = consume_last(config['topics']['indexer_logs'])
+        log_data = consume_last(_CONFIG['topics']['indexer_logs'])
         print(log_data)
 
         try:
             resp = requests.get(
-                "/".join([es_url, msg_data['index'], es_data_type, msg_data['id']]),
-                headers=headers
+                "/".join([_ES_URL, msg_data['index'], _ES_DATA_TYPE, msg_data['id']]),
+                headers=_HEADERS
             )
         except requests.exceptions.RequestException as error:
             raise error

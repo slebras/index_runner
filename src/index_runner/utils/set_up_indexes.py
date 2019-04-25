@@ -4,25 +4,18 @@ from .config import get_config
 
 config = get_config()
 
-es_host = config['elasticsearch_host']
-es_port = config['elasticsearch_port']
-
-es_data_type = config["elasticsearch_data_type"]
-es_url = "http://" + es_host + ":" + str(es_port)
-
-es_index_prefix = config.get('elasticsearch_index_prefix')
-
-headers = {
-    "Content-Type": "application/json"
-}
-
-required_mapping_fields = {
+_ES_HOST = config['elasticsearch_host']
+_ES_PORT = config['elasticsearch_port']
+_ES_DATA_TYPE = config["elasticsearch_data_type"]
+_ES_URL = "http://" + _ES_HOST + ":" + str(_ES_PORT)
+_ES_INDEX_PREFIX = config.get('elasticsearch_index_prefix')
+_HEADERS = {"Content-Type": "application/json"}
+_REQUIRED_MAPPING_FIELDS = {
     'timestamp': {'type': 'date'},
     'guid': {'type': 'keyword'},
     'creation_date': {'type': 'date'}
 }
-
-mappings = {
+_MAPPINGS = {
     "kbasenarrative.narrative-4.0": {
         'name': {'type': 'text'},
         'upa': {'type': 'text'},
@@ -47,8 +40,8 @@ def _create_index(index, mapping):
     # that are defined in 'required_mapping_fields'
     request_body = {
         "mappings": {
-            es_data_type: {
-                "properties": {**mapping, **required_mapping_fields}
+            _ES_DATA_TYPE: {
+                "properties": {**mapping, **_REQUIRED_MAPPING_FIELDS}
             }
         },
         "settings": {
@@ -58,26 +51,20 @@ def _create_index(index, mapping):
             }
         }
     }
-
-    try:
-        resp = requests.put(
-            '/'.join([es_url, index]),
-            data=json.dumps(request_body),
-            headers=headers
-        )
-    except requests.exceptions.RequestException as error:
-        raise error
-
+    resp = requests.put(
+        '/'.join([_ES_URL, index]),
+        data=json.dumps(request_body),
+        headers=_HEADERS
+    )
     if not resp.ok:
-        raise RuntimeError("Error while creating new index %s: " % index + resp.text +
-                           ". Exited with status code %i" % resp.status_code)
+        raise RuntimeError(f"Error while creating new index {index}: {resp.text}")
 
 
 def set_up_indexes():
     print("setting up indices...")
     try:
         resp = requests.get(
-            es_url + "/_aliases",
+            _ES_URL + "/_aliases",
         )
     except requests.exceptions.RequestException as error:
         raise error
@@ -85,15 +72,13 @@ def set_up_indexes():
         raise RuntimeError("Error while querying for indices: " + resp.text +
                            ". Exited with status code %i" % resp.status_code)
     indexes_data = resp.json()
-
     indexes = indexes_data.keys()
-    for index, mapping in mappings.items():
-        index = es_index_prefix + '.' + index + "_1"
+    for index, mapping in _MAPPINGS.items():
+        index = _ES_INDEX_PREFIX + '.' + index + "_1"
         if index in indexes:
             print("index %s already created" % index)
             continue
         print("creating new index %s" % index)
         # create index here using the mapping stored above.
         _create_index(index, mapping)
-
     print("all indices loaded...")

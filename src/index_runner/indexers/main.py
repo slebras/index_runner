@@ -48,13 +48,12 @@ def index_obj(msg_data):
     except WorkspaceResponseError as err:
         print('Workspace response error:', err.resp_data)
         raise err
-
     # Dispatch to a specific type handler to produce the search document
     (type_module_name, type_version) = msg_data['objtype'].split('-')
     (type_module, type_name) = type_module_name.split('.')
     indexer = _find_indexer(type_module, type_name, type_version)
-
     indexer_ret = indexer(obj_data, ws_info, obj_data_v1)
+    # Merge in default data into the document
     indexer_ret['doc'].update(_add_default_fields(obj_data, obj_data_v1))
     return indexer_ret
 
@@ -63,7 +62,7 @@ def _find_indexer(type_module, type_name, type_version):
     """
     Find the indexer function for the given object type within the indexer_directory list.
     """
-    for entry in indexer_directory:
+    for entry in _INDEXER_DIRECTORY:
         module_match = ('module' not in entry) or entry['module'] == type_module
         name_match = ('type' not in entry) or entry['type'] == type_name
         ver_match = ('version' not in entry) or entry['version'] == type_version
@@ -75,13 +74,14 @@ def _find_indexer(type_module, type_name, type_version):
 def default_indexer(obj_data, ws_info, index_prefix):
     """
     Default indexer fallback, when we don't find a type-specific handler.
+    TODO - expand
     """
     return {'schema': {}, 'data': obj_data}
 
 
 def _add_default_fields(obj_data, obj_data_v1):
     """
-    function to add recurring fields
+    Add fields that should be present in any document on elasticsearch.
     """
     data = obj_data['data'][0]
     v1_info = obj_data['data'][0]['info']
@@ -94,7 +94,7 @@ def _add_default_fields(obj_data, obj_data_v1):
 
 # Directory of all indexer functions.
 # Higher up in the list gets higher precedence.
-indexer_directory = [
+_INDEXER_DIRECTORY = [
     {'module': 'KBaseNarrative', 'type': 'Narrative', 'indexer': index_narrative}
 ]
 
