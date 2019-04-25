@@ -26,11 +26,15 @@ mappings = {
     "kbasenarrative.narrative-4.0": {
         'name': {'type': 'text'},
         'upa': {'type': 'text'},
-        'markdown_text': {'type': 'text'},
-        'app_names': {'type': 'text'},
+        'data_objects': {'type': 'nested'},
+        'cells': {'type': 'object'},
         'creator': {'type': 'text'},
         'shared_users': {'type': 'text'},
         'total_cells': {'type': 'short'},
+        'access_group': {'type': 'integer'},
+        'public': {'type': 'boolean'},
+        'islast': {'type': 'boolean'},
+        'shared': {'type': 'boolean'}
     }
 }
 

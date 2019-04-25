@@ -65,7 +65,7 @@ def delivery_report(err, msg):
         print('Message delivered to', msg.topic(), msg.partition())
 
 
-def consume_last(topic, timeout=180):
+def consume_last(topic, timeout=120):
     """Consume the most recent message from the topic stream."""
     consumer = Consumer({
         'bootstrap.servers': config['kafka_server'],
@@ -135,12 +135,43 @@ class TestIntegration(unittest.TestCase):
         check_against = {
             "name": "Test Narrative Name",
             "upa": "41347:1:16",
-            "markdown_text": ["Testing\n"],
-            "app_names": ["kb_uploadmethods/import_gff_fasta_as_genome_from_staging"],
+            "data_objects": [
+                {
+                    'name': 'Rhodobacter_CACIA_14H1',
+                    'type': 'KBaseGenomes.Genome-7.0'
+                }, {
+                    'name': '_Nostoc_azollae__0708',
+                    'type': 'KBaseGenomes.Genome-14.2'
+                }, {
+                    'name': 'Acetobacter_aceti_NBRC_14818',
+                    'type': 'KBaseGenomes.Genome-14.1'
+                }, {
+                    'name': '_H9',
+                    'type': 'KBaseBiochem.Media-1.0'
+                }, {
+                    'name': 'KBase_derived_Rhodobacter_CACIA_14H1.gff_genome.assembly',
+                    'type': 'KBaseGenomeAnnotations.Assembly-6.0'
+                }, {
+                    'name': 'KBase_derived_Rhodobacter_CACIA_14H1.gff_genome',
+                    'type': 'KBaseGenomes.Genome-15.1'
+                }
+            ],
+            "cells": [
+                {
+                    'description': 'Testing\n',
+                    'type': 'markdown'
+                }, {
+                    'description': "print('nope')",
+                    'type': 'code_cell'
+                }, {
+                    'description': 'Import GFF3/FASTA file as Genome from Staging Area',
+                    'type': 'kbase_app'
+                }
+            ],
             "creator": "username",
             "shared_users": ['username'],
             "total_cells": 3,
-            "accgrp": 41347,
+            "access_group": 41347,
             "public": True,
             "islast": True,
             "shared": False,
