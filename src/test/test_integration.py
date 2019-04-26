@@ -141,7 +141,7 @@ class TestIntegration(unittest.TestCase):
             "shared_users": ['username'],
             "total_cells": 3,
             "access_group": 41347,
-            "public": True,
+            "is_public": True,
             "timestamp": 1554408998887,
             "creation_date": '2019-04-04T20:16:39+0000'
         }
