@@ -54,7 +54,7 @@ def index_obj(msg_data):
     indexer = _find_indexer(type_module, type_name, type_version)
     indexer_ret = indexer(obj_data, ws_info, obj_data_v1)
     # Merge in default data into the document
-    indexer_ret['doc'].update(_add_default_fields(obj_data, obj_data_v1))
+    indexer_ret['doc'].update(_default_fields(obj_data, obj_data_v1))
     return indexer_ret
 
 
@@ -79,7 +79,7 @@ def default_indexer(obj_data, ws_info, index_prefix):
     return {'schema': {}, 'data': obj_data}
 
 
-def _add_default_fields(obj_data, obj_data_v1):
+def _default_fields(obj_data, obj_data_v1):
     """
     Add fields that should be present in any document on elasticsearch.
     """
@@ -87,7 +87,6 @@ def _add_default_fields(obj_data, obj_data_v1):
     v1_info = obj_data['data'][0]['info']
     return {
         "timestamp": data['epoch'],
-        "guid": "WS:" + '/'.join([str(data['info'][6]), str(data['info'][0]), str(data['info'][4])]),
         "creation_date": v1_info[3]
     }
 
@@ -99,15 +98,15 @@ _INDEXER_DIRECTORY = [
 ]
 
 
-def _get_upa_from_msg_data(event_data):
+def _get_upa_from_msg_data(msg_data):
     """Get the UPA workspace reference from a Kafka workspace event payload."""
-    ws_id = event_data.get('wsid')
+    ws_id = msg_data.get('wsid')
     if not ws_id:
-        raise RuntimeError(f'Event data missing the "wsid" field for workspace ID: {event_data}')
-    obj_id = event_data.get('objid')
+        raise RuntimeError(f'Event data missing the "wsid" field for workspace ID: {msg_data}')
+    obj_id = msg_data.get('objid')
     if not ws_id:
-        raise RuntimeError(f'Event data missing the "objid" field for object ID: {event_data}')
-    obj_ver = event_data.get('ver')
+        raise RuntimeError(f'Event data missing the "objid" field for object ID: {msg_data}')
+    obj_ver = msg_data.get('ver')
     if not ws_id:
-        raise RuntimeError(f'Event data missing the "ver" field for object ID: {event_data}')
+        raise RuntimeError(f'Event data missing the "ver" field for object ID: {msg_data}')
     return f"{ws_id}/{obj_id}/{obj_ver}"

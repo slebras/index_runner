@@ -1,6 +1,6 @@
 import json
 
-from index_runner.indexers.narrative import index_narrative
+from index_runner.indexers.main import index_obj
 
 
 def main(inpath, outpath):
@@ -14,13 +14,11 @@ def main(inpath, outpath):
     try:
         for line in infd:
             j = json.loads(line)
-            obj_data = j['full_data']
-            ws_info = j['ws_info']
             try:
-                index = index_narrative(obj_data, ws_info)
+                index = index_obj(j)
             except Exception as err:
+                print(err)
                 print(j)
-                raise err
             json.dump(index['doc'], outfd)
             outfd.write('\n')
     finally:

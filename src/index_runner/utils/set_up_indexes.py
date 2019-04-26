@@ -10,17 +10,28 @@ _ES_DATA_TYPE = config["elasticsearch_data_type"]
 _ES_URL = "http://" + _ES_HOST + ":" + str(_ES_PORT)
 _ES_INDEX_PREFIX = config.get('elasticsearch_index_prefix')
 _HEADERS = {"Content-Type": "application/json"}
-_REQUIRED_MAPPING_FIELDS = {
+_GLOBAL_MAPPINGS = {
     'timestamp': {'type': 'date'},
-    'guid': {'type': 'keyword'},
     'creation_date': {'type': 'date'}
 }
 _MAPPINGS = {
     "kbasenarrative.narrative-4.0": {
         'name': {'type': 'text'},
-        'upa': {'type': 'text'},
-        'data_objects': {'type': 'nested'},
-        'cells': {'type': 'object'},
+        'upa': {'type': 'keyword'},
+        'data_objects': {
+            'type': 'nested',
+            'properties': {
+                'name': {'type': 'keyword'},
+                'obj_type': {'type': 'keyword'}
+            }
+        },
+        'cells': {
+            'type': 'object',
+            'properties': {
+                'desc': {'type': 'text'},
+                'cell_type': {'type': 'keyword'}
+            }
+        },
         'creator': {'type': 'text'},
         'shared_users': {'type': 'text'},
         'total_cells': {'type': 'short'},
@@ -34,14 +45,12 @@ _MAPPINGS = {
 
 def _create_index(index, mapping):
     """
+    Create an index on Elasticsearch using our mapping definitions above.
     """
-    # merge the two dictionaries (shallowly)
-    # this ordering overwrites any field in 'mapping'
-    # that are defined in 'required_mapping_fields'
     request_body = {
         "mappings": {
             _ES_DATA_TYPE: {
-                "properties": {**mapping, **_REQUIRED_MAPPING_FIELDS}
+                "properties": {**mapping, **_GLOBAL_MAPPINGS}
             }
         },
         "settings": {
@@ -63,9 +72,7 @@ def _create_index(index, mapping):
 def set_up_indexes():
     print("setting up indices...")
     try:
-        resp = requests.get(
-            _ES_URL + "/_aliases",
-        )
+        resp = requests.get(_ES_URL + "/_aliases")
     except requests.exceptions.RequestException as error:
         raise error
     if not resp.ok:

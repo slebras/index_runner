@@ -23,9 +23,8 @@ def get_shared_users(ws_id):
         raise err
     shared_users = []
     for username, user_perms in obj_perm.items():
-        if user_perms in ['a', 'r', 'w']:
+        if user_perms in ['a', 'r', 'w'] and username != '*':
             shared_users.append(username)
-
     return shared_users
 
 
@@ -48,7 +47,7 @@ def fetch_objects_in_workspace(ws_id):
         print("Workspace response error: ", err.resp_data)
         raise err
     narrative_data = [
-        {"name": obj[1], "type": obj[2]}
+        {"name": obj[1], "obj_type": obj[2]}
         for obj in narr_data_obj_info
         if 'KBaseNarrative' not in str(obj[2])
     ]
