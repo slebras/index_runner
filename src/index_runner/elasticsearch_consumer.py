@@ -2,7 +2,6 @@
 Consume elasticsearch save events from kafka.
 """
 import json
-from confluent_kafka import Producer
 import requests
 
 from .utils.kafka_consumer import kafka_consumer
@@ -10,7 +9,6 @@ from .utils.config import get_config
 from .utils.threadify import threadify
 
 _CONFIG = get_config()
-_PRODUCER = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
 _ES_HOST = _CONFIG['elasticsearch_host']
 _ES_PORT = _CONFIG['elasticsearch_port']
 _ES_DATA_TYPE = _CONFIG["elasticsearch_data_type"]
@@ -43,38 +41,25 @@ def _save_to_elastic(msg_data):
     msg_data is a python dict of:
         doc - elasticsearch index document (json like object)
     """
+    print(f"Starting Elasticsearch save on document {msg_data.get('id')}")
     try:
         _validate_message(msg_data)
     except RuntimeError as error:
         # log the error
         msg_data['error'] = str(error)
-        _PRODUCER.produce(
-            _CONFIG['topics']['error_logs'],
-            json.dumps(msg_data),
-            callback=_delivery_report
-        )
-        _PRODUCER.poll(60)
+        print(f"Elasticsearch save validation error: {error}")
         raise error
-    try:
-        # save to elasticsearch index
-        resp = requests.put(
-            '/'.join([_ES_URL, msg_data['index'], _ES_DATA_TYPE, msg_data['id']]),
-            data=json.dumps(msg_data['doc']),
-            headers=_HEADERS
-        )
-    except requests.exceptions.RequestException as error:
-        raise error
+    # save to elasticsearch index
+    resp = requests.put(
+        '/'.join([_ES_URL, msg_data['index'], _ES_DATA_TYPE, msg_data['id']]),
+        data=json.dumps(msg_data['doc']),
+        headers=_HEADERS
+    )
     if not resp.ok:
-        # unsuccesful save to elasticsearch.
+        # Unsuccesful save to elasticsearch.
         raise RuntimeError("Error when saving to elasticsearch index %s: " % msg_data['index'] + resp.text +
                            ". Exited with status code %i" % resp.status_code)
-    # log the message if we are succesful.
-    _PRODUCER.produce(
-        _CONFIG['topics']['indexer_logs'],
-        json.dumps(msg_data),
-        callback=_delivery_report
-    )
-    _PRODUCER.poll(60)
+    print(f"Elasticsearch document saved with id {msg_data['id']}")
 
 
 def _delivery_report(err, msg):

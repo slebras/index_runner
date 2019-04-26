@@ -146,8 +146,8 @@ class TestIntegration(unittest.TestCase):
             "creation_date": '2019-04-04T20:16:39+0000'
         }
         self.assertEqual(msg_data['doc'], check_against)
-        log_data = consume_last(_CONFIG['topics']['indexer_logs'])
-        print('Log data:', log_data)
+        # Dumb way to wait for the elasticsearch document to save to the index
+        time.sleep(15)
         # Make a request to elastic to fetch our new index document
         url = "/".join([_ES_URL, msg_data['index'], _ES_DATA_TYPE, msg_data['id']])
         resp = requests.get(url, headers=_HEADERS)

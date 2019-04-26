@@ -12,7 +12,6 @@ def index_obj(msg_data):
     """
     For a newly created object, generate the index document for it and push to
     the elasticsearch topic on Kafka.
-
     Args:
         msg_data - json event data received from the kafka workspace events stream
     """
@@ -52,6 +51,9 @@ def index_obj(msg_data):
     (type_module_name, type_version) = msg_data['objtype'].split('-')
     (type_module, type_name) = type_module_name.split('.')
     indexer = _find_indexer(type_module, type_name, type_version)
+    if not indexer:
+        # No indexer found for this type
+        return
     indexer_ret = indexer(obj_data, ws_info, obj_data_v1)
     # Merge in default data into the document
     indexer_ret['doc'].update(_default_fields(obj_data, obj_data_v1))
@@ -68,15 +70,8 @@ def _find_indexer(type_module, type_name, type_version):
         ver_match = ('version' not in entry) or entry['version'] == type_version
         if module_match and name_match and ver_match:
             return entry['indexer']
-    return default_indexer
-
-
-def default_indexer(obj_data, ws_info, index_prefix):
-    """
-    Default indexer fallback, when we don't find a type-specific handler.
-    TODO - expand
-    """
-    return {'schema': {}, 'data': obj_data}
+    # No indexer found for this type
+    return None
 
 
 def _default_fields(obj_data, obj_data_v1):

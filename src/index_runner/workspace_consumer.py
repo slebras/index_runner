@@ -59,6 +59,9 @@ def _run_indexer(msg_data):
     This will be threaded and backgrounded.
     """
     result = index_obj(msg_data)
+    if not result:
+        print(f"Unable to index object: {msg_data}.")
+        return
     # Produce an event in Kafka to save the index to elasticsearch
     print('producing to', _CONFIG['topics']['elasticsearch_updates'])
     _PRODUCER.produce(
