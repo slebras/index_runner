@@ -34,13 +34,11 @@ _MAPPINGS = {
                     'cell_type': {'type': 'keyword'}
                 }
             },
-            'creator': {'type': 'text'},
-            'shared_users': {'type': 'text'},
+            'creator': {'type': 'keyword'},
+            'shared_users': {'type': 'keyword'},
             'total_cells': {'type': 'short'},
             'access_group': {'type': 'integer'},
-            'public': {'type': 'boolean'},
-            'islast': {'type': 'boolean'},
-            'shared': {'type': 'boolean'}
+            'is_public': {'type': 'boolean'}
         }
     }
 }

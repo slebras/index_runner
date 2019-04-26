@@ -97,7 +97,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             'shared_users': shared_users,
             'total_cells': len(cells),
             'access_group': data['info'][6],
-            'public': is_public
+            'is_public': is_public
         },
         'index': 'narrative',
         'id': upa
