@@ -149,15 +149,12 @@ class TestIntegration(unittest.TestCase):
         # Dumb way to wait for the elasticsearch document to save to the index
         time.sleep(15)
         # Make a request to elastic to fetch our new index document
-        url = "/".join([_ES_URL, msg_data['index'], _ES_DATA_TYPE, msg_data['id']])
+        index_name = _CONFIG['elasticsearch_index_prefix'] + '.' + msg_data['index']
+        url = "/".join([_ES_URL, index_name, _ES_DATA_TYPE, msg_data['id']])
         resp = requests.get(url, headers=_HEADERS)
-        if not resp.ok:
-            raise RuntimeError("Failed to get id %s from index %s,"
-                               " results in error: " % (msg_data['id'], msg_data['index']) + resp.text +
-                               ". Exited with status code %i" % resp.status_code)
-        resp_data = resp.json()
-        if resp_data.get('error'):
-            raise RuntimeError("Failed to get id %s from index %s,"
-                               " results in error: " % (msg_data['id'], msg_data['index'])
-                               + str(resp_data['error']['root_cause']))
-        self.assertEqual(resp_data['_source'], check_against)
+        if not resp.ok or resp.json().get('error'):
+            raise RuntimeError('\n'.join([
+                f"Failed to fetch id {msg_data['id']} from index {index_name}.",
+                f"Response error: {resp.text}"
+            ]))
+        self.assertEqual(resp.json()['_source'], check_against)

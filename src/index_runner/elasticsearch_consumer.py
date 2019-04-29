@@ -41,17 +41,14 @@ def _save_to_elastic(msg_data):
     msg_data is a python dict of:
         doc - elasticsearch index document (json like object)
     """
-    print(f"Starting Elasticsearch save on document {msg_data.get('id')}")
-    try:
-        _validate_message(msg_data)
-    except RuntimeError as error:
-        # log the error
-        msg_data['error'] = str(error)
-        print(f"Elasticsearch save validation error: {error}")
-        raise error
-    # save to elasticsearch index
+    print(f"Starting Elasticsearch save on document {msg_data.get('id')} in index {msg_data['index']}")
+    _validate_message(msg_data)
+    # Save the document to the elasticsearch index
+    prefix = _CONFIG['elasticsearch_index_prefix']
+    index_name = f"{prefix}.{msg_data['index']}"
+    url = f"{_ES_URL}/{index_name}/{_ES_DATA_TYPE}/{msg_data['id']}"
     resp = requests.put(
-        '/'.join([_ES_URL, msg_data['index'], _ES_DATA_TYPE, msg_data['id']]),
+        url,
         data=json.dumps(msg_data['doc']),
         headers=_HEADERS
     )
@@ -59,7 +56,7 @@ def _save_to_elastic(msg_data):
         # Unsuccesful save to elasticsearch.
         raise RuntimeError("Error when saving to elasticsearch index %s: " % msg_data['index'] + resp.text +
                            ". Exited with status code %i" % resp.status_code)
-    print(f"Elasticsearch document saved with id {msg_data['id']}")
+    print(f"Elasticsearch document saved with id {msg_data['id']} to index {msg_data['index']}")
 
 
 def _delivery_report(err, msg):

@@ -99,7 +99,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             'access_group': data['info'][6],
             'is_public': is_public
         },
-        'index': 'narrative',
+        'index': 'narrative:1',
         'id': upa
     }
     return result
