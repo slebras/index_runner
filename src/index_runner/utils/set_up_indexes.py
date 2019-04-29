@@ -19,7 +19,8 @@ _MAPPINGS = {
         'alias': 'narrative',
         'properties': {
             'name': {'type': 'text'},
-            'upa': {'type': 'keyword'},
+            'version': {'type': 'integer'},
+            'obj_id': {'type': 'integer'},
             'data_objects': {
                 'type': 'nested',
                 'properties': {

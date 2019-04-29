@@ -103,7 +103,8 @@ class TestIntegration(unittest.TestCase):
         msg_data = consume_last(_CONFIG['topics']['elasticsearch_updates'])
         check_against = {
             "name": "Test Narrative Name",
-            "upa": "41347:1:16",
+            'obj_id': 1,
+            'version': 16,
             "data_objects": [
                 {
                     'name': 'Rhodobacter_CACIA_14H1',
