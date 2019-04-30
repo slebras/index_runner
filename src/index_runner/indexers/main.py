@@ -86,6 +86,8 @@ def _add_default_fields(obj_data, obj_data_v1):
     data = obj_data['data'][0]
     v1_info = obj_data['data'][0]['info']
     return {
+        "creator": data["creator"],
+        "access_group": data['info'][6]
         "timestamp": data['epoch'],
         "guid": "WS:" + '/'.join([str(data['info'][6]), str(data['info'][0]), str(data['info'][4])]),
         "creation_date": v1_info[3]

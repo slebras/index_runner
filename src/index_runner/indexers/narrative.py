@@ -13,6 +13,7 @@ def process_code_cell(cell):
         'description': "",
         'type': ""
     }
+
     app_path = get_path(cell, ['metadata', 'kbase', 'appCell'])
     if app_path:
         # we know the cell is kbase application

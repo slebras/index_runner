@@ -19,7 +19,12 @@ headers = {
 required_mapping_fields = {
     'timestamp': {'type': 'date'},
     'guid': {'type': 'keyword'},
-    'creation_date': {'type': 'date'}
+    'creation_date': {'type': 'date'},
+    'access_group': {'type': 'integer'},
+    'creator': {'type': 'text'},
+    'islast': {'type': 'boolean'},
+    'shared': {'type': 'boolean'},
+    'public': {'type': 'boolean'},
 }
 
 mappings = {
@@ -28,13 +33,28 @@ mappings = {
         'upa': {'type': 'text'},
         'data_objects': {'type': 'nested'},
         'cells': {'type': 'object'},
-        'creator': {'type': 'text'},
         'shared_users': {'type': 'text'},
         'total_cells': {'type': 'short'},
-        'access_group': {'type': 'integer'},
-        'public': {'type': 'boolean'},
-        'islast': {'type': 'boolean'},
-        'shared': {'type': 'boolean'}
+    },
+    "kbasefile.pairedendlibrary" : {
+        'sequncing_tech': {'type': 'keyword'},
+        'size': {'type': 'integer'},
+        'interleaved': {'type': 'boolean'},
+        'single_genome': {'type': 'boolean'},
+        'reads_type': {'type': 'keyword'},
+        'reads_type_version': {'type': 'keyword'},
+        'provenance_services': {'type': 'keyword'},
+        'name': {'type': 'text'}
+    },
+    "kbasefile.singleendlibrary" : {
+        'sequencing_tech': {'type': 'keyword'},
+        'size': {'type': 'integer'},
+        'reads_type': {'type': 'keyword'},
+        'reads_type_version': {'type': 'keyword'},
+        # 'interleaved': {'type': 'boolean'},
+        'single_genome': {'type': 'boolean'},
+        'provenance_services': {'type': 'keyword'},
+        'name': {'type': 'text'}
     }
 }
 
