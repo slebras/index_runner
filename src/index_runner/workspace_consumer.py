@@ -9,15 +9,15 @@ from .utils.config import get_config
 from .utils.threadify import threadify
 from .indexers.main import index_obj
 
-config = get_config()
-producer = Producer({'bootstrap.servers': config['kafka_server']})
+_CONFIG = get_config()
+_PRODUCER = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
 
 
 def main():
     """
     Main consumer of Kafka messages from workspace updates, generating new indexes.
     """
-    topics = [config['topics']['workspace_events']]
+    topics = [_CONFIG['topics']['workspace_events']]
     for msg_data in kafka_consumer(topics):
         threadify(_process_event, [msg_data])
 
@@ -59,14 +59,17 @@ def _run_indexer(msg_data):
     This will be threaded and backgrounded.
     """
     result = index_obj(msg_data)
+    if not result:
+        print(f"Unable to index object: {msg_data}.")
+        return
     # Produce an event in Kafka to save the index to elasticsearch
-    print('producing to', config['topics']['elasticsearch_updates'])
-    producer.produce(
-        config['topics']['elasticsearch_updates'],
+    print('producing to', _CONFIG['topics']['elasticsearch_updates'])
+    _PRODUCER.produce(
+        _CONFIG['topics']['elasticsearch_updates'],
         json.dumps(result),
         callback=_delivery_report
     )
-    producer.poll(60)
+    _PRODUCER.poll(60)
 
 
 # Handler functions for each event type ('evtype' key)

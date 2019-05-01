@@ -1,110 +1,108 @@
+import sys
 from bs4 import BeautifulSoup
 from markdown2 import Markdown
 
 from utils.get_path import get_path
-
 from . import indexer_utils
+
+_MARKDOWNER = Markdown()
 
 
 def process_code_cell(cell):
     # here we want to differentiate between kbase app cells and code cells
     # app_path = get_path(cell, ['metadata', 'kbase', 'appCell', 'newAppName', 'id'])
-    index_cell = {
-        'description': "",
-        'type': ""
-    }
-
-    app_path = get_path(cell, ['metadata', 'kbase', 'appCell'])
-    if app_path:
-        # we know the cell is kbase application
-        app_path = get_path(cell, ['metadata', 'kbase', 'attributes', 'title'])
-        if app_path:
-            desc = cell['metadata']['kbase']['attributes']['title']
+    index_cell = {'desc': '', 'cell_type': ''}
+    widget_data = get_path(cell, ['metadata', 'kbase', 'outputCell', 'widget'])
+    app_cell = get_path(cell, ['metadata', 'kbase', 'appCell'])
+    data_cell = get_path(cell, ['metadata', 'kbase', 'dataCell'])
+    if app_cell:
+        # We know that the cell is a KBase app
+        # Try to get the app name from a couple possible paths in the object
+        app_name1 = get_path(cell, ['metadata', 'kbase', 'attributes', 'title'])
+        app_name2 = get_path(app_cell, ['app', 'id'])
+        index_cell['desc'] = app_name1 or app_name2 or ''
+        index_cell['cell_type'] = 'kbase_app'
+    elif widget_data:
+        index_cell['cell_type'] = 'widget'
+        index_cell['desc'] = widget_data.get('name', '')
+    elif data_cell:
+        index_cell['cell_type'] = 'data'
+        name = get_path(data_cell, ['objectInfo', 'name'])
+        obj_type = get_path(data_cell, ['objectInfo', 'cell_type'])
+        if name and obj_type:
+            index_cell['desc'] = f'{name} ({obj_type})'
         else:
-            app_path = get_path(cell, ['metadata', 'kbase', 'appCell', 'app', 'id'])
-            if app_path:
-                desc = cell['metadata']['kbase']['appCell']['app']['id']
-            else:
-                desc = ""
-        index_cell['type'] = "kbase_app"
+            index_cell['desc'] = name or obj_type or ''
     else:
-        app_path = get_path(cell, ['source'])
-        if app_path:
-            desc = cell['source']
-        else:
-            desc = ""
-        index_cell['type'] = "code_cell"
-    index_cell['description'] = desc
-
+        # Regular code-cell
+        index_cell['cell_type'] = 'code_cell'
+        index_cell['desc'] = cell.get('source', '')
     return index_cell
 
 
 def index_narrative(obj_data, ws_info, obj_data_v1):
     """
     Index a narrative object on save.
-    We only the latest narratives for:
+    We index the latest narratives for:
         - title and author
-        - markdown cell content (non boilerplate)
+        - cell content
+        - object names and types
         - created and updated dates
-        - total number cells
+        - total number of cells
     """
-    # Narrative name
-    # Markdown cells that are not the welcome boilerplate
-    # maybes:
-    #  - app names
-    #  - obj names
-    #  - creator
     data = obj_data['data'][0]
     obj_info = data['info']
-
-    upa = ':'.join([str(data['info'][6]), str(data['info'][0]), str(data['info'][4])])
-
+    workspace_id = data['info'][6]
+    object_id = data['info'][0]
+    version = data['info'][4]
     ws_id = obj_info[6]
-
+    # Fetch a list of usernames that the workspace is shared with
     shared_users = indexer_utils.get_shared_users(ws_id)
-    narrative_data_objects = indexer_utils.get_narrative_data(ws_id)
-
-    markdowner = Markdown()
+    # Get all the types and names of objects in the narrative's workspace.
+    narrative_data_objects = indexer_utils.fetch_objects_in_workspace(ws_id)
     index_cells = []
     cells = data['data']['cells']
     creator = data['creator']
     for cell in cells:
-        if (cell.get('cell_type') == 'markdown'
-                and cell.get('source')
-                and not cell['source'].startswith('## Welcome to KBase')):
-            # format markdown into string
-            cell_soup = BeautifulSoup(markdowner.convert(cell['source']), 'html.parser')
-            index_cell = {
-                'description': cell_soup.get_text(),
-                'type': "markdown"
-            }
-            index_cell['type'] = "markdown"
-            index_cell['description'] = cell_soup.get_text()
-        # for an app cell the module/method name lives in metadata/kbase/appCell/app/id
+        if cell.get('cell_type') == 'markdown':
+            if not cell.get('source'):
+                # Empty markdown cell
+                continue
+            if cell['source'].startswith('## Welcome to KBase'):
+                # Ignore boilerplate markdown cells
+                continue
+            # Remove all HTML and markdown formatting syntax.
+            cell_soup = BeautifulSoup(_MARKDOWNER.convert(cell['source']), 'html.parser')
+            index_cell = {'desc': cell_soup.get_text(), 'cell_type': "markdown"}
+            index_cell['cell_type'] = "markdown"
+            index_cell['desc'] = cell_soup.get_text()
+        # For an app cell, the module/method name lives in metadata/kbase/appCell/app/id
         elif cell.get('cell_type') == 'code':
             index_cell = process_code_cell(cell)
         else:
             cell_type = cell.get('cell_type', "Error: no cell type")
-            print(f"Narrative Indexer: could not resolve cell type \"{cell_type}\"")
+            sys.stderr.write(f"Narrative Indexer: could not resolve cell type \"{cell_type}\"\n")
+            sys.stderr.write(str(cell))
+            sys.stderr.write('\n' + ('-' * 80) + '\n')
+            index_cell = {'desc': 'Narrative Cell', 'cell_type': 'unknown'}
         index_cells.append(index_cell)
-
     metadata = obj_info[-1] or {}  # last elem of obj info is a metadata dict
     narr_name = metadata.get('name')
     is_public = ws_info[6] == 'r'
-    return {
+    result = {
         'doc': {
             'name': narr_name,
-            'upa': upa,
+            'version': version,
+            'obj_id': object_id,
             'data_objects': narrative_data_objects,
             'cells': index_cells,
             'creator': creator,
             'shared_users': shared_users,
             'total_cells': len(cells),
-            'access_group': data['info'][6],
-            'public': is_public,
-            'islast': True,
-            'shared': False
+            'access_group': workspace_id,
+            'is_public': is_public
         },
-        'index': 'narrative',
-        'id': upa
+        'index': 'narrative:1',
+        'id': f'{workspace_id}:{version}',
     }
+    return result

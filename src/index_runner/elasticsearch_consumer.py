@@ -2,34 +2,25 @@
 Consume elasticsearch save events from kafka.
 """
 import json
-from confluent_kafka import Producer
 import requests
 
 from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
 from .utils.threadify import threadify
 
-config = get_config()
-producer = Producer({'bootstrap.servers': config['kafka_server']})
-
-es_host = config['elasticsearch_host']
-es_port = config['elasticsearch_port']
-
-_ES_DATA_TYPE = config["elasticsearch_data_type"]
-
-es_url = "http://" + es_host + ":" + str(es_port)
-# es = elasticsearch.Elasticsearch([{'host': es_host, 'port': es_port}])
-
-headers = {
-    "Content-Type": "application/json"
-}
+_CONFIG = get_config()
+_ES_HOST = _CONFIG['elasticsearch_host']
+_ES_PORT = _CONFIG['elasticsearch_port']
+_ES_DATA_TYPE = _CONFIG["elasticsearch_data_type"]
+_ES_URL = "http://" + _ES_HOST + ":" + str(_ES_PORT)
+_HEADERS = {"Content-Type": "application/json"}
 
 
 def main():
     """
     Main event loop for consuming messages from Kafka and saving to elasticsearch.
     """
-    topics = [config['topics']['elasticsearch_updates']]
+    topics = [_CONFIG['topics']['elasticsearch_updates']]
     for msg_data in kafka_consumer(topics):
         threadify(_save_to_elastic, [msg_data])
 
@@ -50,38 +41,22 @@ def _save_to_elastic(msg_data):
     msg_data is a python dict of:
         doc - elasticsearch index document (json like object)
     """
-    try:
-        _validate_message(msg_data)
-    except RuntimeError as error:
-        # log the error
-        msg_data['error'] = str(error)
-        producer.produce(
-            config['topics']['error_logs'],
-            json.dumps(msg_data),
-            callback=_delivery_report
-        )
-        producer.poll(60)
-        raise error
-    try:
-        # save to elasticsearch index
-        resp = requests.put(
-            '/'.join([es_url, msg_data['index'], _ES_DATA_TYPE, msg_data['id']]),
-            data=json.dumps(msg_data['doc']),
-            headers=headers
-        )
-    except requests.exceptions.RequestException as error:
-        raise error
+    print(f"Starting Elasticsearch save on document {msg_data.get('id')} in index {msg_data['index']}")
+    _validate_message(msg_data)
+    # Save the document to the elasticsearch index
+    prefix = _CONFIG['elasticsearch_index_prefix']
+    index_name = f"{prefix}.{msg_data['index']}"
+    url = f"{_ES_URL}/{index_name}/{_ES_DATA_TYPE}/{msg_data['id']}"
+    resp = requests.put(
+        url,
+        data=json.dumps(msg_data['doc']),
+        headers=_HEADERS
+    )
     if not resp.ok:
-        # unsuccesful save to elasticsearch.
+        # Unsuccesful save to elasticsearch.
         raise RuntimeError("Error when saving to elasticsearch index %s: " % msg_data['index'] + resp.text +
                            ". Exited with status code %i" % resp.status_code)
-    # log the message if we are succesful.
-    producer.produce(
-        config['topics']['indexer_logs'],
-        json.dumps(msg_data),
-        callback=_delivery_report
-    )
-    producer.poll(60)
+    print(f"Elasticsearch document saved with id {msg_data['id']} to index {msg_data['index']}")
 
 
 def _delivery_report(err, msg):

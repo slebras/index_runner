@@ -1,5 +1,6 @@
 import json
 import requests
+import os
 
 from utils.get_path import get_path
 
@@ -16,7 +17,7 @@ def main(inpath, outpath, token):
             j = json.loads(line)
             upa = j['upa']
             result = requests.post(
-                'https://ci.kbase.us/services/ws',
+                os.environ.get('WORKSPACE_URL', 'https://ci.kbase.us/services/ws'),
                 data=json.dumps({
                     'method': 'administer',
                     'params': [{

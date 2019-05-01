@@ -17,10 +17,7 @@ def main(inpath, outpath, token):
                 'https://ci.kbase.us/services/ws',
                 data=json.dumps({
                     'method': 'administer',
-                    'params': [{
-                        'command': 'listObjects',
-                        'params': {'ids': [wsid]}
-                    }]
+                    'params': [{'command': 'listObjects', 'params': {'ids': [wsid]}}]
                 }),
                 headers={'Authorization': token}
             ).json()
@@ -28,8 +25,13 @@ def main(inpath, outpath, token):
             for obj in result:
                 ws_type = obj[2]
                 if ws_type == 'KBaseNarrative.Narrative-4.0':
-                    j['upa'] = f"{obj[6]}/{obj[0]}/{obj[4]}"
-                    json.dump(j, outfd)
+                    out_data = {
+                        'wsid': obj[6],
+                        'objid': obj[0],
+                        'ver': obj[4],
+                        'objtype': ws_type
+                    }
+                    json.dump(out_data, outfd)
                     outfd.write('\n')
     finally:
         infd.close()

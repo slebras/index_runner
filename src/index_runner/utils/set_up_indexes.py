@@ -4,19 +4,13 @@ from .config import get_config
 
 config = get_config()
 
-es_host = config['elasticsearch_host']
-es_port = config['elasticsearch_port']
-
-es_data_type = config["elasticsearch_data_type"]
-es_url = "http://" + es_host + ":" + str(es_port)
-
-es_index_prefix = config.get('elasticsearch_index_prefix')
-
-headers = {
-    "Content-Type": "application/json"
-}
-
-required_mapping_fields = {
+_ES_HOST = config['elasticsearch_host']
+_ES_PORT = config['elasticsearch_port']
+_ES_DATA_TYPE = config.get('elasticsearch_data_type', 'data')
+_ES_URL = "http://" + _ES_HOST + ":" + str(_ES_PORT)
+_ES_INDEX_PREFIX = config.get('elasticsearch_index_prefix')
+_HEADERS = {"Content-Type": "application/json"}
+_GLOBAL_MAPPINGS = {
     'timestamp': {'type': 'date'},
     'guid': {'type': 'keyword'},
     'creation_date': {'type': 'date'},
@@ -24,27 +18,46 @@ required_mapping_fields = {
     'creator': {'type': 'text'},
     'islast': {'type': 'boolean'},
     'shared': {'type': 'boolean'},
-    'public': {'type': 'boolean'},
+    'is_public': {'type': 'boolean'},
 }
 
-mappings = {
-    "kbasenarrative.narrative-4.0": {
-        'name': {'type': 'text'},
-        'upa': {'type': 'text'},
-        'data_objects': {'type': 'nested'},
-        'cells': {'type': 'object'},
-        'shared_users': {'type': 'text'},
-        'total_cells': {'type': 'short'},
+_MAPPINGS = {
+    'narrative:1': {
+        'alias': 'narrative',
+        'properties': {
+            'name': {'type': 'text'},
+            'version': {'type': 'integer'},
+            'obj_id': {'type': 'integer'},
+            'data_objects': {
+                'type': 'nested',
+                'properties': {
+                    'name': {'type': 'keyword'},
+                    'obj_type': {'type': 'keyword'}
+                }
+            },
+            'cells': {
+                'type': 'object',
+                'properties': {
+                    'desc': {'type': 'text'},
+                    'cell_type': {'type': 'keyword'}
+                }
+            },
+            'shared_users': {'type': 'keyword'},
+            'total_cells': {'type': 'short'},
+        }
     },
-    "kbasefile.pairedendlibrary" : {
-        'sequncing_tech': {'type': 'keyword'},
-        'size': {'type': 'integer'},
-        'interleaved': {'type': 'boolean'},
-        'single_genome': {'type': 'boolean'},
-        'reads_type': {'type': 'keyword'},
-        'reads_type_version': {'type': 'keyword'},
-        'provenance_services': {'type': 'keyword'},
-        'name': {'type': 'text'}
+    "reads:1" : {
+        'alias': 'reads',
+        'properties': {
+            'sequncing_tech': {'type': 'keyword'},
+            'size': {'type': 'integer'},
+            'interleaved': {'type': 'boolean'},
+            'single_genome': {'type': 'boolean'},
+            'reads_type': {'type': 'keyword'},
+            'reads_type_version': {'type': 'keyword'},
+            'provenance_services': {'type': 'keyword'},
+            'name': {'type': 'text'}
+        }
     },
     "kbasefile.singleendlibrary" : {
         'sequencing_tech': {'type': 'keyword'},
@@ -59,16 +72,14 @@ mappings = {
 }
 
 
-def _create_index(index, mapping):
+def _create_index(index_name, mapping):
     """
+    Create an index on Elasticsearch using our mapping definitions above.
     """
-    # merge the two dictionaries (shallowly)
-    # this ordering overwrites any field in 'mapping'
-    # that are defined in 'required_mapping_fields'
     request_body = {
         "mappings": {
-            es_data_type: {
-                "properties": {**mapping, **required_mapping_fields}
+            _ES_DATA_TYPE: {
+                "properties": {**mapping['properties'], **_GLOBAL_MAPPINGS}
             }
         },
         "settings": {
@@ -78,42 +89,51 @@ def _create_index(index, mapping):
             }
         }
     }
-
-    try:
-        resp = requests.put(
-            '/'.join([es_url, index]),
-            data=json.dumps(request_body),
-            headers=headers
-        )
-    except requests.exceptions.RequestException as error:
-        raise error
-
+    url = _ES_URL + '/' + index_name
+    resp = requests.put(url, data=json.dumps(request_body), headers=_HEADERS)
     if not resp.ok:
-        raise RuntimeError("Error while creating new index %s: " % index + resp.text +
-                           ". Exited with status code %i" % resp.status_code)
+        raise RuntimeError(f"Error while creating new index {index_name}:\n{resp.text}")
+
+
+def _create_alias(alias_name, index_name):
+    """
+    Create an alias from `alias_name` to the  `index_name`.
+    """
+    body = {
+        'actions': [{'add': {'index': index_name, 'alias': alias_name}}]
+    }
+    url = _ES_URL + '/_aliases'
+    resp = requests.post(url, data=json.dumps(body), headers=_HEADERS)
+    if not resp.ok:
+        raise RuntimeError(f"Error creating alias '{alias_name}':\n{resp.text}")
 
 
 def set_up_indexes():
     print("setting up indices...")
-    try:
-        resp = requests.get(
-            es_url + "/_aliases",
-        )
-    except requests.exceptions.RequestException as error:
-        raise error
-    if not resp.ok:
-        raise RuntimeError("Error while querying for indices: " + resp.text +
-                           ". Exited with status code %i" % resp.status_code)
-    indexes_data = resp.json()
-
-    indexes = indexes_data.keys()
-    for index, mapping in mappings.items():
-        index = es_index_prefix + '.' + index + "_1"
-        if index in indexes:
-            print("index %s already created" % index)
+    # Fetch all alias names
+    aliases_resp = requests.get(_ES_URL + "/_aliases?format=json")
+    if not aliases_resp.ok:
+        raise RuntimeError('\n'.join([
+            f"Error querying aliases: {aliases_resp.text}",
+            f"Exited with status code {aliases_resp.status_code}"
+        ]))
+    # This will be a dict where the keys are index names. Each value is a dict
+    # with a key for "aliases".
+    indices = aliases_resp.json()
+    for index, mapping in _MAPPINGS.items():
+        index_name = f"{_ES_INDEX_PREFIX}.{index}"
+        alias_name = f"{_ES_INDEX_PREFIX}.{mapping['alias']}"
+        if index_name not in indices:
+            print(f"Creating new index '{index_name}' and alias '{alias_name}'.")
+            _create_index(index_name, mapping)
+            _create_alias(alias_name, index_name)
             continue
-        print("creating new index %s" % index)
-        # create index here using the mapping stored above.
-        _create_index(index, mapping)
-
+        print(f"Index '{index_name}' already created.")
+        # Index is created, but let's check for aliases
+        aliases = indices[index_name].get('aliases', {})
+        if alias_name not in aliases:
+            print(f"Creating alias '{alias_name}'.")
+            _create_alias(alias_name, index_name)
+        else:
+            print(f"Alias '{alias_name}' already created.")
     print("all indices loaded...")

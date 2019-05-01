@@ -4,7 +4,6 @@ import requests
 
 from utils.get_path import get_path
 
-
 _WS_URL = os.environ.get('WORKSPACE_URL', 'https://ci.kbase.us/services/ws')
 
 
@@ -15,15 +14,12 @@ def main(outpath, token):
     """
     outfd = open(outpath, 'a')
     try:
-        for wsid in range(1, 42000):
+        for wsid in range(1, 43000):
             resp = requests.post(
                 _WS_URL,
                 data=json.dumps({
                     'method': 'administer',
-                    'params': [{
-                        'command': 'getWorkspaceInfo',
-                        'params': {'id': wsid}
-                    }]
+                    'params': [{'command': 'getWorkspaceInfo', 'params': {'id': wsid}}]
                 }),
                 headers={'Authorization': token}
             ).json()

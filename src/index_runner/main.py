@@ -9,8 +9,7 @@ from .utils.threadify import threadify
 from .utils.set_up_indexes import set_up_indexes
 
 if __name__ == '__main__':
-    # create the indexes for elasticsearch
-
+    # Create the indexes for elasticsearch
     set_up_indexes()
     print('Starting consumer threads..')
     # A list of threads, saving their functions and arguments
