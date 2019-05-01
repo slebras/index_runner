@@ -1,5 +1,4 @@
-from utils.get_path import get_path
-from . import indexer_utils
+# from . import indexer_utils
 
 
 def index_reads(obj_data, ws_info, obj_data_v1):
@@ -8,20 +7,13 @@ def index_reads(obj_data, ws_info, obj_data_v1):
     '''
     data = obj_data['data'][0]
     obj_info = data['info']
+    workspace_id = obj_info[6]
+    object_id = obj_info[0]
 
-    upa = ":".join([str(data['info'][6]), str(data['info'][0]), str(data['info'][4])])
-
-    ws_id = obj_info[6]
     reads_type = obj_info[2].split('-')[0]
-    reads_type_version = obj_info[2].split('-')[1]
-    shared_users = indexer_utils.get_shared_users(ws_id)
-
-    # Get the rest of the data
-    if data.get('provenance'):
-        prov_services = []
-        for prov in data_obj['provenance']:
-            prov_service = prov['service']
-            prov_services.append(prov_service)
+    reads_type_version = float(obj_info[2].split('-')[1])
+    # not sure we want this for reads (but maybe?)
+    # shared_users = indexer_utils.get_shared_users(ws_id)
 
     if data.get('data'):
         if data['data'].get('interleaved'):
@@ -35,46 +27,67 @@ def index_reads(obj_data, ws_info, obj_data_v1):
             sequencing_tech = ""
 
         size = None
+        # if lib1 exists, we know that its they're paired-end reads
         if data['data'].get('lib1'):
             if data['data']['lib1'].get('size'):
                 size = data['data']['lib1']['size']
-            else:
-                size = None
+            if data['data'].get('lib2'):
+                if data['data']['lib2'].get('size'):
+                    if size is None:
+                        size += data['data']['lib2']['size']
+                    else:
+                        size = data['data']['lib2']['size']
 
         if data['data'].get('lib'):
             if data['data']['lib'].get('size'):
                 size = data['data']['lib']['size']
-            else:
-                size = None
 
         if data['data'].get('single_genome'):
             single_genome = data['data']['single_genome']
         else:
             single_genome = None
 
+        if data['data'].get('gc_content'):
+            gc_content = data['data']['gc_content']
+        else:
+            gc_content = None
+
+        # the average (mean) read length size
+        if data['data'].get('read_length_mean'):
+            mean_read_length = data['data']['read_length_mean']
+        else:
+            mean_read_length = None
+
+        # mean quality scores
+        if data['data'].get('qual_mean'):
+            qual_mean = data['data']['qual_mean']
+        else:
+            qual_mean = None
+
+        # the scale of phred scores
+        if data['data'].get('phred_type'):
+            phred_type = data['data']['phred_type']
+        else:
+            phred_type = None
+
     else:
         raise Exception("no data provided.")
-    # gc_content, read_length_mean, qual_mean, phred_type
 
-    metadata = obj_info[-1] or {}  # last elem of obj info is a metadata dict
-    reads_name = metadata.get('name')
-    is_public = ws_info[6] == 'r'
+    reads_name = obj_info[1]
     return {
-        'doc':{
+        'doc': {
+            'phred_type': phred_type,
+            'gc_content': gc_content,
+            'mean_quality_score': qual_mean,
+            'mean_read_length': mean_read_length,
             'sequencing_tech': sequencing_tech,
             'reads_type': reads_type,
             'reads_type_version': reads_type_version,
             'size': size,
             'interleaved': interleaved,
             'single_genome': single_genome,
-            'provenance_services': prov_services,
-            'name': reads_name,
-            'public': is_public,
-            'islast': True,
-            'shared': False
+            'name': reads_name
         },
         'index': 'reads',
-        'id': upa
+        'id': f'{workspace_id}:{object_id}'
     }
-
-

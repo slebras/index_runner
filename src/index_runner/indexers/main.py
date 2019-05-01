@@ -6,6 +6,7 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from ..utils.config import get_config
 from .narrative import index_narrative
+from .reads import index_reads
 
 
 def index_obj(msg_data):
@@ -56,7 +57,7 @@ def index_obj(msg_data):
         return
     indexer_ret = indexer(obj_data, ws_info, obj_data_v1)
     # Merge in default data into the document
-    indexer_ret['doc'].update(_default_fields(obj_data, obj_data_v1))
+    indexer_ret['doc'].update(_default_fields(obj_data, ws_info, obj_data_v1))
     return indexer_ret
 
 
@@ -74,24 +75,31 @@ def _find_indexer(type_module, type_name, type_version):
     return None
 
 
-def _default_fields(obj_data, obj_data_v1):
+def _default_fields(obj_data, ws_info, obj_data_v1):
     """
     Add fields that should be present in any document on elasticsearch.
     """
     data = obj_data['data'][0]
-    v1_info = obj_data['data'][0]['info']
+    v1_info = obj_data_v1['data'][0]['info']
+    is_public = ws_info[6] == 'r'
     return {
         "creator": data["creator"],
-        "access_group": data['info'][6]
+        "access_group": data['info'][6],
+        "guid": ":".join([str(data['info'][6]), str(data['info'][0])]),
         "timestamp": data['epoch'],
-        "creation_date": v1_info[3]
+        "creation_date": v1_info[3],
+        "is_public": is_public,
+        "version": data['info'][4],
+        "obj_id": data['info'][0]
     }
 
 
 # Directory of all indexer functions.
 # Higher up in the list gets higher precedence.
 _INDEXER_DIRECTORY = [
-    {'module': 'KBaseNarrative', 'type': 'Narrative', 'indexer': index_narrative}
+    {'module': 'KBaseNarrative', 'type': 'Narrative', 'indexer': index_narrative},
+    {'module': 'KBaseFile', 'type': 'PairedEndLibrary', 'indexer': index_reads},
+    {'module': 'KBaseFile', 'type': 'SingleEndLibrary', 'indexer': index_reads}
 ]
 
 

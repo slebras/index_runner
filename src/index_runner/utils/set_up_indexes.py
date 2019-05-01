@@ -16,8 +16,8 @@ _GLOBAL_MAPPINGS = {
     'creation_date': {'type': 'date'},
     'access_group': {'type': 'integer'},
     'creator': {'type': 'text'},
-    'islast': {'type': 'boolean'},
-    'shared': {'type': 'boolean'},
+    'version': {'type': 'integer'},
+    'obj_id': {'type': 'integer'},
     'is_public': {'type': 'boolean'},
 }
 
@@ -46,7 +46,7 @@ _MAPPINGS = {
             'total_cells': {'type': 'short'},
         }
     },
-    "reads:1" : {
+    "reads:1": {
         'alias': 'reads',
         'properties': {
             'sequncing_tech': {'type': 'keyword'},
@@ -54,21 +54,15 @@ _MAPPINGS = {
             'interleaved': {'type': 'boolean'},
             'single_genome': {'type': 'boolean'},
             'reads_type': {'type': 'keyword'},
-            'reads_type_version': {'type': 'keyword'},
+            'reads_type_version': {'type': 'float'},
             'provenance_services': {'type': 'keyword'},
-            'name': {'type': 'text'}
+            'name': {'type': 'text'},
+            'phred_type': {'type': 'text'},
+            'gc_content': {'type': 'float'},
+            'mean_quality_score': {'type': 'float'},
+            'mean_read_length': {'type': 'float'},
         }
     },
-    "kbasefile.singleendlibrary" : {
-        'sequencing_tech': {'type': 'keyword'},
-        'size': {'type': 'integer'},
-        'reads_type': {'type': 'keyword'},
-        'reads_type_version': {'type': 'keyword'},
-        # 'interleaved': {'type': 'boolean'},
-        'single_genome': {'type': 'boolean'},
-        'provenance_services': {'type': 'keyword'},
-        'name': {'type': 'text'}
-    }
 }
 
 

@@ -5,6 +5,11 @@ import requests
 from confluent_kafka import Producer, Consumer, KafkaError
 
 from index_runner.utils.config import get_config
+from index_runner.indexers.main import _default_fields
+from index_runner.indexers.reads import index_reads
+
+from kbase_workspace_client import WorkspaceClient
+from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 _CONFIG = get_config()
 _ES_DATA_TYPE = _CONFIG['elasticsearch_data_type']
@@ -43,6 +48,17 @@ _TEST_EVENTS = {
         "objid": 5,
         "time": 1554408311320,
         "objtype": None,
+        "permusers": [],
+        "user": "username"
+    },
+    'reads_save': {
+        "wsid": 15,
+        "ver": 1,
+        "perm": None,
+        "evtype": "OBJECT_DELETE_STATE_CHANGE",
+        "objid": 44,
+        "time": 1554408311320,
+        "objtype": "KBaseFile.PairedEndLibrary‑2.0",
         "permusers": [],
         "user": "username"
     }
@@ -90,6 +106,59 @@ def consume_last(topic, timeout=120):
 
 class TestIntegration(unittest.TestCase):
 
+    def test_reads_update_event(self):
+        print('Testing reads')
+        event_data = _TEST_EVENTS['reads_save']
+        upa = "/".join([str(event_data['wsid']), str(event_data['objid']), str(event_data['ver'])])
+        ws_client = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
+        try:
+            obj_data = ws_client.admin_req('getObjects', {
+                'objects': [{'ref': upa}]
+            })
+        except WorkspaceResponseError as err:
+            print('Workspace response error:', err.resp_data)
+            raise err
+        try:
+            ws_info = ws_client.admin_req('getWorkspaceInfo', {
+                'id': event_data['wsid']
+            })
+        except WorkspaceResponseError as err:
+            print('Workspace response error:', err.resp_data)
+            raise err
+        obj_data_v1 = obj_data
+
+        msg_data = index_reads(obj_data, ws_info, obj_data_v1)
+        msg_data['doc'].update(_default_fields(obj_data, ws_info, obj_data_v1))
+        print('-'*80)
+        print('-'*80)
+        print(msg_data['doc'])
+        print('-'*80)
+        print('-'*80)
+        print('..objects formatted for index, verifying output...')
+
+        check_against = {
+            'phred_type': None,
+            'gc_content': None,
+            'mean_quality_score': None,
+            'mean_read_length': None,
+            'sequencing_tech': "Illumina",
+            'reads_type': "KBaseFile.PairedEndLibrary",
+            'reads_type_version': 2.0,
+            'size': 36510129,
+            'interleaved': True,
+            'single_genome': True,
+            'name': "rhodobacter.art.q20.int.PE.reads",
+            'guid': "15:44",
+            'creator': 'username',
+            'access_group': 15,
+            'version': 1,
+            'timestamp': 1475672651086,
+            'creation_date': "2016-10-05T17:11:40+0000",
+            'is_public': True,
+            'obj_id': 44,
+        }
+        self.assertEqual(msg_data['doc'], check_against)
+
     def test_narrative_update_event(self):
         print('producing to', _CONFIG['topics']['workspace_events'])
         producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
@@ -101,11 +170,12 @@ class TestIntegration(unittest.TestCase):
         producer.poll(60)
         print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
         msg_data = consume_last(_CONFIG['topics']['elasticsearch_updates'])
+
         check_against = {
             "name": "Test Narrative Name",
             'obj_id': 1,
             'version': 16,
-            "data_objects": [
+            'data_objects': [
                 {
                     'name': 'Rhodobacter_CACIA_14H1',
                     'obj_type': 'KBaseGenomes.Genome-7.0'
@@ -139,13 +209,17 @@ class TestIntegration(unittest.TestCase):
                 }
             ],
             "creator": "username",
+            "guid": "41347:1",
             "shared_users": ['username'],
             "total_cells": 3,
             "access_group": 41347,
             "is_public": True,
             "timestamp": 1554408998887,
-            "creation_date": '2019-04-04T20:16:39+0000'
+            'creation_date': '2019-03-26T17:23:33+0000',
         }
+        print('_'*80)
+        print(msg_data['doc'])
+        print('_'*80)
         self.assertEqual(msg_data['doc'], check_against)
         # Dumb way to wait for the elasticsearch document to save to the index
         time.sleep(15)
