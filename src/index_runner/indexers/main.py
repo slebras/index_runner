@@ -7,6 +7,7 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 from ..utils.config import get_config
 from .narrative import index_narrative
 from .reads import index_reads
+from .indexer_utils import get_shared_users
 
 
 def index_obj(msg_data):
@@ -80,17 +81,22 @@ def _default_fields(obj_data, ws_info, obj_data_v1):
     Add fields that should be present in any document on elasticsearch.
     """
     data = obj_data['data'][0]
+    ws_id = data['info'][6]
+    obj_id = data['info'][0]
+    version = data['info'][4]
     v1_info = obj_data_v1['data'][0]['info']
     is_public = ws_info[6] == 'r'
+    shared_users = get_shared_users(ws_id)
     return {
         "creator": data["creator"],
-        "access_group": data['info'][6],
-        "guid": ":".join([str(data['info'][6]), str(data['info'][0])]),
+        "access_group": ws_id,
+        "shared_users": shared_users,
+        "guid": ":".join([str(ws_id), str(obj_id)]),
         "timestamp": data['epoch'],
         "creation_date": v1_info[3],
         "is_public": is_public,
-        "version": data['info'][4],
-        "obj_id": data['info'][0]
+        "version": version,
+        "obj_id": obj_id
     }
 
 

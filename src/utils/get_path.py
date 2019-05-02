@@ -1,6 +1,6 @@
 
 
-def get_path(obj, path):
+def get_path(obj, path, default=None):
     """
     Fetch some deeply nested data from dicts and lists. Returns None if the
     path is not found in the data structure.
@@ -16,6 +16,6 @@ def get_path(obj, path):
         try:
             obj[part]
         except Exception:
-            return None
+            return default
         obj = obj[part]
     return obj

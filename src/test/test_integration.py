@@ -55,7 +55,7 @@ _TEST_EVENTS = {
         "wsid": 15,
         "ver": 1,
         "perm": None,
-        "evtype": "OBJECT_DELETE_STATE_CHANGE",
+        "evtype": "NEW_VERSION",
         "objid": 44,
         "time": 1554408311320,
         "objtype": "KBaseFile.PairedEndLibrary‑2.0",
@@ -129,11 +129,6 @@ class TestIntegration(unittest.TestCase):
 
         msg_data = index_reads(obj_data, ws_info, obj_data_v1)
         msg_data['doc'].update(_default_fields(obj_data, ws_info, obj_data_v1))
-        print('-'*80)
-        print('-'*80)
-        print(msg_data['doc'])
-        print('-'*80)
-        print('-'*80)
         print('..objects formatted for index, verifying output...')
 
         check_against = {
@@ -143,7 +138,7 @@ class TestIntegration(unittest.TestCase):
             'mean_read_length': None,
             'sequencing_tech': "Illumina",
             'reads_type': "KBaseFile.PairedEndLibrary",
-            'reads_type_version': 2.0,
+            'reads_type_version': "2.0",
             'size': 36510129,
             'interleaved': True,
             'single_genome': True,
@@ -156,6 +151,7 @@ class TestIntegration(unittest.TestCase):
             'creation_date': "2016-10-05T17:11:40+0000",
             'is_public': True,
             'obj_id': 44,
+            "shared_users": ['username'],
         }
         self.assertEqual(msg_data['doc'], check_against)
 
@@ -217,9 +213,6 @@ class TestIntegration(unittest.TestCase):
             "timestamp": 1554408998887,
             'creation_date': '2019-03-26T17:23:33+0000',
         }
-        print('_'*80)
-        print(msg_data['doc'])
-        print('_'*80)
         self.assertEqual(msg_data['doc'], check_against)
         # Dumb way to wait for the elasticsearch document to save to the index
         time.sleep(15)

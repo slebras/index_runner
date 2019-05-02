@@ -55,8 +55,6 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
     workspace_id = data['info'][6]
     version = data['info'][4]
     ws_id = obj_info[6]
-    # Fetch a list of usernames that the workspace is shared with
-    shared_users = indexer_utils.get_shared_users(ws_id)
     # Get all the types and names of objects in the narrative's workspace.
     narrative_data_objects = indexer_utils.fetch_objects_in_workspace(ws_id)
     index_cells = []
@@ -94,7 +92,6 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             'data_objects': narrative_data_objects,
             'cells': index_cells,
             'creator': creator,
-            'shared_users': shared_users,
             'total_cells': len(cells),
         },
         'index': 'narrative:1',

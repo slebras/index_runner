@@ -14,6 +14,7 @@ _GLOBAL_MAPPINGS = {
     'timestamp': {'type': 'date'},
     'guid': {'type': 'keyword'},
     'creation_date': {'type': 'date'},
+    'shared_users': {'type': 'keyword'},
     'access_group': {'type': 'integer'},
     'creator': {'type': 'text'},
     'version': {'type': 'integer'},
@@ -42,19 +43,18 @@ _MAPPINGS = {
                     'cell_type': {'type': 'keyword'}
                 }
             },
-            'shared_users': {'type': 'keyword'},
             'total_cells': {'type': 'short'},
         }
     },
     "reads:1": {
         'alias': 'reads',
         'properties': {
-            'sequncing_tech': {'type': 'keyword'},
+            'sequencing_tech': {'type': 'keyword'},
             'size': {'type': 'integer'},
             'interleaved': {'type': 'boolean'},
             'single_genome': {'type': 'boolean'},
             'reads_type': {'type': 'keyword'},
-            'reads_type_version': {'type': 'float'},
+            'reads_type_version': {'type': 'keyword'},
             'provenance_services': {'type': 'keyword'},
             'name': {'type': 'text'},
             'phred_type': {'type': 'text'},

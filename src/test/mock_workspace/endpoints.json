@@ -122,6 +122,32 @@
       "method": "Workspace.administer",
       "params": [{
         "command": "getPermissionsMass",
+        "params": {"workspaces": [{"id": 15}]}
+      }]
+    },
+    "response": {
+      "status": "200",
+      "body": {
+        "version": "1.1",
+        "result": [{
+          "perms": [
+            {"username": "a"},
+            {"username2": "w"},
+            {"*": "r"}
+          ]
+        }]
+      }
+    }
+  }, 
+  {
+    "methods": ["POST"],
+    "path": "/",
+    "headers": {"Authorization": "valid_admin_token"},
+    "body": {
+      "version": "1.1",
+      "method": "Workspace.administer",
+      "params": [{
+        "command": "getPermissionsMass",
         "params": {"workspaces": [{"id": 41347}]}
       }]
     },
