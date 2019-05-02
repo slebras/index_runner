@@ -90,6 +90,7 @@ def _default_fields(obj_data, ws_info, obj_data_v1):
     return {
         "creator": data["creator"],
         "access_group": ws_id,
+        "obj_name": data['info'][1],
         "shared_users": shared_users,
         "guid": ":".join([str(ws_id), str(obj_id)]),
         "timestamp": data['epoch'],

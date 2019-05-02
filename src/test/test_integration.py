@@ -142,7 +142,7 @@ class TestIntegration(unittest.TestCase):
             'size': 36510129,
             'interleaved': True,
             'single_genome': True,
-            'name': "rhodobacter.art.q20.int.PE.reads",
+            'obj_name': "rhodobacter.art.q20.int.PE.reads",
             'guid': "15:44",
             'creator': 'username',
             'access_group': 15,
@@ -168,9 +168,10 @@ class TestIntegration(unittest.TestCase):
         msg_data = consume_last(_CONFIG['topics']['elasticsearch_updates'])
 
         check_against = {
-            "name": "Test Narrative Name",
+            "narrative_title": "Test Narrative Name",
             'obj_id': 1,
             'version': 16,
+            'obj_name': "Narrative.1553621013004",
             'data_objects': [
                 {
                     'name': 'Rhodobacter_CACIA_14H1',

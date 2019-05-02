@@ -37,7 +37,6 @@ def index_reads(obj_data, ws_info, obj_data_v1):
     # the scale of phred scores
     phred_type = data['data'].get('phred_type', None)
 
-    reads_name = obj_info[1]
     return {
         'doc': {
             'phred_type': phred_type,
@@ -50,7 +49,6 @@ def index_reads(obj_data, ws_info, obj_data_v1):
             'size': size,
             'interleaved': interleaved,
             'single_genome': single_genome,
-            'name': reads_name
         },
         'index': 'reads',
         'id': f'{workspace_id}:{object_id}'

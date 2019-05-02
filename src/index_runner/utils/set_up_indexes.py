@@ -12,6 +12,7 @@ _ES_INDEX_PREFIX = config.get('elasticsearch_index_prefix')
 _HEADERS = {"Content-Type": "application/json"}
 _GLOBAL_MAPPINGS = {
     'timestamp': {'type': 'date'},
+    'obj_name': {'type': 'text'},
     'guid': {'type': 'keyword'},
     'creation_date': {'type': 'date'},
     'shared_users': {'type': 'keyword'},
@@ -26,7 +27,7 @@ _MAPPINGS = {
     'narrative:1': {
         'alias': 'narrative',
         'properties': {
-            'name': {'type': 'text'},
+            'narrative_title': {'type': 'text'},
             'version': {'type': 'integer'},
             'obj_id': {'type': 'integer'},
             'data_objects': {
@@ -56,7 +57,6 @@ _MAPPINGS = {
             'reads_type': {'type': 'keyword'},
             'reads_type_version': {'type': 'keyword'},
             'provenance_services': {'type': 'keyword'},
-            'name': {'type': 'text'},
             'phred_type': {'type': 'text'},
             'gc_content': {'type': 'float'},
             'mean_quality_score': {'type': 'float'},
