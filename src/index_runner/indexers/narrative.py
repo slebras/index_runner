@@ -53,11 +53,8 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
     data = obj_data['data'][0]
     obj_info = data['info']
     workspace_id = data['info'][6]
-    object_id = data['info'][0]
     version = data['info'][4]
     ws_id = obj_info[6]
-    # Fetch a list of usernames that the workspace is shared with
-    shared_users = indexer_utils.get_shared_users(ws_id)
     # Get all the types and names of objects in the narrative's workspace.
     narrative_data_objects = indexer_utils.fetch_objects_in_workspace(ws_id)
     index_cells = []
@@ -87,20 +84,15 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             index_cell = {'desc': 'Narrative Cell', 'cell_type': 'unknown'}
         index_cells.append(index_cell)
     metadata = obj_info[-1] or {}  # last elem of obj info is a metadata dict
-    narr_name = metadata.get('name')
-    is_public = ws_info[6] == 'r'
+    narrative_title = metadata.get('name')
+    # is_public = ws_info[6] == 'r'
     result = {
         'doc': {
-            'name': narr_name,
-            'version': version,
-            'obj_id': object_id,
+            'narrative_title': narrative_title,
             'data_objects': narrative_data_objects,
             'cells': index_cells,
             'creator': creator,
-            'shared_users': shared_users,
             'total_cells': len(cells),
-            'access_group': workspace_id,
-            'is_public': is_public
         },
         'index': 'narrative:1',
         'id': f'{workspace_id}:{version}',

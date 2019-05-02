@@ -12,13 +12,22 @@ _ES_INDEX_PREFIX = config.get('elasticsearch_index_prefix')
 _HEADERS = {"Content-Type": "application/json"}
 _GLOBAL_MAPPINGS = {
     'timestamp': {'type': 'date'},
-    'creation_date': {'type': 'date'}
+    'obj_name': {'type': 'text'},
+    'guid': {'type': 'keyword'},
+    'creation_date': {'type': 'date'},
+    'shared_users': {'type': 'keyword'},
+    'access_group': {'type': 'integer'},
+    'creator': {'type': 'text'},
+    'version': {'type': 'integer'},
+    'obj_id': {'type': 'integer'},
+    'is_public': {'type': 'boolean'},
 }
+
 _MAPPINGS = {
     'narrative:1': {
         'alias': 'narrative',
         'properties': {
-            'name': {'type': 'text'},
+            'narrative_title': {'type': 'text'},
             'version': {'type': 'integer'},
             'obj_id': {'type': 'integer'},
             'data_objects': {
@@ -35,13 +44,25 @@ _MAPPINGS = {
                     'cell_type': {'type': 'keyword'}
                 }
             },
-            'creator': {'type': 'keyword'},
-            'shared_users': {'type': 'keyword'},
             'total_cells': {'type': 'short'},
-            'access_group': {'type': 'integer'},
-            'is_public': {'type': 'boolean'}
         }
-    }
+    },
+    "reads:1": {
+        'alias': 'reads',
+        'properties': {
+            'sequencing_tech': {'type': 'keyword'},
+            'size': {'type': 'integer'},
+            'interleaved': {'type': 'boolean'},
+            'single_genome': {'type': 'boolean'},
+            'reads_type': {'type': 'keyword'},
+            'reads_type_version': {'type': 'keyword'},
+            'provenance_services': {'type': 'keyword'},
+            'phred_type': {'type': 'text'},
+            'gc_content': {'type': 'float'},
+            'mean_quality_score': {'type': 'float'},
+            'mean_read_length': {'type': 'float'},
+        }
+    },
 }
 
 
