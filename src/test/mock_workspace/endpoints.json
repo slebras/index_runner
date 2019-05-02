@@ -270,7 +270,7 @@
                             },
                             "info": [
                                 43,
-                                "rhodobacter.art.q50.SE.eads",
+                                "rhodobacter.art.q50.SE.reads",
                                 "KBaseFile.SingleEndLibrary-2.0",
                                 "2016-10-05T17:11:32+0000",
                                 1,
@@ -339,7 +339,7 @@
                             "created": "2016-10-05T13:03:41+0000",
                             "epoch": 1475672621588,
                             "refs": [],
-                            "copy_source_inaccessible": 0,
+                            "copy_source_inaccessible": 1,
                             "extracted_ids": {
                                 "handle": [
                                     "KBH_55376"
@@ -464,7 +464,7 @@
                           "created": "2016-10-05T13:04:11+0000",
                           "epoch": 1475672651086,
                           "refs": [],
-                          "copy_source_inaccessible": 0,
+                          "copy_source_inaccessible": 1,
                           "extracted_ids": {
                               "handle": [
                                   "KBH_55378"
