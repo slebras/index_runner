@@ -109,7 +109,11 @@ class TestIntegration(unittest.TestCase):
     def test_reads_update_event(self):
         print('Testing reads')
         event_data = _TEST_EVENTS['reads_save']
-        upa = "/".join([str(event_data['wsid']), str(event_data['objid']), str(event_data['ver'])])
+        upa = "/".join([
+            str(event_data['wsid']),  # type: ignore
+            str(event_data['objid']),  # type: ignore
+            str(event_data['ver'])  # type: ignore
+        ])
         ws_client = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
         try:
             obj_data = ws_client.admin_req('getObjects', {
@@ -120,17 +124,15 @@ class TestIntegration(unittest.TestCase):
             raise err
         try:
             ws_info = ws_client.admin_req('getWorkspaceInfo', {
-                'id': event_data['wsid']
+                'id': event_data['wsid']  # type: ignore
             })
         except WorkspaceResponseError as err:
             print('Workspace response error:', err.resp_data)
             raise err
         obj_data_v1 = obj_data
-
         msg_data = index_reads(obj_data, ws_info, obj_data_v1)
         msg_data['doc'].update(_default_fields(obj_data, ws_info, obj_data_v1))
         print('..objects formatted for index, verifying output...')
-
         check_against = {
             'phred_type': None,
             'gc_content': None,
@@ -152,6 +154,7 @@ class TestIntegration(unittest.TestCase):
             'is_public': True,
             'obj_id': 44,
             "shared_users": ['username'],
+            'copied': None
         }
         self.assertEqual(msg_data['doc'], check_against)
 
@@ -166,7 +169,6 @@ class TestIntegration(unittest.TestCase):
         producer.poll(60)
         print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
         msg_data = consume_last(_CONFIG['topics']['elasticsearch_updates'])
-
         check_against = {
             "narrative_title": "Test Narrative Name",
             'obj_id': 1,
@@ -213,6 +215,7 @@ class TestIntegration(unittest.TestCase):
             "is_public": True,
             "timestamp": 1554408998887,
             'creation_date': '2019-03-26T17:23:33+0000',
+            'copied': '1/2/3'
         }
         self.assertEqual(msg_data['doc'], check_against)
         # Dumb way to wait for the elasticsearch document to save to the index

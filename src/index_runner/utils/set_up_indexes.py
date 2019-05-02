@@ -12,15 +12,16 @@ _ES_INDEX_PREFIX = config.get('elasticsearch_index_prefix')
 _HEADERS = {"Content-Type": "application/json"}
 _GLOBAL_MAPPINGS = {
     'timestamp': {'type': 'date'},
-    'obj_name': {'type': 'text'},
+    'obj_name': {'type': 'keyword'},
     'guid': {'type': 'keyword'},
     'creation_date': {'type': 'date'},
     'shared_users': {'type': 'keyword'},
     'access_group': {'type': 'integer'},
-    'creator': {'type': 'text'},
+    'creator': {'type': 'keyword'},
     'version': {'type': 'integer'},
     'obj_id': {'type': 'integer'},
     'is_public': {'type': 'boolean'},
+    'copied': {'type': 'keyword'}
 }
 
 _MAPPINGS = {
