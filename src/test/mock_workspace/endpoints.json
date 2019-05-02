@@ -688,6 +688,7 @@
                 "created": "2019-04-04T20:16:38+0000",
                 "epoch": 1554408998887,
                 "refs": [],
+                "copied": "1/2/3",
                 "copy_source_inaccessible": 0,
                 "extracted_ids": {}
             }]
