@@ -7,6 +7,7 @@ from confluent_kafka import Producer, Consumer, KafkaError
 from index_runner.utils.config import get_config
 from index_runner.indexers.main import _default_fields
 from index_runner.indexers.reads import index_reads
+from index_runner.indexers.assembly import index_assembly
 
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
@@ -61,7 +62,18 @@ _TEST_EVENTS = {
         "objtype": "KBaseFile.PairedEndLibrary‑2.0",
         "permusers": [],
         "user": "username"
-    }
+    },
+    'assembly_save': {
+        "wsid": 39794,
+        "ver": 1,
+        "perm": None,
+        "evtype": "NEW_VERSION",
+        "objid": 4,
+        "time": 1554408311320,
+        "objtype": "KBaseGenomeAnnotations.Assembly‑6.0",
+        "permusers": [],
+        "user": "username"
+    },
 }
 
 
@@ -104,11 +116,11 @@ def consume_last(topic, timeout=120):
         return json.loads(msg.value())
 
 
-class TestIntegration(unittest.TestCase):
+class TestTypes(unittest.TestCase):
 
-    def test_reads_update_event(self):
-        print('Testing reads')
-        event_data = _TEST_EVENTS['reads_save']
+    def _default_obj_test(self, event_data_str, indexer, check_against):
+        print(f'Testing {event_data_str} indexer...')
+        event_data = _TEST_EVENTS[event_data_str]
         upa = "/".join([
             str(event_data['wsid']),  # type: ignore
             str(event_data['objid']),  # type: ignore
@@ -130,9 +142,17 @@ class TestIntegration(unittest.TestCase):
             print('Workspace response error:', err.resp_data)
             raise err
         obj_data_v1 = obj_data
-        msg_data = index_reads(obj_data, ws_info, obj_data_v1)
+        msg_data = indexer(obj_data, ws_info, obj_data_v1)
         msg_data['doc'].update(_default_fields(obj_data, ws_info, obj_data_v1))
+        print('='*80)
+        print('='*80)
+        print(msg_data['doc'])
+        print('='*80)
+        print('='*80)
         print('..objects formatted for index, verifying output...')
+        self.assertEqual(msg_data['doc'], check_against)
+
+    def test_reads_indexer(self):
         check_against = {
             'phred_type': None,
             'gc_content': None,
@@ -156,7 +176,41 @@ class TestIntegration(unittest.TestCase):
             "shared_users": ['username'],
             'copied': None
         }
-        self.assertEqual(msg_data['doc'], check_against)
+        self._default_obj_test('reads_save', index_reads, check_against)
+
+    def test_assembly_indexer(self):
+
+        check_against = {
+            'assembly_name': None,
+            'mean_contig_length': 50195.5,
+            'percent_complete_contigs': None,
+            'percent_circle_contigs': None,
+            'assembly_type': 'KBaseGenomeAnnotations.Assembly',
+            'assembly_type_version': '6.0',
+            'assembly_id': '3300029893_12.fa_assembly',
+            'gc_content': 0.41488,
+            'size': 2208602,
+            'num_contigs': 44,
+            'taxon_ref': None,
+            'external_origination_date': None,
+            'external_source_id': None,
+            'external_source': None,
+            'creator': 'slebras',
+            'access_group': 39794,
+            'obj_name': '3300029893_12',
+            'shared_users': ['username'],
+            'guid': '39794:4',
+            'timestamp': 1548197802938,
+            'creation_date': '2019-05-03T17:31:47+0000',
+            'is_public': True,
+            'version': 1,
+            'obj_id': 4,
+            'copied': '39795/6/1'
+        }
+        self._default_obj_test('assembly_save', index_assembly, check_against)
+
+
+class TestIntegration(unittest.TestCase):
 
     def test_narrative_update_event(self):
         print('producing to', _CONFIG['topics']['workspace_events'])
