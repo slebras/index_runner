@@ -7,6 +7,7 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 from ..utils.config import get_config
 from .narrative import index_narrative
 from .reads import index_reads
+from .assembly import index_assembly
 from .indexer_utils import get_shared_users
 
 
@@ -99,7 +100,7 @@ def _default_fields(obj_data, ws_info, obj_data_v1):
         "is_public": is_public,
         "version": version,
         "obj_id": obj_id,
-        "copied": copy_ref
+        "copied": copy_ref,
     }
 
 
@@ -108,7 +109,8 @@ def _default_fields(obj_data, ws_info, obj_data_v1):
 _INDEXER_DIRECTORY = [
     {'module': 'KBaseNarrative', 'type': 'Narrative', 'indexer': index_narrative},
     {'module': 'KBaseFile', 'type': 'PairedEndLibrary', 'indexer': index_reads},
-    {'module': 'KBaseFile', 'type': 'SingleEndLibrary', 'indexer': index_reads}
+    {'module': 'KBaseFile', 'type': 'SingleEndLibrary', 'indexer': index_reads},
+    {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly}
 ]
 
 

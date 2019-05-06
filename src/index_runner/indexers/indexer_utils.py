@@ -4,6 +4,15 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 from ..utils.config import get_config
 
 
+def mean(array):
+    """
+    get mean of list, returns None if length is less than 1
+    """
+    if len(array) < 1:
+        return None
+    return float(sum(array))/float(len(array))
+
+
 def get_shared_users(ws_id):
     """
     Get the list of users that have read, write, or author access to a workspace object.
