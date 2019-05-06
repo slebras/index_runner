@@ -8,7 +8,7 @@ def mean(array):
     """
     get mean of list, returns None if length is less than 1
     """
-    if len(array) < 1:
+    if not array:
         return None
     return float(sum(array))/float(len(array))
 

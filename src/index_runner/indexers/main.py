@@ -31,6 +31,7 @@ def index_obj(msg_data):
     except WorkspaceResponseError as err:
         print('Workspace response error:', err.resp_data)
         raise err
+    obj_data = obj_data['data'][0]
     try:
         ws_info = ws_client.admin_req('getWorkspaceInfo', {
             'id': msg_data['wsid']
@@ -50,6 +51,7 @@ def index_obj(msg_data):
     except WorkspaceResponseError as err:
         print('Workspace response error:', err.resp_data)
         raise err
+    obj_data_v1 = obj_data_v1['data'][0]
     # Dispatch to a specific type handler to produce the search document
     (type_module_name, type_version) = msg_data['objtype'].split('-')
     (type_module, type_name) = type_module_name.split('.')
@@ -81,21 +83,20 @@ def _default_fields(obj_data, ws_info, obj_data_v1):
     """
     Add fields that should be present in any document on elasticsearch.
     """
-    data = obj_data['data'][0]
-    ws_id = data['info'][6]
-    obj_id = data['info'][0]
-    version = data['info'][4]
-    v1_info = obj_data_v1['data'][0]['info']
+    ws_id = obj_data['info'][6]
+    obj_id = obj_data['info'][0]
+    version = obj_data['info'][4]
+    v1_info = obj_data_v1['info']
     is_public = ws_info[6] == 'r'
     shared_users = get_shared_users(ws_id)
-    copy_ref = data.get('copied')
+    copy_ref = obj_data.get('copied')
     return {
-        "creator": data["creator"],
+        "creator": obj_data["creator"],
         "access_group": ws_id,
-        "obj_name": data['info'][1],
+        "obj_name": obj_data['info'][1],
         "shared_users": shared_users,
         "guid": ":".join([str(ws_id), str(obj_id)]),
-        "timestamp": data['epoch'],
+        "timestamp": obj_data['epoch'],
         "creation_date": v1_info[3],
         "is_public": is_public,
         "version": version,

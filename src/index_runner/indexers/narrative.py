@@ -8,7 +8,66 @@ from . import indexer_utils
 _MARKDOWNER = Markdown()
 
 
-def process_code_cell(cell):
+def index_narrative(obj_data, ws_info, obj_data_v1):
+    """
+    Index a narrative object on save.
+    We index the latest narratives for:
+        - title and author
+        - cell content
+        - object names and types
+        - created and updated dates
+        - total number of cells
+    """
+    obj_info = obj_data['info']
+    workspace_id = obj_data['info'][6]
+    version = obj_data['info'][4]
+    ws_id = obj_info[6]
+    # Get all the types and names of objects in the narrative's workspace.
+    narrative_data_objects = indexer_utils.fetch_objects_in_workspace(ws_id)
+    index_cells = []
+    cells = obj_data['data']['cells']
+    creator = obj_data['creator']
+    for cell in cells:
+        if cell.get('cell_type') == 'markdown':
+            if not cell.get('source'):
+                # Empty markdown cell
+                continue
+            if cell['source'].startswith('## Welcome to KBase'):
+                # Ignore boilerplate markdown cells
+                continue
+            # Remove all HTML and markdown formatting syntax.
+            cell_soup = BeautifulSoup(_MARKDOWNER.convert(cell['source']), 'html.parser')
+            index_cell = {'desc': cell_soup.get_text(), 'cell_type': "markdown"}
+            index_cell['cell_type'] = "markdown"
+            index_cell['desc'] = cell_soup.get_text()
+        # For an app cell, the module/method name lives in metadata/kbase/appCell/app/id
+        elif cell.get('cell_type') == 'code':
+            index_cell = _process_code_cell(cell)
+        else:
+            cell_type = cell.get('cell_type', "Error: no cell type")
+            sys.stderr.write(f"Narrative Indexer: could not resolve cell type \"{cell_type}\"\n")
+            sys.stderr.write(str(cell))
+            sys.stderr.write('\n' + ('-' * 80) + '\n')
+            index_cell = {'desc': 'Narrative Cell', 'cell_type': 'unknown'}
+        index_cells.append(index_cell)
+    metadata = obj_info[-1] or {}  # last elem of obj info is a metadata dict
+    narrative_title = metadata.get('name')
+    # is_public = ws_info[6] == 'r'
+    result = {
+        'doc': {
+            'narrative_title': narrative_title,
+            'data_objects': narrative_data_objects,
+            'cells': index_cells,
+            'creator': creator,
+            'total_cells': len(cells),
+        },
+        'index': 'narrative:1',
+        'id': f'{workspace_id}:{version}',
+    }
+    return result
+
+
+def _process_code_cell(cell):
     # here we want to differentiate between kbase app cells and code cells
     # app_path = get_path(cell, ['metadata', 'kbase', 'appCell', 'newAppName', 'id'])
     index_cell = {'desc': '', 'cell_type': ''}
@@ -38,63 +97,3 @@ def process_code_cell(cell):
         index_cell['cell_type'] = 'code_cell'
         index_cell['desc'] = cell.get('source', '')
     return index_cell
-
-
-def index_narrative(obj_data, ws_info, obj_data_v1):
-    """
-    Index a narrative object on save.
-    We index the latest narratives for:
-        - title and author
-        - cell content
-        - object names and types
-        - created and updated dates
-        - total number of cells
-    """
-    data = obj_data['data'][0]
-    obj_info = data['info']
-    workspace_id = data['info'][6]
-    version = data['info'][4]
-    ws_id = obj_info[6]
-    # Get all the types and names of objects in the narrative's workspace.
-    narrative_data_objects = indexer_utils.fetch_objects_in_workspace(ws_id)
-    index_cells = []
-    cells = data['data']['cells']
-    creator = data['creator']
-    for cell in cells:
-        if cell.get('cell_type') == 'markdown':
-            if not cell.get('source'):
-                # Empty markdown cell
-                continue
-            if cell['source'].startswith('## Welcome to KBase'):
-                # Ignore boilerplate markdown cells
-                continue
-            # Remove all HTML and markdown formatting syntax.
-            cell_soup = BeautifulSoup(_MARKDOWNER.convert(cell['source']), 'html.parser')
-            index_cell = {'desc': cell_soup.get_text(), 'cell_type': "markdown"}
-            index_cell['cell_type'] = "markdown"
-            index_cell['desc'] = cell_soup.get_text()
-        # For an app cell, the module/method name lives in metadata/kbase/appCell/app/id
-        elif cell.get('cell_type') == 'code':
-            index_cell = process_code_cell(cell)
-        else:
-            cell_type = cell.get('cell_type', "Error: no cell type")
-            sys.stderr.write(f"Narrative Indexer: could not resolve cell type \"{cell_type}\"\n")
-            sys.stderr.write(str(cell))
-            sys.stderr.write('\n' + ('-' * 80) + '\n')
-            index_cell = {'desc': 'Narrative Cell', 'cell_type': 'unknown'}
-        index_cells.append(index_cell)
-    metadata = obj_info[-1] or {}  # last elem of obj info is a metadata dict
-    narrative_title = metadata.get('name')
-    # is_public = ws_info[6] == 'r'
-    result = {
-        'doc': {
-            'narrative_title': narrative_title,
-            'data_objects': narrative_data_objects,
-            'cells': index_cells,
-            'creator': creator,
-            'total_cells': len(cells),
-        },
-        'index': 'narrative:1',
-        'id': f'{workspace_id}:{version}',
-    }
-    return result

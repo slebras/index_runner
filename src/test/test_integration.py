@@ -139,8 +139,8 @@ class TestTypes(unittest.TestCase):
             print('Workspace response error:', err.resp_data)
             raise err
         obj_data_v1 = obj_data
-        msg_data = indexer(obj_data, ws_info, obj_data_v1)
-        msg_data['doc'].update(_default_fields(obj_data, ws_info, obj_data_v1))
+        msg_data = indexer(obj_data['data'][0], ws_info, obj_data_v1['data'][0])
+        msg_data['doc'].update(_default_fields(obj_data['data'][0], ws_info, obj_data_v1['data'][0]))
         print('..objects formatted for index, verifying output...')
         self.assertEqual(msg_data['doc'], check_against)
 
@@ -171,7 +171,6 @@ class TestTypes(unittest.TestCase):
         self._default_obj_test('reads_save', index_reads, check_against)
 
     def test_assembly_indexer(self):
-
         check_against = {
             'assembly_name': None,
             'mean_contig_length': 50195.5,
