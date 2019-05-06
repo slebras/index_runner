@@ -25,8 +25,6 @@ def get_config():
         'elasticsearch_data_type': os.environ.get("ELASTICSEARCH_DATA_TYPE", 'default1'),
         'topics': {
             'workspace_events': os.environ.get('KAFKA_WORKSPACE_TOPIC', 'workspaceevents'),
-            'elasticsearch_updates': os.environ.get('KAFKA_ES_UPDATE_TOPIC', 'elasticsearch_updates'),
-            'indexer_logs': os.environ.get('KAFKA_LOGS_TOPIC', 'index_runner_logs'),
-            'error_logs': os.environ.get('KAFKA_ERROR_TOPIC', 'index_runner_error_logs')
+            'elasticsearch_updates': os.environ.get('KAFKA_ES_UPDATE_TOPIC', 'elasticsearch_updates')
         }
     }

@@ -1,7 +1,7 @@
 .PHONY: test
 
 test:
-	docker-compose restart web && docker-compose run web sh /app/scripts/run_tests.sh
+	docker-compose restart app && docker-compose run app sh /app/scripts/run_tests.sh
 
 reset:
 	docker-compose down -v  --remove-orphans --rmi all
