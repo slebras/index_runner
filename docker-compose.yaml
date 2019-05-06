@@ -5,13 +5,12 @@ version: '3'
 services:
 
   # For running the python consumers
-  web:
+  app:
     build:
       context: .
       args:
         DEVELOPMENT: 1
     depends_on:
-      - elasticsearch
       - kafka
       - workspace
     volumes:
@@ -21,23 +20,6 @@ services:
       - PYTHONUNBUFFERED=true
       - KBASE_WORKSPACE_URL=http://workspace:5000
       - WORKSPACE_TOKEN=valid_admin_token
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:5.5.3
-    environment:
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - bootstrap.memory_lock=true
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-    volumes:
-      - esdata1:/usr/share/elasticsearch/data
-    ports:
-      - 9200:9200
-      - 9300:9300
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
@@ -72,6 +54,7 @@ services:
     image: mockservices/mock_json_service
     volumes:
       - ${PWD}/src/test/mock_workspace:/config
+
 
 volumes:
   esdata1:
