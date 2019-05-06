@@ -10,12 +10,12 @@ _HEADERS = {"Content-Type": "application/json"}
 # Universal type mappings for every doc in every index.
 _GLOBAL_MAPPINGS = {
     'timestamp': {'type': 'date'},
-    'obj_name': {'type': 'text'},
+    'obj_name': {'type': 'keyword'},
     'guid': {'type': 'keyword'},
     'creation_date': {'type': 'date'},
     'shared_users': {'type': 'keyword'},
     'access_group': {'type': 'integer'},
-    'creator': {'type': 'text'},
+    'creator': {'type': 'keyword'},
     'version': {'type': 'integer'},
     'obj_id': {'type': 'integer'},
     'is_public': {'type': 'boolean'},
@@ -85,6 +85,6 @@ def set_up_indexes():
 
 def _delivery_report(err, msg):
     if err is not None:
-        sys.stderr.write(f'Message delivery failed on {msg.topic()}: {err}\n')
+        sys.stderr.write(f'Message delivery failed for {msg.key()} in {msg.topic()}: {err}\n')
     else:
         print(f'Message "{msg.key()}" delivered to {msg.topic()}')
