@@ -1,7 +1,6 @@
 import unittest
 import json
 import time
-import requests
 from confluent_kafka import Producer, Consumer, KafkaError
 
 from index_runner.utils.config import get_config
@@ -13,8 +12,6 @@ from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 _CONFIG = get_config()
-_ES_DATA_TYPE = _CONFIG['elasticsearch_data_type']
-_ES_URL = "http://" + _CONFIG['elasticsearch_host'] + ":" + str(_CONFIG['elasticsearch_port'])
 _HEADERS = {"Content-Type": "application/json"}
 _TEST_EVENTS = {
     'new_object': {
@@ -84,7 +81,7 @@ def delivery_report(err, msg):
         print('Message delivered to', msg.topic(), msg.partition())
 
 
-def consume_last(topic, timeout=120):
+def _consume_last(topic, key, timeout=120):
     """Consume the most recent message from the topic stream."""
     consumer = Consumer({
         'bootstrap.servers': _CONFIG['kafka_server'],
@@ -92,8 +89,6 @@ def consume_last(topic, timeout=120):
         'auto.offset.reset': 'earliest'
     })
     consumer.subscribe([topic])
-    # partition = TopicPartition(_CONFIG['topics']['elasticsearch_updates'], 0)
-    # consumer.seek(0)
     start_time = time.time()
     while True:
         # get time elapsed in seconds
@@ -111,7 +106,9 @@ def consume_last(topic, timeout=120):
             else:
                 print(f"Error: {msg.error()}")
             continue
-        # We got a message
+        if msg.key() != key:
+            continue
+        # We got our message
         consumer.close()
         return json.loads(msg.value())
 
@@ -222,7 +219,7 @@ class TestIntegration(unittest.TestCase):
         )
         producer.poll(60)
         print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
-        msg_data = consume_last(_CONFIG['topics']['elasticsearch_updates'])
+        msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'index')
         check_against = {
             "narrative_title": "Test Narrative Name",
             'obj_id': 1,
@@ -272,15 +269,3 @@ class TestIntegration(unittest.TestCase):
             'copied': '1/2/3'
         }
         self.assertEqual(msg_data['doc'], check_against)
-        # Dumb way to wait for the elasticsearch document to save to the index
-        time.sleep(15)
-        # Make a request to elastic to fetch our new index document
-        index_name = _CONFIG['elasticsearch_index_prefix'] + '.' + msg_data['index']
-        url = "/".join([_ES_URL, index_name, _ES_DATA_TYPE, msg_data['id']])
-        resp = requests.get(url, headers=_HEADERS)
-        if not resp.ok or resp.json().get('error'):
-            raise RuntimeError('\n'.join([
-                f"Failed to fetch id {msg_data['id']} from index {index_name}.",
-                f"Response error: {resp.text}"
-            ]))
-        self.assertEqual(resp.json()['_source'], check_against)

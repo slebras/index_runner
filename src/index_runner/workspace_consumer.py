@@ -1,6 +1,7 @@
 """
 Consume workspace update events from kafka and publish new indexes.
 """
+import sys
 import json
 from confluent_kafka import Producer
 
@@ -39,8 +40,7 @@ def _process_event(msg_data):
         REINDEX_WORKSPACE - index all objects in the workspace
     """
     # Workspace events reference:
-    # https://github.com/kbase/workspace_deluxe/blob/8a52097748ef31b94cdf1105766e2c35108f4c41/src/us/kbase/workspace/modules/SearchPrototypeEventHandlerFactory.java#L58  # noqa
-    # TODO error loggers to kafka/file/etc
+    # https://github.com/kbase/workspace_deluxe/blob/master/docsource/events.rst
     event_type = msg_data.get('evtype')
     ws_id = msg_data.get('wsid')
     if not ws_id:
@@ -60,13 +60,14 @@ def _run_indexer(msg_data):
     """
     result = index_obj(msg_data)
     if not result:
-        print(f"Unable to index object: {msg_data}.")
+        sys.stderr.write(f"Unable to index object: {msg_data}.\n")
         return
     # Produce an event in Kafka to save the index to elasticsearch
     print('producing to', _CONFIG['topics']['elasticsearch_updates'])
     _PRODUCER.produce(
         _CONFIG['topics']['elasticsearch_updates'],
         json.dumps(result),
+        'index',
         callback=_delivery_report
     )
     _PRODUCER.poll(60)
@@ -79,11 +80,8 @@ event_type_handlers = {
 
 
 def _delivery_report(err, msg):
-    """
-    Kafka producer callback.
-    """
-    # TODO file logger
+    """Kafka producer callback."""
     if err is not None:
-        print(f'Message delivery failed on {msg.topic()}: {err}')
+        sys.stderr.write(f'Message delivery failed for "{msg.key()}" in {msg.topic()}: {err}\n')
     else:
-        print(f'Message delivered to {msg.topic()}')
+        print(f'Message "{msg.key()}" delivered to {msg.topic()}')
