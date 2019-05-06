@@ -87,6 +87,7 @@ def _default_fields(obj_data, ws_info, obj_data_v1):
     v1_info = obj_data_v1['data'][0]['info']
     is_public = ws_info[6] == 'r'
     shared_users = get_shared_users(ws_id)
+    copy_ref = data.get('copied')
     return {
         "creator": data["creator"],
         "access_group": ws_id,
@@ -97,7 +98,8 @@ def _default_fields(obj_data, ws_info, obj_data_v1):
         "creation_date": v1_info[3],
         "is_public": is_public,
         "version": version,
-        "obj_id": obj_id
+        "obj_id": obj_id,
+        "copied": copy_ref
     }
 
 

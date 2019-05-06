@@ -105,7 +105,11 @@ class TestIntegration(unittest.TestCase):
     def test_reads_update_event(self):
         print('Testing reads')
         event_data = _TEST_EVENTS['reads_save']
-        upa = "/".join([str(event_data['wsid']), str(event_data['objid']), str(event_data['ver'])])  # type: ignore
+        upa = "/".join([
+            str(event_data['wsid']),  # type: ignore
+            str(event_data['objid']),  # type: ignore
+            str(event_data['ver'])  # type: ignore
+        ])
         ws_client = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
         try:
             obj_data = ws_client.admin_req('getObjects', {
@@ -146,6 +150,7 @@ class TestIntegration(unittest.TestCase):
             'is_public': True,
             'obj_id': 44,
             "shared_users": ['username'],
+            'copied': None
         }
         self.assertEqual(msg_data['doc'], check_against)
 
@@ -206,5 +211,6 @@ class TestIntegration(unittest.TestCase):
             "is_public": True,
             "timestamp": 1554408998887,
             'creation_date': '2019-03-26T17:23:33+0000',
+            'copied': '1/2/3'
         }
         self.assertEqual(msg_data['doc'], check_against)
