@@ -80,11 +80,11 @@ def set_up_indexes():
             'init_index',
             callback=_delivery_report
         )
-        producer.poll(0)
+        producer.poll(60)
 
 
 def _delivery_report(err, msg):
     if err is not None:
         sys.stderr.write(f'Message delivery failed on {msg.topic()}: {err}\n')
     else:
-        print(f'Message delivered to {msg.topic()}')
+        print(f'Message "{msg.key()}" delivered to {msg.topic()}')

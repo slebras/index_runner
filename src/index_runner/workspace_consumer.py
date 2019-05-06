@@ -67,6 +67,7 @@ def _run_indexer(msg_data):
     _PRODUCER.produce(
         _CONFIG['topics']['elasticsearch_updates'],
         json.dumps(result),
+        'index',
         callback=_delivery_report
     )
     _PRODUCER.poll(60)
@@ -79,11 +80,8 @@ event_type_handlers = {
 
 
 def _delivery_report(err, msg):
-    """
-    Kafka producer callback.
-    """
-    # TODO file logger
+    """Kafka producer callback."""
     if err is not None:
-        sys.stderr.write(f'Message delivery failed on {msg.topic()}: {err}\n')
+        sys.stderr.write(f'Message delivery failed for "{msg.key()}" in {msg.topic()}: {err}\n')
     else:
-        print(f'Message delivered to {msg.topic()}')
+        print(f'Message "{msg.key()}" delivered to {msg.topic()}')

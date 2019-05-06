@@ -69,7 +69,7 @@ def delivery_report(err, msg):
         print('Message delivered to', msg.topic(), msg.partition())
 
 
-def consume_last(topic, timeout=120):
+def _consume_last(topic, key, timeout=120):
     """Consume the most recent message from the topic stream."""
     consumer = Consumer({
         'bootstrap.servers': _CONFIG['kafka_server'],
@@ -94,7 +94,9 @@ def consume_last(topic, timeout=120):
             else:
                 print(f"Error: {msg.error()}")
             continue
-        # We got a message
+        if msg.key() != key:
+            continue
+        # We got our message
         consumer.close()
         return json.loads(msg.value())
 
@@ -164,7 +166,7 @@ class TestIntegration(unittest.TestCase):
         )
         producer.poll(60)
         print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
-        msg_data = consume_last(_CONFIG['topics']['elasticsearch_updates'])
+        msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'index')
         check_against = {
             "narrative_title": "Test Narrative Name",
             'obj_id': 1,
