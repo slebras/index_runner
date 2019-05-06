@@ -141,11 +141,6 @@ class TestTypes(unittest.TestCase):
         obj_data_v1 = obj_data
         msg_data = indexer(obj_data, ws_info, obj_data_v1)
         msg_data['doc'].update(_default_fields(obj_data, ws_info, obj_data_v1))
-        print('='*80)
-        print('='*80)
-        print(msg_data['doc'])
-        print('='*80)
-        print('='*80)
         print('..objects formatted for index, verifying output...')
         self.assertEqual(msg_data['doc'], check_against)
 
