@@ -16,14 +16,14 @@ def index_obj(msg_data):
     For a newly created object, generate the index document for it and push to
     the elasticsearch topic on Kafka.
     Args:
-        msg_data - json event data received from the kafka workspace events stream
+        msg_data - json event data received from the kafka workspace events
+        stream. Must have keys for `wsid` and `objid`
     """
     # Fetch the object data from the workspace API
     upa = _get_upa_from_msg_data(msg_data)
     config = get_config()
     ws_url = config['workspace_url']
     ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
-    upa = _get_upa_from_msg_data(msg_data)
     try:
         obj_data = ws_client.admin_req('getObjects', {
             'objects': [{'ref': upa}]
@@ -32,6 +32,7 @@ def index_obj(msg_data):
         print('Workspace response error:', err.resp_data)
         raise err
     obj_data = obj_data['data'][0]
+    obj_type = obj_data['info'][2]
     try:
         ws_info = ws_client.admin_req('getWorkspaceInfo', {
             'id': msg_data['wsid']
@@ -39,13 +40,11 @@ def index_obj(msg_data):
     except WorkspaceResponseError as err:
         print('Workspace response error:', err.resp_data)
         raise err
-    # get upa for first version of current object
-    v1_upa = '/'.join(upa.split("/")[:-1]) + "/1"
-    # we get the info of the first object to get the origin creation date
-    # of the object
+    # Get the info of the first object to get the origin creation date of the
+    # object.
     try:
         obj_data_v1 = ws_client.admin_req('getObjects', {
-            'objects': [{'ref': v1_upa}],
+            'objects': [{'ref': upa + '/1'}],
             'no_data': 1
         })
     except WorkspaceResponseError as err:
@@ -53,7 +52,7 @@ def index_obj(msg_data):
         raise err
     obj_data_v1 = obj_data_v1['data'][0]
     # Dispatch to a specific type handler to produce the search document
-    (type_module_name, type_version) = msg_data['objtype'].split('-')
+    (type_module_name, type_version) = obj_type.split('-')
     (type_module, type_name) = type_module_name.split('.')
     indexer = _find_indexer(type_module, type_name, type_version)
     if not indexer:
@@ -121,9 +120,6 @@ def _get_upa_from_msg_data(msg_data):
     if not ws_id:
         raise RuntimeError(f'Event data missing the "wsid" field for workspace ID: {msg_data}')
     obj_id = msg_data.get('objid')
-    if not ws_id:
+    if not obj_id:
         raise RuntimeError(f'Event data missing the "objid" field for object ID: {msg_data}')
-    obj_ver = msg_data.get('ver')
-    if not ws_id:
-        raise RuntimeError(f'Event data missing the "ver" field for object ID: {msg_data}')
-    return f"{ws_id}/{obj_id}/{obj_ver}"
+    return f"{ws_id}/{obj_id}"
