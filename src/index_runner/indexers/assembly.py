@@ -31,7 +31,7 @@ def index_assembly(obj_data, ws_info, obj_data_v1):
                                        in data['contigs'].items() if contig.get('is_circ')])
     else:
         mean_contig_length, percent_complete_contigs, percent_circle_contigs = None, None, None
-    return {
+    yield {
         'doc': {
             "assembly_name": data.get("name", None),
             "mean_contig_length": mean_contig_length,

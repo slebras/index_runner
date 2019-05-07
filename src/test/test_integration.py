@@ -1,12 +1,14 @@
 import unittest
 import json
 import time
+import os
 from confluent_kafka import Producer, Consumer, KafkaError
 
 from index_runner.utils.config import get_config
 from index_runner.indexers.main import _default_fields
 from index_runner.indexers.reads import index_reads
 from index_runner.indexers.assembly import index_assembly
+from index_runner.indexers.genome import index_genome
 
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
@@ -71,6 +73,17 @@ _TEST_EVENTS = {
         "permusers": [],
         "user": "username"
     },
+    'genome_save': {
+        "wsid": 39794,
+        "ver": 1,
+        "perm": None,
+        "evtype": "NEW_VERSION",
+        "objid": 4,
+        "time": 1554408311320,
+        "objtype": "KBaseGenomes.Genome‑15.1",
+        "permusers": [],
+        "user": "username"
+    }
 }
 
 
@@ -115,8 +128,32 @@ def _consume_last(topic, key, timeout=120):
 
 class TestTypes(unittest.TestCase):
 
+    def _default_obj_test_from_json(self, json_path, indexer, json_check_against):
+        self.maxDiff = None
+        print(f'Testing {str(indexer)} indexer...')
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+
+        with open(os.path.join(dir_path, json_path)) as fid:
+            json_data = json.load(fid)
+        obj_data = json_data['obj_data']
+        ws_info = json_data['ws_info']
+        obj_data_v1 = obj_data
+
+        result_gen = indexer(obj_data, ws_info, obj_data_v1)
+        default_fields = _default_fields(obj_data, ws_info, obj_data_v1)
+
+        with open(os.path.join(dir_path, json_check_against)) as fid:
+            check_against = json.load(fid)
+
+        print('..Indexer and data retrieved, now proceeding to verify output...')
+        # print('[')
+        for i, result in enumerate(result_gen):
+            result['doc'].update(default_fields)
+            self.assertEqual(result['doc'], check_against[i])
+        # print(']')
+
     def _default_obj_test(self, event_data_str, indexer, check_against):
-        print(f'Testing {event_data_str} indexer...')
+        print(f'Testing {str(indexer)} indexer...')
         event_data = _TEST_EVENTS[event_data_str]
         upa = "/".join([
             str(event_data['wsid']),  # type: ignore
@@ -139,10 +176,13 @@ class TestTypes(unittest.TestCase):
             print('Workspace response error:', err.resp_data)
             raise err
         obj_data_v1 = obj_data
-        msg_data = indexer(obj_data, ws_info, obj_data_v1)
-        msg_data['doc'].update(_default_fields(obj_data, ws_info, obj_data_v1))
-        print('..objects formatted for index, verifying output...')
-        self.assertEqual(msg_data['doc'], check_against)
+        result_gen = indexer(obj_data, ws_info, obj_data_v1)
+        default_fields = _default_fields(obj_data, ws_info, obj_data_v1)
+
+        for i, result in enumerate(result_gen):
+            result['doc'].update(default_fields)
+            print('..objects formatted for index, verifying output...')
+            self.assertEqual(result['doc'], check_against[i])
 
     def test_reads_indexer(self):
         check_against = {
@@ -168,7 +208,14 @@ class TestTypes(unittest.TestCase):
             "shared_users": ['username'],
             'copied': None
         }
-        self._default_obj_test('reads_save', index_reads, check_against)
+        self._default_obj_test('reads_save', index_reads, [check_against])
+
+    def test_genome_indexer(self):
+        self._default_obj_test_from_json(
+            'test_files/genome_file.json',
+            index_genome,
+            'test_files/genome_check_against.json'
+        )
 
     def test_assembly_indexer(self):
 
@@ -199,7 +246,7 @@ class TestTypes(unittest.TestCase):
             'obj_id': 4,
             'copied': '39795/6/1'
         }
-        self._default_obj_test('assembly_save', index_assembly, check_against)
+        self._default_obj_test('assembly_save', index_assembly, [check_against])
 
 
 class TestIntegration(unittest.TestCase):

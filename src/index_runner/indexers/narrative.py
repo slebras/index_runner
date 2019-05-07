@@ -97,4 +97,4 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
         'index': 'narrative:1',
         'id': f'{workspace_id}:{version}',
     }
-    return result
+    yield result

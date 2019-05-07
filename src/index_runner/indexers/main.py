@@ -7,6 +7,7 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 from ..utils.config import get_config
 from .narrative import index_narrative
 from .reads import index_reads
+from .genome import index_genome
 from .assembly import index_assembly
 from .indexer_utils import get_shared_users
 
@@ -57,10 +58,12 @@ def index_obj(msg_data):
     if not indexer:
         # No indexer found for this type
         return
-    indexer_ret = indexer(obj_data, ws_info, obj_data_v1)
-    # Merge in default data into the document
-    indexer_ret['doc'].update(_default_fields(obj_data, ws_info, obj_data_v1))
-    return indexer_ret
+    # all indexers should be generators.
+    indexer_generator = indexer(obj_data, ws_info, obj_data_v1)
+    for indexer_ret in indexer_generator:
+        # Merge in default data into the document
+        indexer_ret['doc'].update(_default_fields(obj_data, ws_info, obj_data_v1))
+        yield indexer_ret
 
 
 def _find_indexer(type_module, type_name, type_version):
@@ -110,7 +113,8 @@ _INDEXER_DIRECTORY = [
     {'module': 'KBaseNarrative', 'type': 'Narrative', 'indexer': index_narrative},
     {'module': 'KBaseFile', 'type': 'PairedEndLibrary', 'indexer': index_reads},
     {'module': 'KBaseFile', 'type': 'SingleEndLibrary', 'indexer': index_reads},
-    {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly}
+    {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly},
+    {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome}
 ]
 
 

@@ -37,7 +37,7 @@ def index_reads(obj_data, ws_info, obj_data_v1):
     # the scale of phred scores
     phred_type = data['data'].get('phred_type', None)
 
-    return {
+    yield {
         'doc': {
             'phred_type': phred_type,
             'gc_content': gc_content,
