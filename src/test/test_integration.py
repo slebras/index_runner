@@ -137,6 +137,7 @@ class TestTypes(unittest.TestCase):
             json_data = json.load(fid)
         obj_data = json_data['obj_data']
         ws_info = json_data['ws_info']
+        obj_data = obj_data['data'][0]
         obj_data_v1 = obj_data
 
         result_gen = indexer(obj_data, ws_info, obj_data_v1)
@@ -145,7 +146,7 @@ class TestTypes(unittest.TestCase):
         with open(os.path.join(dir_path, json_check_against)) as fid:
             check_against = json.load(fid)
 
-        print('..Indexer and data retrieved, now proceeding to verify output...')
+        print('..Indexer and data retrieved, now proceeding to verify outputs...')
         # print('[')
         for i, result in enumerate(result_gen):
             result['doc'].update(default_fields)
@@ -175,6 +176,7 @@ class TestTypes(unittest.TestCase):
         except WorkspaceResponseError as err:
             print('Workspace response error:', err.resp_data)
             raise err
+        obj_data = obj_data['data'][0]
         obj_data_v1 = obj_data
         result_gen = indexer(obj_data, ws_info, obj_data_v1)
         default_fields = _default_fields(obj_data, ws_info, obj_data_v1)
@@ -183,7 +185,6 @@ class TestTypes(unittest.TestCase):
             result['doc'].update(default_fields)
             print('..objects formatted for index, verifying output...')
             self.assertEqual(result['doc'], check_against[i])
-
 
     def test_reads_indexer(self):
         check_against = {

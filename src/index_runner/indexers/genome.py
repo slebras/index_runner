@@ -8,11 +8,10 @@ def index_genome(obj_data, ws_info, obj_data_v1):
         ci:              KBaseGenomes.Genome-13.0+
         narrative(prod): KBaseGenomes.Genome-8.1+
     """
-    data = obj_data['data'][0]
-    info = data['info']
-    if not data.get('data'):
+    info = obj_data['info']
+    if not obj_data.get('data'):
         raise Exception("no data in object")
-    data = data['data']
+    data = obj_data['data']
 
     workspace_id = info[6]
     object_id = info[0]
