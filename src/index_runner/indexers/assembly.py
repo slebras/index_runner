@@ -7,19 +7,13 @@ def index_assembly(obj_data, ws_info, obj_data_v1):
     Currently Handles the follownig workspace types:
          KBaseGenomeAnnotations.Assembly-6.0
     """
-    data = obj_data['data'][0]
-    info = data['info']
-    if not data.get('data'):
-        raise Exception("no data in object")
-    data = data['data']
-
+    info = obj_data['info']
+    data = obj_data['data']
     workspace_id = info[6]
     object_id = info[0]
-
     # get assembly type
     assembly_type = info[2].split('-')[0]
     assembly_type_version = info[2].split('-')[1]
-
     # get mean contig length
     if data.get('contigs'):
         # we do not include the contig if it does not store the requisite field

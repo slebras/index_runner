@@ -184,6 +184,7 @@ class TestTypes(unittest.TestCase):
             print('..objects formatted for index, verifying output...')
             self.assertEqual(result['doc'], check_against[i])
 
+
     def test_reads_indexer(self):
         check_against = {
             'phred_type': None,
@@ -218,7 +219,6 @@ class TestTypes(unittest.TestCase):
         )
 
     def test_assembly_indexer(self):
-
         check_against = {
             'assembly_name': None,
             'mean_contig_length': 50195.5,

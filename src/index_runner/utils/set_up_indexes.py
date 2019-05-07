@@ -118,8 +118,8 @@ def set_up_indexes():
             config['topics']['elasticsearch_updates'],
             json.dumps({
                 'name': index,
-                'alias': mapping.get('alias'),
-                'props': mapping['properties']
+                'alias': mapping['alias'],
+                'props': {**mapping['properties'], **_GLOBAL_MAPPINGS}  # type: ignore
             }),
             'init_index',
             callback=_delivery_report
