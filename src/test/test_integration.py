@@ -150,6 +150,7 @@ class TestTypes(unittest.TestCase):
         # print('[')
         for i, result in enumerate(result_gen):
             result['doc'].update(default_fields)
+            # print(result['doc'])
             self.assertEqual(result['doc'], check_against[i])
         # print(']')
 

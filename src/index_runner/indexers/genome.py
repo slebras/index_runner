@@ -62,6 +62,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
 
             feature_index = {
                 'doc': {
+                    'feature_type': feat_type,
                     'functions': functions,
                     'contig_ids': contig_ids,
                     'sequence_length': seq_len,

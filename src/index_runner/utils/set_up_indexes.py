@@ -99,6 +99,7 @@ _MAPPINGS = {
     "genome_features:1": {
         'alias': "genome_features",
         'properties': {
+                'feature_type': {'type': 'keyword'},
                 'functions': {'type': 'keyword'},
                 'contig_ids': {'type': 'keyword'},
                 'sequence_length': {'type': 'integer'},
