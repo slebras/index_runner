@@ -39,8 +39,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
             'taxonomy': data.get('taxonomy', None),
             'mean_contig_length': mean(data.get('contig_lengths', [])),
             'external_origination_date': data.get('external_source_origination_date', None),
-            'original_source_file_name': data.get('original_source_file_name', None),
-            **default_fields(obj_data, ws_info, obj_data_v1)
+            'original_source_file_name': data.get('original_source_file_name', None)
         },
         'index': "genome",
         'id': f"{workspace_id}:{object_id}"
@@ -65,5 +64,6 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                 },
                 'index': 'genome_features',
                 'id': f'{workspace_id}:{object_id}:{feature_id}',
+                'no_defaults': True
             }
             yield feature_index

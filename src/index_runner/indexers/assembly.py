@@ -1,5 +1,5 @@
 # from utils.get_path import get_path
-from .indexer_utils import mean, default_fields
+from .indexer_utils import mean
 
 
 def index_assembly(obj_data, ws_info, obj_data_v1):
@@ -41,7 +41,6 @@ def index_assembly(obj_data, ws_info, obj_data_v1):
             "external_origination_date": data.get('external_source_origination_date', None),
             "external_source_id": data.get('external_source_id', None),
             "external_source": data.get('external_source', None),
-            **default_fields(obj_data, ws_info, obj_data_v1)
         },
         'index': "assembly",
         'id': f"{workspace_id}:{object_id}",

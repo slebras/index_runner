@@ -1,4 +1,3 @@
-from .indexer_utils import default_fields
 from utils.get_path import get_path
 
 
@@ -46,7 +45,6 @@ def index_reads(obj_data, ws_info, obj_data_v1):
             'size': size,
             'interleaved': interleaved,
             'single_genome': single_genome,
-            **default_fields(obj_data, ws_info, obj_data_v1)
         },
         'index': 'reads',
         'id': f'{workspace_id}:{object_id}'

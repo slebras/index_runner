@@ -62,6 +62,11 @@ def index_obj(msg_data):
     indexer = _find_indexer(type_module, type_name, type_version)
     # all indexers should be generators.
     for indexer_ret in indexer(obj_data, ws_info, obj_data_v1):
+        if indexer_ret.get('no_defaults'):
+            del indexer_ret['no_defaults']
+        else:
+            defaults = indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
+            indexer_ret['doc'].update(defaults)
         yield indexer_ret
 
 

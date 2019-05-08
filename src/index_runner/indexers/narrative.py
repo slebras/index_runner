@@ -59,7 +59,6 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             'cells': index_cells,
             'creator': creator,
             'total_cells': len(cells),
-            **indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
         },
         'index': 'narrative:1',
         'id': f'{workspace_id}:{version}',
