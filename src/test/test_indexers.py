@@ -6,6 +6,7 @@ from index_runner.utils.config import get_config
 from index_runner.indexers.reads import index_reads
 from index_runner.indexers.genome import index_genome
 from index_runner.indexers.assembly import index_assembly
+from index_runner.indexers.pangenome import index_pangenome
 
 _CONFIG = get_config()
 
@@ -48,6 +49,7 @@ _TEST_EVENTS = {
         'ver': 1,
         'perm': None,
         'evtype': "NEW_VERSION",
+        "objid": 8,
         "time": 1554408311320,
         "objtype": "KBaseGenomes.Pangenome-4.2",
         "permusers": [],
@@ -110,3 +112,10 @@ class TestIndexers(unittest.TestCase):
         with open(os.path.join(dir_path, 'test_data/genome_check_against.json')) as fd:
             check_against = json.load(fd)
         self._default_obj_test('genome_save', index_genome, check_against)
+
+    def test_pangenome_indexer(self):
+        # The pangenome `check_against` data is really big, so we keep it in an external file
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        with open(os.path.join(dir_path, 'test_data/pangenome_check_against.json')) as fd:
+            check_against = json.load(fd)
+        self._default_obj_test('pangenome_save', index_pangenome, check_against)
