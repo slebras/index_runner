@@ -1,5 +1,6 @@
 # from utils.get_path import get_path
 from .indexer_utils import mean
+from ..utils import ws_type
 
 
 def index_assembly(obj_data, ws_info, obj_data_v1):
@@ -12,8 +13,7 @@ def index_assembly(obj_data, ws_info, obj_data_v1):
     workspace_id = info[6]
     object_id = info[0]
     # get assembly type
-    assembly_type = info[2].split('-')[0]
-    assembly_type_version = info[2].split('-')[1]
+    (type_module, assembly_type, assembly_type_version) = ws_type.get_pieces(info[2])
     # get mean contig length
     if data.get('contigs'):
         # we do not include the contig if it does not store the requisite field

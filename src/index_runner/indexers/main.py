@@ -6,6 +6,7 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from . import indexer_utils
 from ..utils.config import get_config
+from ..utils import ws_type
 from .narrative import index_narrative
 from .reads import index_reads
 from .genome import index_genome
@@ -34,7 +35,7 @@ def index_obj(msg_data):
         raise err
     obj_data = obj_data['data'][0]
     obj_type = obj_data['info'][2]
-    type_name = obj_type.split('-')[0].split('.')[1]
+    (type_module, type_name, type_version) = ws_type.get_pieces(obj_type)
     if type_name in _TYPE_BLACKLIST:
         # Blacklisted type, so we don't index it
         return
@@ -57,8 +58,6 @@ def index_obj(msg_data):
         raise err
     obj_data_v1 = obj_data_v1['data'][0]
     # Dispatch to a specific type handler to produce the search document
-    (type_module_name, type_version) = obj_type.split('-')
-    (type_module, type_name) = type_module_name.split('.')
     indexer = _find_indexer(type_module, type_name, type_version)
     # all indexers should be generators.
     for indexer_ret in indexer(obj_data, ws_info, obj_data_v1):
@@ -89,7 +88,7 @@ def generic_indexer(obj_data, ws_info, obj_data_v1):
     version = obj_data['info'][4]
     upa = f"{workspace_id}:{version}"
     obj_type = obj_data['info'][2]
-    obj_type_name = obj_type.split('-')[0].split('.')[1]
+    obj_type_name = ws_type.get_pieces(obj_type)[1]
     return {
         'doc': indexer_utils.default_fields(obj_data, ws_info, obj_data_v1),
         'index': obj_type_name,
