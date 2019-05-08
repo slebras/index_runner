@@ -48,7 +48,6 @@ class TestIntegration(unittest.TestCase):
 
     maxDiff = None
 
-    @unittest.skip('x')
     def test_narrative_update_event(self):
         print('producing to', _CONFIG['topics']['workspace_events'])
         producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})

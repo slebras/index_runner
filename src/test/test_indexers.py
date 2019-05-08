@@ -70,7 +70,6 @@ class TestIndexers(unittest.TestCase):
         for idx, msg_data in enumerate(indexer(test_data['obj'], test_data['ws_info'], test_data['obj'])):
             self.assertEqual(msg_data['doc'], check_against[idx])
 
-    @unittest.skip('x')
     def test_reads_indexer(self):
         check_against = [{
             'phred_type': None,
@@ -86,7 +85,6 @@ class TestIndexers(unittest.TestCase):
         }]
         self._default_obj_test('reads_save', index_reads, check_against)
 
-    @unittest.skip('x')
     def test_assembly_indexer(self):
         check_against = [{
             'assembly_name': None,

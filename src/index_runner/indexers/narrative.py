@@ -52,7 +52,6 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
         index_cells.append(index_cell)
     metadata = obj_info[-1] or {}  # last elem of obj info is a metadata dict
     narrative_title = metadata.get('name')
-    # is_public = ws_info[6] == 'r'
     result = {
         'doc': {
             'narrative_title': narrative_title,
