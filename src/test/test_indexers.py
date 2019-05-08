@@ -42,6 +42,16 @@ _TEST_EVENTS = {
         "objtype": "KBaseGenomes.Genome‑15.1",
         "permusers": [],
         "user": "username"
+    },
+    'pangenome_save': {
+        'wsid': 39794,
+        'ver': 1,
+        'perm': None,
+        'evtype': "NEW_VERSION",
+        "time": 1554408311320,
+        "objtype": "KBaseGenomes.Pangenome-4.2",
+        "permusers": [],
+        "user": "username"
     }
 }
 
