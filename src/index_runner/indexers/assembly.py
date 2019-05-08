@@ -31,7 +31,7 @@ def index_assembly(obj_data, ws_info, obj_data_v1):
             "mean_contig_length": mean_contig_length,
             "percent_complete_contigs": percent_complete_contigs,
             "percent_circle_contigs": percent_circle_contigs,
-            "assembly_type": assembly_type,
+            "assembly_type": type_module + '.' + assembly_type,
             "assembly_type_version": assembly_type_version,
             "assembly_id": data.get('assembly_id', None),
             "gc_content": data.get('gc_content', None),

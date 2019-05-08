@@ -40,7 +40,7 @@ def index_reads(obj_data, ws_info, obj_data_v1):
             'mean_quality_score': qual_mean,
             'mean_read_length': mean_read_length,
             'sequencing_tech': sequencing_tech,
-            'reads_type': reads_type,
+            'reads_type': type_module + '.' + reads_type,
             'reads_type_version': reads_type_version,
             'size': size,
             'interleaved': interleaved,
