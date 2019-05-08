@@ -57,19 +57,21 @@ def _run_indexer(msg_data):
     Run the indexer for a workspace event message and produce an event for it.
     This will be threaded and backgrounded.
     """
-    result = index_obj(msg_data)
-    if not result:
-        sys.stderr.write(f"Unable to index object: {msg_data}.\n")
-        return
-    # Produce an event in Kafka to save the index to elasticsearch
-    print('producing to', _CONFIG['topics']['elasticsearch_updates'])
-    _PRODUCER.produce(
-        _CONFIG['topics']['elasticsearch_updates'],
-        json.dumps(result),
-        'index',
-        callback=_delivery_report
-    )
-    _PRODUCER.poll(60)
+    # index_obj returns a generator
+    result_gen = index_obj(msg_data)
+    for result in result_gen:
+        if not result:
+            sys.stderr.write(f"Unable to index object: {msg_data}.\n")
+            continue
+        # Produce an event in Kafka to save the index to elasticsearch
+        print('producing to', _CONFIG['topics']['elasticsearch_updates'])
+        _PRODUCER.produce(
+            _CONFIG['topics']['elasticsearch_updates'],
+            json.dumps(result),
+            'index',
+            callback=_delivery_report
+        )
+        _PRODUCER.poll(60)
 
 
 # Handler functions for each event type ('evtype' key)
