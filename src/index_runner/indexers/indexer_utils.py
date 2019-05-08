@@ -61,3 +61,29 @@ def fetch_objects_in_workspace(ws_id):
         if 'KBaseNarrative' not in str(obj[2])
     ]
     return narrative_data
+
+
+def default_fields(obj_data, ws_info, obj_data_v1):
+    """
+    Add fields that should be present in any document on elasticsearch.
+    """
+    ws_id = obj_data['info'][6]
+    obj_id = obj_data['info'][0]
+    version = obj_data['info'][4]
+    v1_info = obj_data_v1['info']
+    is_public = ws_info[6] == 'r'
+    shared_users = get_shared_users(ws_id)
+    copy_ref = obj_data.get('copied')
+    return {
+        "creator": obj_data["creator"],
+        "access_group": ws_id,
+        "obj_name": obj_data['info'][1],
+        "shared_users": shared_users,
+        "guid": ":".join([str(ws_id), str(obj_id)]),
+        "timestamp": obj_data['epoch'],
+        "creation_date": v1_info[3],
+        "is_public": is_public,
+        "version": version,
+        "obj_id": obj_id,
+        "copied": copy_ref,
+    }

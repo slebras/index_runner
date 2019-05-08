@@ -4,11 +4,11 @@ Indexer logic based on type
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
+from . import indexer_utils
 from ..utils.config import get_config
 from .narrative import index_narrative
 from .reads import index_reads
 from .assembly import index_assembly
-from .indexer_utils import get_shared_users
 
 
 def index_obj(msg_data):
@@ -33,6 +33,10 @@ def index_obj(msg_data):
         raise err
     obj_data = obj_data['data'][0]
     obj_type = obj_data['info'][2]
+    type_name = obj_type.split('-')[0].split('.')[1]
+    if type_name in _TYPE_BLACKLIST:
+        # Blacklisted type, so we don't index it
+        return
     try:
         ws_info = ws_client.admin_req('getWorkspaceInfo', {
             'id': msg_data['wsid']
@@ -55,13 +59,7 @@ def index_obj(msg_data):
     (type_module_name, type_version) = obj_type.split('-')
     (type_module, type_name) = type_module_name.split('.')
     indexer = _find_indexer(type_module, type_name, type_version)
-    if not indexer:
-        # No indexer found for this type
-        return
-    indexer_ret = indexer(obj_data, ws_info, obj_data_v1)
-    # Merge in default data into the document
-    indexer_ret['doc'].update(_default_fields(obj_data, ws_info, obj_data_v1))
-    return indexer_ret
+    return indexer(obj_data, ws_info, obj_data_v1)
 
 
 def _find_indexer(type_module, type_name, type_version):
@@ -75,32 +73,19 @@ def _find_indexer(type_module, type_name, type_version):
         if module_match and name_match and ver_match:
             return entry['indexer']
     # No indexer found for this type
-    return None
+    return generic_indexer
 
 
-def _default_fields(obj_data, ws_info, obj_data_v1):
-    """
-    Add fields that should be present in any document on elasticsearch.
-    """
-    ws_id = obj_data['info'][6]
-    obj_id = obj_data['info'][0]
+def generic_indexer(obj_data, ws_info, obj_data_v1):
+    workspace_id = obj_data['info'][6]
     version = obj_data['info'][4]
-    v1_info = obj_data_v1['info']
-    is_public = ws_info[6] == 'r'
-    shared_users = get_shared_users(ws_id)
-    copy_ref = obj_data.get('copied')
+    upa = f"{workspace_id}:{version}"
+    obj_type = obj_data['info'][2]
+    obj_type_name = obj_type.split('-')[0].split('.')[1]
     return {
-        "creator": obj_data["creator"],
-        "access_group": ws_id,
-        "obj_name": obj_data['info'][1],
-        "shared_users": shared_users,
-        "guid": ":".join([str(ws_id), str(obj_id)]),
-        "timestamp": obj_data['epoch'],
-        "creation_date": v1_info[3],
-        "is_public": is_public,
-        "version": version,
-        "obj_id": obj_id,
-        "copied": copy_ref,
+        'doc': indexer_utils.default_fields(obj_data, ws_info, obj_data_v1),
+        'index': obj_type_name,
+        'id': upa
     }
 
 
@@ -111,6 +96,210 @@ _INDEXER_DIRECTORY = [
     {'module': 'KBaseFile', 'type': 'PairedEndLibrary', 'indexer': index_reads},
     {'module': 'KBaseFile', 'type': 'SingleEndLibrary', 'indexer': index_reads},
     {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly}
+]
+
+# All types we don't want to index
+_TYPE_BLACKLIST = [
+    "KBaseExperiments.AmpliconSet",
+    "KBaseExperiments.AttributeMapping",
+    "KBaseExperiments.ClusterSet",
+    "KBaseExperiments.CorrelationMatrix",
+    "KBaseExperiments.Network",
+    "KBaseExperiments.PCAMatrix",
+    "KBaseGwasData.Associations",
+    "KBaseGwasData.Variations",
+    "KBaseGenomes.ContigSet",
+    "KBaseGenomes.Feature",
+    "KBaseGenomes.GenomeComparison",
+    "KBaseGenomes.GenomeDomainData",
+    "KBaseGenomes.MetagenomeAnnotation",
+    "KBaseGenomes.Pangenome",
+    "KBaseGenomes.ProbabilisticAnnotation",
+    "KBaseRNASeq.AlignmentStatsResults",
+    "KBaseRNASeq.Bowtie2Indexes",
+    "KBaseRNASeq.cummerbund_output",
+    "KBaseRNASeq.cummerbundplot",
+    "KBaseRNASeq.DifferentialExpressionStat",
+    "KBaseRNASeq.GFFAnnotation",
+    "KBaseRNASeq.RNASeqAlignment",
+    "KBaseRNASeq.RNASeqAlignmentSet",
+    "KBaseRNASeq.RNASeqDifferentialExpression",
+    "KBaseRNASeq.RNASeqExpression",
+    "KBaseRNASeq.RNASeqExpressionSet",
+    "KBaseRNASeq.RNASeqSampleSet",
+    "KBaseMatrices.AmpliconMatrix",
+    "KBaseMatrices.DifferentialExpressionMatrix",
+    "KBaseMatrices.ExpressionMatrix",
+    "KBaseMatrices.FitnessMatrix",
+    "KBaseMatrices.MetaboliteMatrix",
+    "KBaseSets.AssemblySet",
+    "KBaseSets.DifferentialExpressionMatrixSet",
+    "KBaseSets.ExpressionSet",
+    "KBaseSets.FeatureSetSet",
+    "KBaseSets.GenomeSet",
+    "KBaseSets.ReadsAlignmentSet",
+    "KBaseSets.ReadsSet",
+    "KBaseClassifier.GenomeCategorizer",
+    "KBaseClassifier.GenomeClassifier",
+    "KBaseClassifier.GenomeClassifierTrainingSet",
+    "KBaseFBA.Classifier",
+    "KBaseFBA.ClassifierResult",
+    "KBaseFBA.ClassifierTrainingSet",
+    "KBaseFBA.ETC",
+    "KBaseFBA.FBA",
+    "KBaseFBA.FBAComparison",
+    "KBaseFBA.FBAModel",
+    "KBaseFBA.FBAModelSet",
+    "KBaseFBA.FBAPathwayAnalysis",
+    "KBaseFBA.FBAPathwayAnalysisMultiple",
+    "KBaseFBA.Gapfilling",
+    "KBaseFBA.Gapgeneration",
+    "KBaseFBA.MissingRoleData",
+    "KBaseFBA.ModelComparison",
+    "KBaseFBA.ModelTemplate",
+    "KBaseFBA.NewModelTemplate",
+    "KBaseFBA.PromConstraint",
+    "KBaseFBA.ReactionProbabilities",
+    "KBaseFBA.ReactionSensitivityAnalysis",
+    "KBaseFBA.SubsystemAnnotation",
+    "KBasePhenotypes.PhenotypeSet",
+    "KBasePhenotypes.PhenotypeSimulationSet",
+    "KBaseFeatureValues.AnalysisReport",
+    "KBaseFeatureValues.DifferentialExpressionMatrix",
+    "KBaseFeatureValues.EstimateKResult",
+    "KBaseFeatureValues.ExpressionMatrix",
+    "KBaseFeatureValues.FeatureClusters",
+    "KBaseFeatureValues.SingleKnockoutFitnessMatrix",
+    "KBaseBiochem.Biochemistry",
+    "KBaseBiochem.BiochemistryStructures",
+    "KBaseBiochem.CompoundSet",
+    "KBaseBiochem.Media",
+    "KBaseBiochem.MediaSet",
+    "KBaseBiochem.MetabolicMap",
+    "KBaseGenomeAnnotations.Taxon",
+    "KBaseGenomeAnnotations.TaxonLookup",
+    "KBaseGenomeAnnotations.TaxonSet",
+    "KBaseMetagenomes.BinnedContigs",
+    "KBaseReport.Report",
+    "DataPalette.DataPalette",
+    "DataPalette.DataReference",
+    "KBaseFile.AnnotationFile",
+    "KBaseFile.AssemblyFile",
+    "KBaseFile.FileRef",
+    "KBaseOntology.OntologyDictionary",
+    "KBaseOntology.OntologyTranslation",
+    "CoExpression.FigureProperties",
+    "CoExpression.MulticlusterHeatmapPlot",
+    "CoExpression.PvalueDistributionPlot",
+    "KBaseRBTnSeq.Delta",
+    "KBaseRBTnSeq.MappedReads",
+    "KBaseRBTnSeq.Pool",
+    "KBaseRBTnSeq.Strain",
+    "ComparativeGenomics.DNAdiffOutput",
+    "ComparativeGenomics.SeqCompOutput",
+    "ComparativeGenomics.WholeGenomeAlignment",
+    "KBaseNarrative.Cell",
+    "KBaseNarrative.Metadata",
+    "KBaseCollections.FBAModelList",
+    "KBaseCollections.FBAModelSet",
+    "KBaseCollections.FeatureList",
+    "KBaseCollections.FeatureSet",
+    "KBaseCollections.GenomeList",
+    "KBaseCollections.GenomeSet",
+    "KBaseAssembly.AssemblyInput",
+    "KBaseAssembly.AssemblyReport",
+    "KBaseAssembly.Handle",
+    "KBaseAssembly.PairedEndLibrary",
+    "KBaseAssembly.ReferenceAssembly",
+    "KBaseAssembly.SingleEndLibrary",
+    "KBaseGeneFamilies.DomainAnnotation",
+    "KBaseGeneFamilies.DomainLibrary",
+    "KBaseGeneFamilies.DomainModelSet",
+    "Communities.Biom",
+    "Communities.BiomAnnotationEntry",
+    "Communities.BiomMatrix",
+    "Communities.BiomMatrixEntry",
+    "Communities.BiomMetagenome",
+    "Communities.BiomMetagenomeEntry",
+    "Communities.Collection",
+    "Communities.Data",
+    "Communities.DataHandle",
+    "Communities.Drisee",
+    "Communities.FunctionalMatrix",
+    "Communities.FunctionalProfile",
+    "Communities.Heatmap",
+    "Communities.List",
+    "Communities.Metadata",
+    "Communities.Metagenome",
+    "Communities.MetagenomeMatrix",
+    "Communities.MetagenomeProfile",
+    "Communities.MetagenomeSet",
+    "Communities.MetagenomeSetElement",
+    "Communities.PCoA",
+    "Communities.PCoAMember",
+    "Communities.Profile",
+    "Communities.Project",
+    "Communities.SequenceFile",
+    "Communities.Statistics",
+    "Communities.StatList",
+    "Communities.StatMatrix",
+    "Communities.StatsQC",
+    "Communities.TaxonomicMatrix",
+    "Communities.TaxonomicProfile",
+    "KBaseSearch.Contig",
+    "KBaseSearch.ContigSet",
+    "KBaseSearch.Feature",
+    "KBaseSearch.FeatureSet",
+    "KBaseSearch.Genome",
+    "KBaseSearch.GenomeSet",
+    "KBaseSearch.IndividualFeature",
+    "KBaseSearch.SearchFeatureSet",
+    "KBaseSearch.Type2CommandConfig",
+    "Empty.AHandle",
+    "Empty.AType",
+    "KBaseCommon.Location",
+    "KBaseCommon.SourceInfo",
+    "KBaseCommon.StrainInfo",
+    "KBaseExpression.ExpressionPlatform",
+    "KBaseExpression.ExpressionReplicateGroup",
+    "KBaseExpression.ExpressionSample",
+    "KBaseExpression.ExpressionSeries",
+    "KBaseExpression.RNASeqDifferentialExpression",
+    "KBaseExpression.RNASeqSample",
+    "KBaseExpression.RNASeqSampleAlignment",
+    "MAK.FloatDataTable",
+    "MAK.FloatDataTableContainer",
+    "MAK.MAKBicluster",
+    "MAK.MAKBiclusterSet",
+    "MAK.MAKInputData",
+    "MAK.MAKParameters",
+    "MAK.MAKResult",
+    "MAK.StringDataTable",
+    "MAK.StringDataTableContainer",
+    "KBasePPI.Interaction",
+    "KBasePPI.InteractionDataset",
+    "GenomeComparison.ProteomeComparison",
+    "KBaseTrees.MSA",
+    "KBaseTrees.MSASet",
+    "KBaseTrees.Tree",
+    "KBaseRegulation.Regulome",
+    "Inferelator.GeneList",
+    "Inferelator.InferelatorRunResult",
+    "Cmonkey.CmonkeyRunResult",
+    "BAMBI.BambiRunResult",
+    "ProbabilisticAnnotation.ProbAnno",
+    "ProbabilisticAnnotation.RxnProbs",
+    "KBaseCommunities.Metagenome",
+    "MEME.MastHit",
+    "MEME.MastRunResult",
+    "MEME.MemePSPM",
+    "MEME.MemePSPMCollection",
+    "MEME.MemeRunResult",
+    "MEME.MemeSite",
+    "MEME.TomtomRunResult",
+    "KBaseNetworks.InteractionSet",
+    "KBaseNetworks.Network",
+    "KBaseSequences.SequenceSet"
 ]
 
 
