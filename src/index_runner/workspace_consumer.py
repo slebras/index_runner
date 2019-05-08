@@ -27,7 +27,6 @@ def _process_event(msg_data):
     """
     Process a new workspace event. This is the main switchboard for handling
     new workspace events. Dispatches to modules in ./event_handlers
-
     Args:
         msg_data - json data received in the kafka event
     Valid events for msg_data['evtype'] include:
@@ -75,7 +74,8 @@ def _run_indexer(msg_data):
 
 # Handler functions for each event type ('evtype' key)
 event_type_handlers = {
-    'NEW_VERSION': _run_indexer
+    'NEW_VERSION': _run_indexer,
+    'REINDEX': _run_indexer
 }
 
 

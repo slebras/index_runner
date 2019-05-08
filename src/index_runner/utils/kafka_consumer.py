@@ -28,14 +28,14 @@ def kafka_consumer(topics):
             if msg.error().code() == KafkaError._PARTITION_EOF:
                 print("Reached end of the stream.")
             else:
-                print("Error:", msg.error())
+                print(f"Error: {msg.error()}")
             continue
-        print(f'New message in {topics}: {msg.value()}')
+        print(f"New message in {topics} with key '{msg.key()}'")
         try:
             data = json.loads(msg.value().decode('utf-8'))
         except ValueError as err:
             # JSON parsing error
-            print('JSON message error:', err)
+            print(f'JSON message error: {err}')
             continue
         yield data
     consumer.close()

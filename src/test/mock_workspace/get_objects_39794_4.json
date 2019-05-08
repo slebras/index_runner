@@ -1,0 +1,485 @@
+{
+  "methods": ["POST"],
+  "path": "/",
+  "headers": {"Authorization": "valid_admin_token"},
+  "body": {
+    "version": "1.1",
+    "method": "Workspace.administer",
+    "params": [{
+      "command": "getObjects",
+      "params": {"objects": [{"ref": "39794/4"}]}
+    }]
+  },
+  "response": {
+    "status": "200",
+    "body": {
+      "version": "1.1",
+      "result": [{
+          "data": [
+              {
+                  "data": {
+                      "assembly_id": "3300029893_12.fa_assembly",
+                      "base_counts": {
+                          "A": 650083,
+                          "C": 464857,
+                          "G": 451448,
+                          "N": 20,
+                          "T": 642194
+                      },
+                      "contigs": {
+                          "3300029893.a:Ga0246236_1000034": {
+                              "contig_id": "3300029893.a:Ga0246236_1000034",
+                              "description": "",
+                              "gc_content": 0.41769,
+                              "length": 186047,
+                              "md5": "6170aeaa64419c097e4305f01c610c4e",
+                              "name": "3300029893.a:Ga0246236_1000034"
+                          },
+                          "3300029893.a:Ga0246236_1000042": {
+                              "contig_id": "3300029893.a:Ga0246236_1000042",
+                              "description": "",
+                              "gc_content": 0.42047,
+                              "length": 166706,
+                              "md5": "bc907e53c6b7163016e29225399407f8",
+                              "name": "3300029893.a:Ga0246236_1000042"
+                          },
+                          "3300029893.a:Ga0246236_1000049": {
+                              "contig_id": "3300029893.a:Ga0246236_1000049",
+                              "description": "",
+                              "gc_content": 0.41387,
+                              "length": 156994,
+                              "md5": "caa03e6b9f102fc1c2be537d432ed5ab",
+                              "name": "3300029893.a:Ga0246236_1000049"
+                          },
+                          "3300029893.a:Ga0246236_1000060": {
+                              "contig_id": "3300029893.a:Ga0246236_1000060",
+                              "description": "",
+                              "gc_content": 0.41299,
+                              "length": 136579,
+                              "md5": "e0d5236339dc30f2d186740931009c8d",
+                              "name": "3300029893.a:Ga0246236_1000060"
+                          },
+                          "3300029893.a:Ga0246236_1000065": {
+                              "contig_id": "3300029893.a:Ga0246236_1000065",
+                              "description": "",
+                              "gc_content": 0.41267,
+                              "length": 132305,
+                              "md5": "d799eb315d7048bd21c661ff18666230",
+                              "name": "3300029893.a:Ga0246236_1000065"
+                          },
+                          "3300029893.a:Ga0246236_1000071": {
+                              "contig_id": "3300029893.a:Ga0246236_1000071",
+                              "description": "",
+                              "gc_content": 0.42398,
+                              "length": 127291,
+                              "md5": "4e9d92ab32292ffa3abd55499c7fb784",
+                              "name": "3300029893.a:Ga0246236_1000071"
+                          },
+                          "3300029893.a:Ga0246236_1000098": {
+                              "Ncount": 10,
+                              "contig_id": "3300029893.a:Ga0246236_1000098",
+                              "description": "",
+                              "gc_content": 0.41253,
+                              "length": 106853,
+                              "md5": "e425a40477f85b9bebfaddb79eab6980",
+                              "name": "3300029893.a:Ga0246236_1000098"
+                          },
+                          "3300029893.a:Ga0246236_1000108": {
+                              "contig_id": "3300029893.a:Ga0246236_1000108",
+                              "description": "",
+                              "gc_content": 0.41917,
+                              "length": 103208,
+                              "md5": "b3226baca6ee2010c011c9c950161795",
+                              "name": "3300029893.a:Ga0246236_1000108"
+                          },
+                          "3300029893.a:Ga0246236_1000131": {
+                              "contig_id": "3300029893.a:Ga0246236_1000131",
+                              "description": "",
+                              "gc_content": 0.41689,
+                              "length": 94364,
+                              "md5": "9167729bb5b8e2b1ff77b2328580a1bd",
+                              "name": "3300029893.a:Ga0246236_1000131"
+                          },
+                          "3300029893.a:Ga0246236_1000135": {
+                              "contig_id": "3300029893.a:Ga0246236_1000135",
+                              "description": "",
+                              "gc_content": 0.41853,
+                              "length": 92104,
+                              "md5": "89f3552996515371f2781bad92731a16",
+                              "name": "3300029893.a:Ga0246236_1000135"
+                          },
+                          "3300029893.a:Ga0246236_1000157": {
+                              "contig_id": "3300029893.a:Ga0246236_1000157",
+                              "description": "",
+                              "gc_content": 0.41214,
+                              "length": 81805,
+                              "md5": "eae66cc6b40509f54f250367db16d410",
+                              "name": "3300029893.a:Ga0246236_1000157"
+                          },
+                          "3300029893.a:Ga0246236_1000255": {
+                              "contig_id": "3300029893.a:Ga0246236_1000255",
+                              "description": "",
+                              "gc_content": 0.41573,
+                              "length": 59868,
+                              "md5": "f19ec67da0d6de8eef8a65b9ab9ac4ff",
+                              "name": "3300029893.a:Ga0246236_1000255"
+                          },
+                          "3300029893.a:Ga0246236_1000270": {
+                              "contig_id": "3300029893.a:Ga0246236_1000270",
+                              "description": "",
+                              "gc_content": 0.42793,
+                              "length": 58105,
+                              "md5": "777a16c498b8679fa08d75a74ccc70f4",
+                              "name": "3300029893.a:Ga0246236_1000270"
+                          },
+                          "3300029893.a:Ga0246236_1000326": {
+                              "contig_id": "3300029893.a:Ga0246236_1000326",
+                              "description": "",
+                              "gc_content": 0.40147,
+                              "length": 50726,
+                              "md5": "53ea734dd6d555ce2fadca1646da4c41",
+                              "name": "3300029893.a:Ga0246236_1000326"
+                          },
+                          "3300029893.a:Ga0246236_1000360": {
+                              "contig_id": "3300029893.a:Ga0246236_1000360",
+                              "description": "",
+                              "gc_content": 0.4064,
+                              "length": 47453,
+                              "md5": "dfee64a9704f8598fca99d8c0291e1da",
+                              "name": "3300029893.a:Ga0246236_1000360"
+                          },
+                          "3300029893.a:Ga0246236_1000381": {
+                              "contig_id": "3300029893.a:Ga0246236_1000381",
+                              "description": "",
+                              "gc_content": 0.41431,
+                              "length": 44749,
+                              "md5": "a6971776e973e548ce49675a5cdf9eb6",
+                              "name": "3300029893.a:Ga0246236_1000381"
+                          },
+                          "3300029893.a:Ga0246236_1000419": {
+                              "contig_id": "3300029893.a:Ga0246236_1000419",
+                              "description": "",
+                              "gc_content": 0.40047,
+                              "length": 42398,
+                              "md5": "f841c995806b61eeddc5dda1232e9b92",
+                              "name": "3300029893.a:Ga0246236_1000419"
+                          },
+                          "3300029893.a:Ga0246236_1000429": {
+                              "contig_id": "3300029893.a:Ga0246236_1000429",
+                              "description": "",
+                              "gc_content": 0.42063,
+                              "length": 41873,
+                              "md5": "c37ba02f1aba3f4082b73bc247bf4a27",
+                              "name": "3300029893.a:Ga0246236_1000429"
+                          },
+                          "3300029893.a:Ga0246236_1000465": {
+                              "contig_id": "3300029893.a:Ga0246236_1000465",
+                              "description": "",
+                              "gc_content": 0.41069,
+                              "length": 39582,
+                              "md5": "d9602623e5bbfb2db8f02076450a4e49",
+                              "name": "3300029893.a:Ga0246236_1000465"
+                          },
+                          "3300029893.a:Ga0246236_1000470": {
+                              "contig_id": "3300029893.a:Ga0246236_1000470",
+                              "description": "",
+                              "gc_content": 0.42464,
+                              "length": 39151,
+                              "md5": "ebc3aaf219fd0d858ed97b19da7086e9",
+                              "name": "3300029893.a:Ga0246236_1000470"
+                          },
+                          "3300029893.a:Ga0246236_1000570": {
+                              "contig_id": "3300029893.a:Ga0246236_1000570",
+                              "description": "",
+                              "gc_content": 0.40654,
+                              "length": 33837,
+                              "md5": "09861c2fb0b5b7e80bc9c0cd9c7340d4",
+                              "name": "3300029893.a:Ga0246236_1000570"
+                          },
+                          "3300029893.a:Ga0246236_1000581": {
+                              "contig_id": "3300029893.a:Ga0246236_1000581",
+                              "description": "",
+                              "gc_content": 0.4237,
+                              "length": 32993,
+                              "md5": "0f5557df85b449f52c82a301ab56bbc8",
+                              "name": "3300029893.a:Ga0246236_1000581"
+                          },
+                          "3300029893.a:Ga0246236_1000630": {
+                              "contig_id": "3300029893.a:Ga0246236_1000630",
+                              "description": "",
+                              "gc_content": 0.4173,
+                              "length": 30865,
+                              "md5": "5c333fc1e1c84c47f49924ef4507e034",
+                              "name": "3300029893.a:Ga0246236_1000630"
+                          },
+                          "3300029893.a:Ga0246236_1000695": {
+                              "contig_id": "3300029893.a:Ga0246236_1000695",
+                              "description": "",
+                              "gc_content": 0.41357,
+                              "length": 28133,
+                              "md5": "c11a9ce3c7ba53f7a361876d55ead351",
+                              "name": "3300029893.a:Ga0246236_1000695"
+                          },
+                          "3300029893.a:Ga0246236_1000704": {
+                              "contig_id": "3300029893.a:Ga0246236_1000704",
+                              "description": "",
+                              "gc_content": 0.404,
+                              "length": 27827,
+                              "md5": "0d526b62f7b9e847fc9c5d325f5c10ba",
+                              "name": "3300029893.a:Ga0246236_1000704"
+                          },
+                          "3300029893.a:Ga0246236_1000836": {
+                              "contig_id": "3300029893.a:Ga0246236_1000836",
+                              "description": "",
+                              "gc_content": 0.40366,
+                              "length": 24025,
+                              "md5": "33973b076632cc415f753d369286feea",
+                              "name": "3300029893.a:Ga0246236_1000836"
+                          },
+                          "3300029893.a:Ga0246236_1000868": {
+                              "contig_id": "3300029893.a:Ga0246236_1000868",
+                              "description": "",
+                              "gc_content": 0.41837,
+                              "length": 23295,
+                              "md5": "e179986951381a4be3393d3f614178a4",
+                              "name": "3300029893.a:Ga0246236_1000868"
+                          },
+                          "3300029893.a:Ga0246236_1000922": {
+                              "contig_id": "3300029893.a:Ga0246236_1000922",
+                              "description": "",
+                              "gc_content": 0.41406,
+                              "length": 22057,
+                              "md5": "879387e187ae4c5233b4dd39cff23bf0",
+                              "name": "3300029893.a:Ga0246236_1000922"
+                          },
+                          "3300029893.a:Ga0246236_1001086": {
+                              "contig_id": "3300029893.a:Ga0246236_1001086",
+                              "description": "",
+                              "gc_content": 0.40268,
+                              "length": 18886,
+                              "md5": "2fe75fe975f56ba0b3e251b42cb5dadd",
+                              "name": "3300029893.a:Ga0246236_1001086"
+                          },
+                          "3300029893.a:Ga0246236_1001104": {
+                              "contig_id": "3300029893.a:Ga0246236_1001104",
+                              "description": "",
+                              "gc_content": 0.40749,
+                              "length": 18663,
+                              "md5": "34ea1727f1991cc47f57236d974bcada",
+                              "name": "3300029893.a:Ga0246236_1001104"
+                          },
+                          "3300029893.a:Ga0246236_1001318": {
+                              "contig_id": "3300029893.a:Ga0246236_1001318",
+                              "description": "",
+                              "gc_content": 0.40495,
+                              "length": 15461,
+                              "md5": "e35044ae8a29cd6922f4c435715a7552",
+                              "name": "3300029893.a:Ga0246236_1001318"
+                          },
+                          "3300029893.a:Ga0246236_1001346": {
+                              "contig_id": "3300029893.a:Ga0246236_1001346",
+                              "description": "",
+                              "gc_content": 0.41664,
+                              "length": 15169,
+                              "md5": "742a5a7b46e811905dfdb1c0a339cbde",
+                              "name": "3300029893.a:Ga0246236_1001346"
+                          },
+                          "3300029893.a:Ga0246236_1001432": {
+                              "contig_id": "3300029893.a:Ga0246236_1001432",
+                              "description": "",
+                              "gc_content": 0.41464,
+                              "length": 14217,
+                              "md5": "b724abc0385880fb528560817f58035f",
+                              "name": "3300029893.a:Ga0246236_1001432"
+                          },
+                          "3300029893.a:Ga0246236_1001441": {
+                              "contig_id": "3300029893.a:Ga0246236_1001441",
+                              "description": "",
+                              "gc_content": 0.3889,
+                              "length": 14158,
+                              "md5": "cfa3122bd69a1cd8b3ea59c9c050e205",
+                              "name": "3300029893.a:Ga0246236_1001441"
+                          },
+                          "3300029893.a:Ga0246236_1001474": {
+                              "contig_id": "3300029893.a:Ga0246236_1001474",
+                              "description": "",
+                              "gc_content": 0.41605,
+                              "length": 13871,
+                              "md5": "390991240562e09b6b146c5476e3d7bf",
+                              "name": "3300029893.a:Ga0246236_1001474"
+                          },
+                          "3300029893.a:Ga0246236_1001544": {
+                              "contig_id": "3300029893.a:Ga0246236_1001544",
+                              "description": "",
+                              "gc_content": 0.40668,
+                              "length": 13298,
+                              "md5": "de8a62c00973dfa06f59d36038f72395",
+                              "name": "3300029893.a:Ga0246236_1001544"
+                          },
+                          "3300029893.a:Ga0246236_1001668": {
+                              "contig_id": "3300029893.a:Ga0246236_1001668",
+                              "description": "",
+                              "gc_content": 0.41964,
+                              "length": 12239,
+                              "md5": "2c6974e7311e928dcf774d4bc3398f75",
+                              "name": "3300029893.a:Ga0246236_1001668"
+                          },
+                          "3300029893.a:Ga0246236_1002211": {
+                              "contig_id": "3300029893.a:Ga0246236_1002211",
+                              "description": "",
+                              "gc_content": 0.40153,
+                              "length": 9130,
+                              "md5": "e1ae421ac9db7932ea68d05a047e7956",
+                              "name": "3300029893.a:Ga0246236_1002211"
+                          },
+                          "3300029893.a:Ga0246236_1002980": {
+                              "contig_id": "3300029893.a:Ga0246236_1002980",
+                              "description": "",
+                              "gc_content": 0.43236,
+                              "length": 6719,
+                              "md5": "d7b93eaed861da866d6bd15b12395416",
+                              "name": "3300029893.a:Ga0246236_1002980"
+                          },
+                          "3300029893.a:Ga0246236_1003140": {
+                              "contig_id": "3300029893.a:Ga0246236_1003140",
+                              "description": "",
+                              "gc_content": 0.40031,
+                              "length": 6360,
+                              "md5": "851150aebb3b2848379563cf2697c2bd",
+                              "name": "3300029893.a:Ga0246236_1003140"
+                          },
+                          "3300029893.a:Ga0246236_1003442": {
+                              "contig_id": "3300029893.a:Ga0246236_1003442",
+                              "description": "",
+                              "gc_content": 0.38143,
+                              "length": 5828,
+                              "md5": "3552f10eda1df2b32d16c6757211a673",
+                              "name": "3300029893.a:Ga0246236_1003442"
+                          },
+                          "3300029893.a:Ga0246236_1003947": {
+                              "Ncount": 10,
+                              "contig_id": "3300029893.a:Ga0246236_1003947",
+                              "description": "",
+                              "gc_content": 0.37505,
+                              "length": 5154,
+                              "md5": "a33f8f733f8968ad80597321f9d397e5",
+                              "name": "3300029893.a:Ga0246236_1003947"
+                          },
+                          "3300029893.a:Ga0246236_1004280": {
+                              "contig_id": "3300029893.a:Ga0246236_1004280",
+                              "description": "",
+                              "gc_content": 0.41264,
+                              "length": 4762,
+                              "md5": "924f87c58c643158dbc63b6ee7e0337e",
+                              "name": "3300029893.a:Ga0246236_1004280"
+                          },
+                          "3300029893.a:Ga0246236_1005912": {
+                              "contig_id": "3300029893.a:Ga0246236_1005912",
+                              "description": "",
+                              "gc_content": 0.3941,
+                              "length": 3494,
+                              "md5": "634605b55d4a87c9f96989d6eedeba2a",
+                              "name": "3300029893.a:Ga0246236_1005912"
+                          }
+                      },
+                      "dna_size": 2208602,
+                      "fasta_handle_info": {
+                          "handle": {
+                              "file_name": "3300029893_12.fa.filtered.fa",
+                              "hid": "KBH_455851",
+                              "id": "e6084667-bb31-4fa1-8898-b6f0d0a4e5bc",
+                              "remote_md5": "4b2aa88001a1ce6998bd22fc61471f96",
+                              "type": "shock",
+                              "url": "https://ci.kbase.us/services/shock-api"
+                          },
+                          "node_file_name": "3300029893_12.fa.filtered.fa",
+                          "shock_id": "e6084667-bb31-4fa1-8898-b6f0d0a4e5bc",
+                          "size": 2246838
+                      },
+                      "fasta_handle_ref": "KBH_455851",
+                      "gc_content": 0.41488,
+                      "md5": "384e24555b9181c6a1c365337997204b",
+                      "num_contigs": 44,
+                      "type": "Unknown"
+                  },
+                  "info": [
+                      4,
+                      "3300029893_12",
+                      "KBaseGenomeAnnotations.Assembly-6.0",
+                      "2019-05-03T17:31:47+0000",
+                      1,
+                      "slebras",
+                      39794,
+                      "slebras:narrative_1548195271680",
+                      "41f56a2f3edd320123d400211f158e33",
+                      10065,
+                      {
+                          "GC content": "0.41488",
+                          "Size": "2208602",
+                          "N Contigs": "44",
+                          "MD5": "384e24555b9181c6a1c365337997204b"
+                      }
+                  ],
+                  "path": [
+                      "39794/4/1"
+                  ],
+                  "provenance": [
+                      {
+                          "time": "2019-01-22T22:56:01+0000",
+                          "epoch": 1548197761000,
+                          "service": "kb_uploadmethods",
+                          "service_ver": "1.0.24",
+                          "method": "import_fasta_as_assembly_from_staging",
+                          "method_params": [
+                              {
+                                  "workspace_name": "slebras:narrative_1548195921478",
+                                  "staging_file_subdir_path": "3300029893_12.fa",
+                                  "assembly_name": "3300029893_12.fa_assembly",
+                                  "min_contig_length": 500
+                              }
+                          ],
+                          "input_ws_objects": [],
+                          "resolved_ws_objects": [],
+                          "external_data": [],
+                          "subactions": [
+                              {
+                                  "name": "kb_uploadmethods",
+                                  "ver": "1.0.24",
+                                  "code_url": "https://github.com/kbaseapps/kb_uploadmethods",
+                                  "commit": "384d6ff1eaaf9b269e5dd6e5860655bc5c392b96"
+                              },
+                              {
+                                  "name": "DataFileUtil",
+                                  "ver": "0.0.25-release",
+                                  "code_url": "https://github.com/kbaseapps/DataFileUtil",
+                                  "commit": "bcef6723524598b739e910f7d6ce9220d4b09bd2"
+                              },
+                              {
+                                  "name": "AssemblyUtil",
+                                  "ver": "1.0.11-release",
+                                  "code_url": "https://github.com/kbaseapps/AssemblyUtil",
+                                  "commit": "c01351fb5658ae670d5083462717b26a556f83ea"
+                              }
+                          ],
+                          "custom": {},
+                          "description": "KBase SDK method run via the KBase Execution Engine"
+                      }
+                  ],
+                  "creator": "slebras",
+                  "orig_wsid": 39795,
+                  "created": "2019-01-22T22:56:42+0000",
+                  "epoch": 1548197802938,
+                  "refs": [],
+                  "copied": "39795/6/1",
+                  "copy_source_inaccessible": 0,
+                  "extracted_ids": {
+                      "handle": [
+                          "KBH_455851"
+                      ]
+                  }
+              }
+          ]
+      }]
+    }
+  }
+}

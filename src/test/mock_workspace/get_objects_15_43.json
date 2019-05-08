@@ -1,0 +1,121 @@
+{
+  "methods": ["POST"],
+  "path": "/",
+  "headers": {"Authorization": "valid_admin_token"},
+  "body": {
+    "version": "1.1",
+    "method": "Workspace.administer",
+    "params": [{
+      "command": "getObjects",
+      "params": {"objects": [{"ref": "15/43"}]}
+    }]
+  },
+  "response": {
+    "status": "200",
+    "body": {
+          "version": "1.1",
+          "result": [
+              {
+                  "data": [
+                      {
+                          "data": {
+                              "lib": {
+                                  "encoding": "ascii",
+                                  "file": {
+                                      "file_name": "6a0804fd-e3fc-4441-a54b-c0abf100a107.single.fastq.gz",
+                                      "hid": "KBH_55376",
+                                      "id": "563d19c6-d5e2-4137-bc6e-179021115ef2",
+                                      "remote_md5": "bd0e0b2167f14abed1eec05e81c910b7",
+                                      "type": "shock",
+                                      "url": "https://ci.kbase.us/services/shock-api"
+                                  },
+                                  "size": 53949468,
+                                  "type": "fq"
+                              },
+                              "sequencing_tech": "Illumina",
+                              "single_genome": 1
+                          },
+                          "info": [
+                              43,
+                              "rhodobacter.art.q50.SE.reads",
+                              "KBaseFile.SingleEndLibrary-2.0",
+                              "2016-10-05T17:11:32+0000",
+                              1,
+                              "kbasetest",
+                              15,
+                              "KBaseExampleData",
+                              "31b40bb1004929f69cd4acfe247ea46d",
+                              351,
+                              {
+                                  "sequencing_tech": "Illumina",
+                                  "single_genome": "1"
+                              }
+                          ],
+                          "path": [
+                              "15/43/1"
+                          ],
+                          "provenance": [
+                              {
+                                  "time": "2016-10-05T13:01:26+0000",
+                                  "epoch": 1475672486000,
+                                  "service": "legacy_reads_conversion",
+                                  "service_ver": "0.0.1",
+                                  "method": "run_legacy_reads_conversion",
+                                  "method_params": [
+                                      {
+                                          "output": "rhodobacter.art.q50.SE.reads",
+                                          "workspace_name": "pranjan77:1475663060070",
+                                          "single_genome": 1,
+                                          "sequencing_tech": "Illumina",
+                                          "read_library_name": "rhodo.art.q50.SE.reads"
+                                      }
+                                  ],
+                                  "input_ws_objects": [
+                                      "11802/4/8"
+                                  ],
+                                  "resolved_ws_objects": [
+                                      "11802/4/8"
+                                  ],
+                                  "external_data": [],
+                                  "subactions": [
+                                      {
+                                          "name": "legacy_reads_conversion",
+                                          "ver": "0.0.1",
+                                          "code_url": "https://github.com/pranjan77/legacy_reads_conversion",
+                                          "commit": "ab6819d9d49a8866f52b216df1d97bd42a56a7aa"
+                                      },
+                                      {
+                                          "name": "ReadsUtils",
+                                          "ver": "0.1.2-dev",
+                                          "code_url": "https://github.com/kbaseapps/ReadsUtils",
+                                          "commit": "98ce5075c2117cec62505200ace121bc736d9569"
+                                      },
+                                      {
+                                          "name": "DataFileUtil",
+                                          "ver": "0.0.6-release",
+                                          "code_url": "https://github.com/kbaseapps/DataFileUtil",
+                                          "commit": "b850c6cca09f85e9f31afe42b389b96fa1b8a42a"
+                                      }
+                                  ],
+                                  "custom": {},
+                                  "description": "KBase SDK method run via the KBase Execution Engine"
+                              }
+                          ],
+                          "creator": "username",
+                          "orig_wsid": 11802,
+                          "created": "2016-10-05T13:03:41+0000",
+                          "epoch": 1475672621588,
+                          "refs": [],
+                          "copy_source_inaccessible": 1,
+                          "extracted_ids": {
+                              "handle": [
+                                  "KBH_55376"
+                              ]
+                          }
+                      }
+                  ]
+              }
+          ]
+      } 
+  }
+}

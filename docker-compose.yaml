@@ -51,7 +51,7 @@ services:
 
   # Mock workspace server (see src/test/mock_workspace/endpoints.json)
   workspace:
-    image: mockservices/mock_json_service
+    image: mockservices/mock_json_service:1.1
     volumes:
       - ${PWD}/src/test/mock_workspace:/config
 
