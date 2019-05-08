@@ -1,3 +1,4 @@
+from ..utils import ws_type
 from utils.get_path import get_path
 
 
@@ -9,8 +10,7 @@ def index_reads(obj_data, ws_info, obj_data_v1):
     data = obj_data['data']
     workspace_id = obj_info[6]
     object_id = obj_info[0]
-    reads_type = obj_info[2].split('-')[0]
-    reads_type_version = str(obj_info[2].split('-')[1])
+    (type_module, reads_type, reads_type_version) = ws_type.get_pieces(obj_info[2])
 
     interleaved = bool(data.get('interleaved', False))
     sequencing_tech = data.get('sequencing_tech', "")
@@ -40,7 +40,7 @@ def index_reads(obj_data, ws_info, obj_data_v1):
             'mean_quality_score': qual_mean,
             'mean_read_length': mean_read_length,
             'sequencing_tech': sequencing_tech,
-            'reads_type': reads_type,
+            'reads_type': type_module + '.' + reads_type,
             'reads_type_version': reads_type_version,
             'size': size,
             'interleaved': interleaved,

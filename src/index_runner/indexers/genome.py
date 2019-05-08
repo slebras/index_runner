@@ -12,11 +12,9 @@ def index_genome(obj_data, ws_info, obj_data_v1):
     if not obj_data.get('data'):
         raise Exception("no data in object")
     data = obj_data['data']
-
     workspace_id = info[6]
     object_id = info[0]
     version = info[4]
-
     '''
     feature
         feat_type
@@ -28,7 +26,6 @@ def index_genome(obj_data, ws_info, obj_data_v1):
     # iterate through the features and yield for each feature
     publication_titles = [pub[2] for pub in data.get('publications', [])]
     publication_authors = [pub[5] for pub in data.get('publications', [])]
-
     genome_index = {
         'doc': {
             'genome_id': data.get('id', None),
@@ -42,24 +39,20 @@ def index_genome(obj_data, ws_info, obj_data_v1):
             'taxonomy': data.get('taxonomy', None),
             'mean_contig_length': mean(data.get('contig_lengths', [])),
             'external_origination_date': data.get('external_source_origination_date', None),
-            'original_source_file_name': data.get('original_source_file_name', None),
+            'original_source_file_name': data.get('original_source_file_name', None)
         },
         'index': "genome",
         'id': f"{workspace_id}:{object_id}"
     }
     yield genome_index
-
     gupa = f"{workspace_id}/{object_id}/{version}"
-
     for feat_type, field in [('gene', 'features'), ('non_coding_feature', 'non_coding_features'),
                              ('CDS', 'cdss'), ('mrna', 'mrnas')]:
         for feat in data.get(field, []):
             functions = feat.get('functions')
             contig_ids = [l[0] for l in feat.get('locations', [])]
             seq_len = feat.get('dna_sequence_length', None)
-
             feature_id = feat.get('id', "")
-
             feature_index = {
                 'doc': {
                     'feature_type': feat_type,
@@ -71,5 +64,6 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                 },
                 'index': 'genome_features',
                 'id': f'{workspace_id}:{object_id}:{feature_id}',
+                'no_defaults': True
             }
             yield feature_index

@@ -16,6 +16,20 @@ Run the tests (servers must be running):
 make test
 ```
 
+### Deployment
+
+Build the image:
+
+```sh
+IMAGE_NAME=kbase/index_runner2:{VERSION} sh hooks/build
+```
+
+Push to docker hub
+
+```sh
+docker push kbase/index_runner2:{VERSION}
+```
+
 ### Project anatomy
 
 * The main process and entrypoint for the app lives in `./src/index_runner/main.py`
