@@ -8,6 +8,7 @@ from . import indexer_utils
 from ..utils.config import get_config
 from .narrative import index_narrative
 from .reads import index_reads
+from .genome import index_genome
 from .assembly import index_assembly
 
 
@@ -59,7 +60,9 @@ def index_obj(msg_data):
     (type_module_name, type_version) = obj_type.split('-')
     (type_module, type_name) = type_module_name.split('.')
     indexer = _find_indexer(type_module, type_name, type_version)
-    return indexer(obj_data, ws_info, obj_data_v1)
+    # all indexers should be generators.
+    for indexer_ret in indexer(obj_data, ws_info, obj_data_v1):
+        yield indexer_ret
 
 
 def _find_indexer(type_module, type_name, type_version):
@@ -95,7 +98,8 @@ _INDEXER_DIRECTORY = [
     {'module': 'KBaseNarrative', 'type': 'Narrative', 'indexer': index_narrative},
     {'module': 'KBaseFile', 'type': 'PairedEndLibrary', 'indexer': index_reads},
     {'module': 'KBaseFile', 'type': 'SingleEndLibrary', 'indexer': index_reads},
-    {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly}
+    {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly},
+    {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome}
 ]
 
 # All types we don't want to index

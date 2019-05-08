@@ -52,7 +52,6 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
         index_cells.append(index_cell)
     metadata = obj_info[-1] or {}  # last elem of obj info is a metadata dict
     narrative_title = metadata.get('name')
-    default_fields = indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
     result = {
         'doc': {
             'narrative_title': narrative_title,
@@ -60,12 +59,12 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             'cells': index_cells,
             'creator': creator,
             'total_cells': len(cells),
-            **default_fields
+            **indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
         },
         'index': 'narrative:1',
         'id': f'{workspace_id}:{version}',
     }
-    return result
+    yield result
 
 
 def _process_code_cell(cell):

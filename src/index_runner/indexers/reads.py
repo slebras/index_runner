@@ -1,3 +1,4 @@
+from .indexer_utils import default_fields
 from utils.get_path import get_path
 
 
@@ -33,7 +34,7 @@ def index_reads(obj_data, ws_info, obj_data_v1):
     # the scale of phred scores
     phred_type = data.get('phred_type', None)
 
-    return {
+    yield {
         'doc': {
             'phred_type': phred_type,
             'gc_content': gc_content,
@@ -45,6 +46,7 @@ def index_reads(obj_data, ws_info, obj_data_v1):
             'size': size,
             'interleaved': interleaved,
             'single_genome': single_genome,
+            **default_fields(obj_data, ws_info, obj_data_v1)
         },
         'index': 'reads',
         'id': f'{workspace_id}:{object_id}'

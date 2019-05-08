@@ -62,6 +62,51 @@ _MAPPINGS = {
             'mean_read_length': {'type': 'float'},
         }
     },
+    "assembly:1": {
+        'alias': 'assembly',
+        'properties': {
+            "assembly_name": {'type': 'keyword'},
+            "mean_contig_length": {'type': 'float'},
+            "percent_complete_contigs": {'type': 'float'},
+            "percent_circle_contigs": {'type': 'float'},
+            "assembly_type": {'type': 'keyword'},
+            "assembly_type_version": {'type': 'keyword'},
+            "assembly_id": {'type': 'keyword'},
+            "gc_content": {'type': 'float'},
+            "size": {'type': 'integer'},
+            "num_contigs": {'type': 'integer'},
+            "taxon_ref": {'type': 'keyword'},
+            "external_origination_date": {'type': 'keyword'},  # should maybe be of type 'date'?
+            "external_source_id": {'type': 'keyword'},
+            "external_source": {'type': 'keyword'},
+        }
+    },
+    "genome:1": {
+        'alias': "genome",
+        'properties': {
+            'genome_id': {'type': 'keyword'},
+            'scientific_name': {'type': 'keyword'},
+            'size': {'type': 'integer'},
+            'num_contigs': {'type': 'integer'},
+            'genome_type': {'type': 'keyword'},
+            'gc_content': {'type': 'float'},
+            'taxonomy': {'type': 'keyword'},
+            'mean_contig_length': {'type': 'float'},
+            'external_origination_date': {'type': 'keyword'},  # should maybe be of type 'date'?
+            'original_source_file_name': {'type': 'keyword'},
+        }
+    },
+    "genome_features:1": {
+        'alias': "genome_features",
+        'properties': {
+                'feature_type': {'type': 'keyword'},
+                'functions': {'type': 'keyword'},
+                'contig_ids': {'type': 'keyword'},
+                'sequence_length': {'type': 'integer'},
+                'id': {'type': 'keyword'},
+                'genome_upa': {'type': 'keyword'},
+        }
+    }
 }
 
 
