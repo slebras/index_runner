@@ -11,6 +11,8 @@ from .narrative import index_narrative
 from .reads import index_reads
 from .genome import index_genome
 from .assembly import index_assembly
+from .tree import index_tree
+from .taxon import index_taxon
 
 
 def index_obj(msg_data):
@@ -103,7 +105,9 @@ _INDEXER_DIRECTORY = [
     {'module': 'KBaseFile', 'type': 'PairedEndLibrary', 'indexer': index_reads},
     {'module': 'KBaseFile', 'type': 'SingleEndLibrary', 'indexer': index_reads},
     {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly},
-    {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome}
+    {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome},
+    {'module': 'KBaseTrees', 'type': 'Tree', 'indexer': index_tree},
+    {'module': 'KBaseGenomeAnnotations', 'type': 'Taxon', 'indexer': index_taxon}
 ]
 
 # All types we don't want to index
@@ -140,7 +144,7 @@ _TYPE_BLACKLIST = [
     "KBaseBiochem.Media",
     "KBaseBiochem.MediaSet",
     "KBaseBiochem.MetabolicMap",
-    "KBaseGenomeAnnotations.Taxon",
+    # "KBaseGenomeAnnotations.Taxon",
     "KBaseGenomeAnnotations.TaxonLookup",
     "KBaseGenomeAnnotations.TaxonSet",
     "KBaseMetagenomes.BinnedContigs",
@@ -245,7 +249,7 @@ _TYPE_BLACKLIST = [
     "GenomeComparison.ProteomeComparison",
     "KBaseTrees.MSA",
     "KBaseTrees.MSASet",
-    "KBaseTrees.Tree",
+    # "KBaseTrees.Tree",
     "KBaseRegulation.Regulome",
     "Inferelator.GeneList",
     "Inferelator.InferelatorRunResult",

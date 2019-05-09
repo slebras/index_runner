@@ -7,6 +7,8 @@ from index_runner.indexers.reads import index_reads
 from index_runner.indexers.genome import index_genome
 from index_runner.indexers.assembly import index_assembly
 from index_runner.indexers.pangenome import index_pangenome
+from index_runner.indexers.taxon import index_taxon
+from index_runner.indexers.tree import index_tree
 
 _CONFIG = get_config()
 
@@ -52,6 +54,28 @@ _TEST_EVENTS = {
         "objid": 8,
         "time": 1554408311320,
         "objtype": "KBaseGenomes.Pangenome-4.2",
+        "permusers": [],
+        "user": "username"
+    },
+    'tree_save': {
+        'wsid': 39794,
+        'ver': 1,
+        'perm': None,
+        'evtype': "NEW_VERSION",
+        "objid": 10,
+        "time": 1554408311320,
+        "objtype": "KBaseTrees.Tree-1.0",
+        "permusers": [],
+        "user": "username"
+    },
+    'taxon_save': {
+        'wsid': 39794,
+        'ver': 1,
+        'perm': None,
+        'evtype': "NEW_VERSION",
+        "objid": 9,
+        "time": 1554408311320,
+        "objtype": "KBaseGenomeAnnotations.Taxon-1.0",
         "permusers": [],
         "user": "username"
     }
@@ -119,3 +143,35 @@ class TestIndexers(unittest.TestCase):
         with open(os.path.join(dir_path, 'test_data/pangenome_check_against.json')) as fd:
             check_against = json.load(fd)
         self._default_obj_test('pangenome_save', index_pangenome, check_against)
+
+    def test_tree_indexer(self):
+        check_against = [{
+            "tree_name": None,
+            "type": "SpeciesTree",
+            "labels": [{
+                "node_id": "user1",
+                "label": "Rhodobacter CACIA 14H1"
+            }]
+        }]
+        self._default_obj_test('tree_save', index_tree, check_against)
+
+    def test_taxon_indexer(self):
+        check_against = [{
+            "scientific_name": "Escherichia coli",
+            "scientific_lineage": ("cellular organisms; Bacteria; Proteobacteria; Gammaproteobacteria; "
+                                   "Enterobacterales; Enterobacteriaceae; Escherichia"),
+            "domain": "Bacteria",
+            "kingdom": None,
+            "parent_taxon_ref": "12518/10/5",
+            "genetic_code": 11,
+            "aliases": [
+                "\"Bacillus coli\" Migula 1895", "\"Bacterium coli commune\" Escherich 1885",
+                "\"Bacterium coli\" (Migula 1895) Lehmann and Neumann 1896", "ATCC 11775",
+                "Bacillus coli", "Bacterium coli", "Bacterium coli commune", "CCUG 24",
+                "CCUG 29300", "CIP 54.8", "DSM 30083", "E. coli", "Enterococcus coli", "Escherchia coli",
+                "Escherichia coli (Migula 1895) Castellani and Chalmers 1919", "Escherichia sp. MAR",
+                "Escherichia/Shigella coli", "Eschericia coli", "JCM 1649", "LMG 2092", "NBRC 102203",
+                "NCCB 54008", "NCTC 9001", "bacterium 10a", "bacterium E3"
+            ]
+        }]
+        self._default_obj_test('taxon_save', index_taxon, check_against)

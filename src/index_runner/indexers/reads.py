@@ -46,6 +46,6 @@ def index_reads(obj_data, ws_info, obj_data_v1):
             'interleaved': interleaved,
             'single_genome': single_genome,
         },
-        'index': 'reads',
+        'index': 'reads:1',
         'id': f'{workspace_id}:{object_id}'
     }

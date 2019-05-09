@@ -1,0 +1,87 @@
+{
+    "obj": {
+        "data": {
+            "GenBank_hidden_flag": 1,
+            "aliases": [
+                "\"Bacillus coli\" Migula 1895",
+                "\"Bacterium coli commune\" Escherich 1885",
+                "\"Bacterium coli\" (Migula 1895) Lehmann and Neumann 1896",
+                "ATCC 11775",
+                "Bacillus coli",
+                "Bacterium coli",
+                "Bacterium coli commune",
+                "CCUG 24",
+                "CCUG 29300",
+                "CIP 54.8",
+                "DSM 30083",
+                "E. coli",
+                "Enterococcus coli",
+                "Escherchia coli",
+                "Escherichia coli (Migula 1895) Castellani and Chalmers 1919",
+                "Escherichia sp. MAR",
+                "Escherichia/Shigella coli",
+                "Eschericia coli",
+                "JCM 1649",
+                "LMG 2092",
+                "NBRC 102203",
+                "NCCB 54008",
+                "NCTC 9001",
+                "bacterium 10a",
+                "bacterium E3"
+            ],
+            "comments": "",
+            "division_id": 0,
+            "domain": "Bacteria",
+            "embl_code": "EC",
+            "genetic_code": 11,
+            "hidden_substree_root_flag": "0",
+            "inherited_GC_flag": 1,
+            "inherited_MGC_flag": 1,
+            "inherited_div_flag": 1,
+            "mitochondrial_genetic_code": 0,
+            "parent_taxon_ref": "12518/10/5",
+            "rank": "species",
+            "scientific_lineage": "cellular organisms; Bacteria; Proteobacteria; Gammaproteobacteria; Enterobacterales; Enterobacteriaceae; Escherichia",
+            "scientific_name": "Escherichia coli",
+            "taxonomy_id": 562
+        },
+        "info": [
+            9,
+            "562_taxon",
+            "KBaseGenomeAnnotations.Taxon-1.0",
+            "2019-05-09T17:25:59+0000",
+            1,
+            "slebras",
+            39794,
+            "slebras:narrative_1548195271680",
+            "abbd24a16886b4fcbe30e70534e4b84c",
+            1020,
+            {}
+        ],
+        "path": [
+            "39794/9/1"
+        ],
+        "provenance": [
+            {
+                "script": "RDM_Taxon_Test.pl",
+                "script_ver": "0.1",
+                "input_ws_objects": [],
+                "resolved_ws_objects": [],
+                "external_data": [],
+                "subactions": [],
+                "custom": {},
+                "description": "Taxon generated from NCBI taxonomy names and nodes files downloaded on 10/20/2016."
+            }
+        ],
+        "creator": "seaver",
+        "orig_wsid": 12518,
+        "created": "2016-12-02T22:02:12+0000",
+        "epoch": 1480716132948,
+        "refs": [
+            "12518/10/5"
+        ],
+        "copy_source_inaccessible": 1,
+        "extracted_ids": {}
+    },
+    "ws_info": [39794, "username:narrative_1553621013004", "username", "2019-04-05T22:17:00+0000", 12, "n", "r", "unlocked", {"searchtags": "narrative", "is_temporary": "false", "narrative": "1", "data_palette_id": "2", "cell_count": "1", "narrative_nice_name": "wat"}]
+}

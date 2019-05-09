@@ -42,6 +42,6 @@ def index_assembly(obj_data, ws_info, obj_data_v1):
             "external_source_id": data.get('external_source_id', None),
             "external_source": data.get('external_source', None),
         },
-        'index': "assembly",
+        'index': "assembly:1",
         'id': f"{workspace_id}:{object_id}",
     }

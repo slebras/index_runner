@@ -17,7 +17,7 @@ def index_pangenome(obj_data, ws_info, obj_data_v1):
             'pangenome_type': data.get('type', None),
             'genome_upas': data.get('genome_refs', []),
         },
-        'index': 'pangenome',
+        'index': 'pangenome:1',
         'id': f"{workspace_id}:{object_id}"
     }
 
@@ -25,6 +25,7 @@ def index_pangenome(obj_data, ws_info, obj_data_v1):
         ortholog_id = ortholog_family.get('id', "")
 
         gene_ids = [ortho[0] for ortho in ortholog_family.get('orthologs', [])]
+        # do we want to add fields like creator, creation date etc.?
         yield {
             'doc': {
                 'ortholog_id': ortholog_id,
@@ -32,6 +33,7 @@ def index_pangenome(obj_data, ws_info, obj_data_v1):
                 'function': ortholog_family.get('function', None),
                 'gene_ids': gene_ids,
             },
-            'index': 'pangenome_orthologfamily',
+            'index': 'pangenome_orthologfamily:1',
             'id': f"{workspace_id}:{object_id}:{ortholog_id}",
+            'no_defaults': True
         }
