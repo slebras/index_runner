@@ -2,10 +2,9 @@ import os
 import sys
 
 from bulk_indexers.narrative import (
-    # fetch_narrative_objects,
     fetch_narrative_upas,
     fetch_narrative_workspaces,
-    # generate_narrative_indexes
+    produce_index_events
 )
 
 
@@ -25,6 +24,7 @@ if __name__ == '__main__':
     # Find the ID of the latest version of the actual narrative object within each workspace
     if not os.path.isfile('narrative_upas.json'):
         fetch_narrative_upas.main('narrative_infos.json', 'narrative_upas.json', token)
+    produce_index_events.main('narrative_upas.json', token)
     # Fetch the full objects for each narrative, with all the details inside
     # if not os.path.isfile('narrative_data.json'):
     #     fetch_narrative_objects.main('narrative_upas.json', 'narrative_data.json', token)
