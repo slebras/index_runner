@@ -106,6 +106,50 @@ _MAPPINGS = {
                 'id': {'type': 'keyword'},
                 'genome_upa': {'type': 'keyword'},
         }
+    },
+    "pangenome:1": {
+        'alias': "pangenome",
+        'properties': {
+            'pangenome_id': {'type': 'keyword'},
+            'pangenome_name': {'type': 'keyword'},
+            'pangenome_type': {'type': 'keyword'},
+            'genome_upas': {'type': 'keyword'},
+        }
+    },
+    "pangenome_orthologfamily:1": {
+        'alias': "pangenome_orthologfamily",
+        'properties': {
+                'ortholog_id': {'type': 'keyword'},
+                'ortholog_type': {'type': 'keyword'},
+                'function': {'type': 'keyword'},
+                'gene_ids': {'type': 'keyword'},
+        }
+    },
+    "taxon:1": {
+        'alias': "taxon",
+        'properties': {
+            'scientific_name': {'type': 'keyword'},
+            'scientific_lineage': {'type': 'keyword'},
+            'domain': {'type': 'keyword'},
+            'kingdom': {'type': 'keyword'},
+            'parent_taxon_ref': {'type': 'keyword'},
+            'genetic_code': {'type': 'integer'},
+            'aliases': {'type': 'keyword'}
+        }
+    },
+    "tree:1": {
+        'alias': "tree",
+        'properties': {
+            'tree_name': {'type': 'keyword'},
+            'type': {'type': 'keyword'},
+            'labels': {
+                'type': 'nested',
+                'properties': {
+                    'node_id': {'type': 'text'},
+                    'label': {'type': 'text'}
+                }
+            },
+        }
     }
 }
 

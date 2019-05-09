@@ -41,7 +41,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
             'external_origination_date': data.get('external_source_origination_date', None),
             'original_source_file_name': data.get('original_source_file_name', None)
         },
-        'index': "genome",
+        'index': "genome:1",
         'id': f"{workspace_id}:{object_id}"
     }
     yield genome_index
@@ -62,7 +62,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                     'id': feature_id,
                     'genome_upa': gupa,
                 },
-                'index': 'genome_features',
+                'index': 'genome_features:1',
                 'id': f'{workspace_id}:{object_id}:{feature_id}',
                 'no_defaults': True
             }
