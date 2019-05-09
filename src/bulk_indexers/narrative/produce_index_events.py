@@ -5,7 +5,7 @@ from confluent_kafka import Producer
 
 kafka_url = os.environ.get('KAFKA_SERVER', 'kafka')
 _PRODUCER = Producer({'bootstrap.servers': kafka_url})
-_TOPIC = 'elasticsearch_updates'
+_TOPIC = 'workspaceevents'
 
 
 def main(input_path, token):
@@ -20,7 +20,6 @@ def main(input_path, token):
             _PRODUCER.produce(
                 _TOPIC,
                 json.dumps(event),
-                'init_index',
                 callback=_delivery_report
             )
 
