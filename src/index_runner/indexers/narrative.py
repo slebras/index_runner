@@ -19,8 +19,8 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
         - total number of cells
     """
     obj_info = obj_data['info']
+    obj_id = obj_info[0]
     workspace_id = obj_data['info'][6]
-    version = obj_data['info'][4]
     ws_id = obj_info[6]
     # Get all the types and names of objects in the narrative's workspace.
     narrative_data_objects = indexer_utils.fetch_objects_in_workspace(ws_id)
@@ -61,7 +61,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             'total_cells': len(cells),
         },
         'index': 'narrative:1',
-        'id': f'{workspace_id}:{version}',
+        'id': f'{workspace_id}:{obj_id}',
     }
     yield result
 

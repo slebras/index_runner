@@ -94,7 +94,7 @@ def generic_indexer(obj_data, ws_info, obj_data_v1):
     # type, if it does not exist.
     set_up_indexes.set_up_generic_index(obj_type)
     obj_type_name = ws_type.get_pieces(obj_type)[1]
-    return {
+    yield {
         'doc': indexer_utils.default_fields(obj_data, ws_info, obj_data_v1),
         'index': obj_type_name,
         'id': upa
