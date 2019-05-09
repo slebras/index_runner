@@ -30,12 +30,12 @@ def kafka_consumer(topics):
             else:
                 print(f"Error: {msg.error()}")
             continue
-        print(f"New message in {topics} with key '{msg.key()}'")
         try:
             data = json.loads(msg.value().decode('utf-8'))
         except ValueError as err:
             # JSON parsing error
             print(f'JSON message error: {err}')
             continue
+        print(f"New message in {topics} with data '{data}'")
         yield data
     consumer.close()
