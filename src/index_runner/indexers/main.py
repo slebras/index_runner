@@ -6,7 +6,7 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from . import indexer_utils
 from ..utils.config import get_config
-from ..utils import ws_type
+from ..utils import ws_type, set_up_indexes
 from .narrative import index_narrative
 from .reads import index_reads
 from .genome import index_genome
@@ -90,6 +90,9 @@ def generic_indexer(obj_data, ws_info, obj_data_v1):
     version = obj_data['info'][4]
     upa = f"{workspace_id}:{version}"
     obj_type = obj_data['info'][2]
+    # Send an event to the elasticsearch_writer to initialize an index for this
+    # type, if it does not exist.
+    set_up_indexes.set_up_generic_index(obj_type)
     obj_type_name = ws_type.get_pieces(obj_type)[1]
     return {
         'doc': indexer_utils.default_fields(obj_data, ws_info, obj_data_v1),

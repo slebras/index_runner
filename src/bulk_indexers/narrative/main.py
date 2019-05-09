@@ -5,7 +5,7 @@ from bulk_indexers.narrative import (
     # fetch_narrative_objects,
     fetch_narrative_upas,
     fetch_narrative_workspaces,
-    generate_narrative_indexes
+    # generate_narrative_indexes
 )
 
 
@@ -29,5 +29,5 @@ if __name__ == '__main__':
     # if not os.path.isfile('narrative_data.json'):
     #     fetch_narrative_objects.main('narrative_upas.json', 'narrative_data.json', token)
     # Generate the index data for each narrative
-    if not os.path.isfile('narrative_indexes.json'):
-        generate_narrative_indexes.main('narrative_upas.json', 'narrative_indexes.json')
+    # if not os.path.isfile('narrative_indexes.json'):
+    #     generate_narrative_indexes.main('narrative_upas.json', 'narrative_indexes.json')

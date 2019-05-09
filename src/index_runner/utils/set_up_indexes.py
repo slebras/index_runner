@@ -2,6 +2,7 @@ import sys
 import json
 from confluent_kafka import Producer
 
+from . import ws_type
 from .config import get_config
 
 
@@ -170,6 +171,27 @@ def set_up_indexes():
             callback=_delivery_report
         )
         producer.poll(60)
+
+
+def set_up_generic_index(full_type_name):
+    """
+    Set up an index for a generic type for which we don't have a specific
+    indexer function.
+    """
+    config = get_config()
+    producer = Producer({'bootstrap.servers': config['kafka_server']})
+    (module_name, type_name, type_ver) = ws_type.get_pieces(full_type_name)
+    producer.produce(
+        config['topics']['elasticsearch_updates'],
+        json.dumps({
+            'name': type_name + ':0',
+            'alias': type_name,
+            'props': _GLOBAL_MAPPINGS
+        }),
+        'init_index',
+        callback=_delivery_report
+    )
+    producer.poll(60)
 
 
 def _delivery_report(err, msg):
