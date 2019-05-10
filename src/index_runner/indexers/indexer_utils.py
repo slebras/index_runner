@@ -4,7 +4,8 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 from ..utils.config import get_config
 from ..utils import ws_type
 
-_REF_DATA_WORKSPACES = []
+_REF_DATA_WORKSPACES = []  # type: list
+
 
 def mean(array):
     """
