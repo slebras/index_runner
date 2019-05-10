@@ -4,6 +4,7 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 from ..utils.config import get_config
 from ..utils import ws_type
 
+
 def mean(array):
     """
     get mean of list, returns None if length is less than 1
