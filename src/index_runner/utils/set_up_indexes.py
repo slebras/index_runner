@@ -181,11 +181,12 @@ def set_up_generic_index(full_type_name):
     config = get_config()
     producer = Producer({'bootstrap.servers': config['kafka_server']})
     (module_name, type_name, type_ver) = ws_type.get_pieces(full_type_name)
+    index_name = type_name.lower()
     producer.produce(
         config['topics']['elasticsearch_updates'],
         json.dumps({
-            'name': type_name + ':0',
-            'alias': type_name,
+            'name': index_name + ':0',
+            'alias': index_name,
             'props': _GLOBAL_MAPPINGS
         }),
         'init_index',

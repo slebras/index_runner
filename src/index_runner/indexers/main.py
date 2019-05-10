@@ -38,7 +38,7 @@ def index_obj(msg_data):
     obj_data = obj_data['data'][0]
     obj_type = obj_data['info'][2]
     (type_module, type_name, type_version) = ws_type.get_pieces(obj_type)
-    if type_name in _TYPE_BLACKLIST:
+    if (type_module + '.' + type_name) in _TYPE_BLACKLIST:
         # Blacklisted type, so we don't index it
         return
     try:
