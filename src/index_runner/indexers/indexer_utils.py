@@ -2,7 +2,7 @@ from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from ..utils.config import get_config
-
+from ..utils import ws_type
 
 def mean(array):
     """
@@ -74,6 +74,8 @@ def default_fields(obj_data, ws_info, obj_data_v1):
     is_public = ws_info[6] == 'r'
     shared_users = get_shared_users(ws_id)
     copy_ref = obj_data.get('copied')
+    obj_type = obj_data['info'][2]
+    (type_module, type_name, type_version) = ws_type.get_pieces(obj_type)
     return {
         "creator": obj_data["creator"],
         "access_group": ws_id,
@@ -86,4 +88,8 @@ def default_fields(obj_data, ws_info, obj_data_v1):
         "version": version,
         "obj_id": obj_id,
         "copied": copy_ref,
+        "tags": "",
+        "obj_type_version": type_version,
+        "obj_type_module": type_module,
+        "obj_type_name": type_name,
     }
