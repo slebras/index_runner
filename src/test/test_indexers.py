@@ -103,8 +103,6 @@ class TestIndexers(unittest.TestCase):
             'mean_quality_score': None,
             'mean_read_length': None,
             'sequencing_tech': "Illumina",
-            'reads_type': "KBaseFile.PairedEndLibrary",
-            'reads_type_version': "2.0",
             'size': 36510129,
             'interleaved': True,
             'single_genome': True
@@ -117,8 +115,6 @@ class TestIndexers(unittest.TestCase):
             'mean_contig_length': 50195.5,
             'percent_complete_contigs': None,
             'percent_circle_contigs': None,
-            'assembly_type': 'KBaseGenomeAnnotations.Assembly',
-            'assembly_type_version': '6.0',
             'assembly_id': '3300029893_12.fa_assembly',
             'gc_content': 0.41488,
             'size': 2208602,

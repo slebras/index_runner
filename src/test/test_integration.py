@@ -105,7 +105,11 @@ class TestIntegration(unittest.TestCase):
             "is_public": True,
             "timestamp": 1554408998887,
             'creation_date': '2019-03-26T17:23:33+0000',
-            'copied': '1/2/3'
+            'copied': '1/2/3',
+            'tags': [],
+            'obj_type_name': 'Narrative',
+            'obj_type_version': '4.0',
+            'obj_type_module': 'KBaseNarrative'
         }
         self.assertEqual(msg_data['doc'], check_against)
 
