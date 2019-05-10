@@ -4,6 +4,8 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 from ..utils.config import get_config
 from ..utils import ws_type
 
+_REF_DATA_WORKSPACES = []
+
 def mean(array):
     """
     get mean of list, returns None if length is less than 1
@@ -77,7 +79,7 @@ def default_fields(obj_data, ws_info, obj_data_v1):
     obj_type = obj_data['info'][2]
     (type_module, type_name, type_version) = ws_type.get_pieces(obj_type)
     tags = []
-    if ws_id in _REF_DATA_WS:
+    if ws_id in _REF_DATA_WORKSPACES:
         tags.append("refdata")
 
     return {
