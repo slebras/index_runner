@@ -4,6 +4,8 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 from ..utils.config import get_config
 from ..utils import ws_type
 
+_REF_DATA_WORKSPACES = []  # type: list
+
 
 def mean(array):
     """
@@ -77,6 +79,10 @@ def default_fields(obj_data, ws_info, obj_data_v1):
     copy_ref = obj_data.get('copied')
     obj_type = obj_data['info'][2]
     (type_module, type_name, type_version) = ws_type.get_pieces(obj_type)
+    tags = []
+    if ws_id in _REF_DATA_WORKSPACES:
+        tags.append("refdata")
+
     return {
         "creator": obj_data["creator"],
         "access_group": ws_id,
@@ -89,7 +95,7 @@ def default_fields(obj_data, ws_info, obj_data_v1):
         "version": version,
         "obj_id": obj_id,
         "copied": copy_ref,
-        "tags": "",
+        "tags": tags,
         "obj_type_version": type_version,
         "obj_type_module": type_module,
         "obj_type_name": type_name,
