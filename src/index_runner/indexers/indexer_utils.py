@@ -7,19 +7,9 @@ from ..utils import ws_type
 _REF_DATA_WORKSPACES = []  # type: list
 
 
-def mean(array):
-    """
-    get mean of list, returns None if length is less than 1
-    """
-    if not array:
-        return None
-    return float(sum(array))/float(len(array))
-
-
 def get_shared_users(ws_id):
     """
     Get the list of users that have read, write, or author access to a workspace object.
-
     Args:
         ws_id - workspace id of requested workspace object
     """
@@ -44,7 +34,6 @@ def fetch_objects_in_workspace(ws_id):
     """
     Get a list of dicts with keys 'type' and 'name' corresponding to all data
     objects in the requested workspace.
-
     Args:
         ws_id - a workspace id
     """
@@ -68,7 +57,7 @@ def fetch_objects_in_workspace(ws_id):
 
 def default_fields(obj_data, ws_info, obj_data_v1):
     """
-    Add fields that should be present in any document on elasticsearch.
+    Produce data for fields that are present in any workspace object document on elasticsearch.
     """
     ws_id = obj_data['info'][6]
     obj_id = obj_data['info'][0]
@@ -82,7 +71,6 @@ def default_fields(obj_data, ws_info, obj_data_v1):
     tags = []
     if ws_id in _REF_DATA_WORKSPACES:
         tags.append("refdata")
-
     return {
         "creator": obj_data["creator"],
         "access_group": ws_id,
@@ -100,3 +88,12 @@ def default_fields(obj_data, ws_info, obj_data_v1):
         "obj_type_module": type_module,
         "obj_type_name": type_name,
     }
+
+
+def mean(array):
+    """
+    get mean of list, returns None if length is less than 1
+    """
+    if not array:
+        return None
+    return float(sum(array))/float(len(array))
