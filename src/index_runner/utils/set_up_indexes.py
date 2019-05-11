@@ -20,7 +20,7 @@ _GLOBAL_MAPPINGS = {
     'version': {'type': 'integer'},
     'obj_id': {'type': 'integer'},
     'is_public': {'type': 'boolean'},
-    'copied': {'type': ''},
+    'copied': {'type': 'keyword'},
     'tags': {'type': 'keyword'},
     'obj_type_version': {'type': 'keyword'},
     'obj_type_module': {'type': 'keyword'},
