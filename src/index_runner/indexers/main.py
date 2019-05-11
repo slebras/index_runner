@@ -87,8 +87,8 @@ def _find_indexer(type_module, type_name, type_version):
 
 def generic_indexer(obj_data, ws_info, obj_data_v1):
     workspace_id = obj_data['info'][6]
-    version = obj_data['info'][4]
-    upa = f"{workspace_id}:{version}"
+    obj_id = obj_data['info'][0]
+    upa = f"{workspace_id}:{obj_id}"
     obj_type = obj_data['info'][2]
     # Send an event to the elasticsearch_writer to initialize an index for this
     # type, if it does not exist.
