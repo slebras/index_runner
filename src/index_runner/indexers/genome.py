@@ -50,7 +50,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                              ('CDS', 'cdss'), ('mrna', 'mrnas')]:
         for feat in data.get(field, []):
             functions = feat.get('functions')
-            contig_ids = [l[0] for l in feat.get('locations', [])]
+            contig_ids = [l[0] for l in feat.get('location', [])]
             seq_len = feat.get('dna_sequence_length', None)
             feature_id = feat.get('id', "")
             feature_index = {
