@@ -96,6 +96,16 @@ _MAPPINGS = {
             'mean_contig_length': {'type': 'float'},
             'external_origination_date': {'type': 'keyword'},  # should maybe be of type 'date'?
             'original_source_file_name': {'type': 'keyword'},
+            # new fields to include:
+            'cds_count': {'type': 'integer'},
+            'feature_count': {'type': 'integer'},
+            'mrna_count': {'type': 'integer'},
+            'non_coding_feature_count': {'type': 'integer'},
+            'assembly_ref': {'type': 'keyword'},
+            'source_id': {'type': 'keyword'},
+            'feature_counts': {'type': 'object'},
+            'source': {'type': 'keyword'},
+            'warnings': {'type': 'text'},
         }
     },
     "genome_features:1": {
@@ -107,6 +117,13 @@ _MAPPINGS = {
                 'sequence_length': {'type': 'integer'},
                 'id': {'type': 'keyword'},
                 'genome_upa': {'type': 'keyword'},
+                # new fields to include:
+                'assembly_ref': {'type': 'keyword'},
+                'genome_feature_type': {'type': 'keyword'},
+                'starts': {'type': 'integer'},
+                'strands': {'type': 'keyword'},
+                'stops': {'type': 'integer'},
+                'aliases': {'type': 'keyword'},
         }
     },
     "pangenome:1": {

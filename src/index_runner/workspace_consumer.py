@@ -8,7 +8,7 @@ from confluent_kafka import Producer
 from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
 from .utils.threadify import threadify
-from .indexers.main import index_obj
+from .indexers.main import index_obj, delete_obj
 
 _CONFIG = get_config()
 _PRODUCER = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
@@ -74,10 +74,35 @@ def _run_indexer(msg_data):
         _PRODUCER.poll(60)
 
 
+def _delete_obj(msg_data):
+    """
+
+    NOTE: Gavin said there should be a check when this message is received,
+          that the state of the object we're querying actually is deleted.
+    """
+
+    result_gen = delete_obj(msg_data)
+    for result in result_gen:
+        if not result:
+            sys.stderr.write(f"Unable to index object: {msg_data}.\n")
+            continue
+        # Produce an event in Kafka to save the index to elasticsearch
+        print('producing to', _CONFIG['topics']['elasticsearch_updates'])
+        _PRODUCER.produce(
+            _CONFIG['topics']['elasticsearch_updates'],
+            json.dumps(result),
+            'delete',
+            callback=_delivery_report
+        )
+        _PRODUCER.poll(60)
+
+
 # Handler functions for each event type ('evtype' key)
 event_type_handlers = {
     'NEW_VERSION': _run_indexer,
-    'REINDEX': _run_indexer
+    'REINDEX': _run_indexer,
+    'OBJECT_DELETE_STATE_CHANGE': _delete_obj,
+
 }
 
 

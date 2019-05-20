@@ -20,6 +20,7 @@ def get_config():
         'kafka_clientgroup': os.environ.get('KAFKA_CLIENTGROUP', 'search_indexer'),
         'topics': {
             'workspace_events': os.environ.get('KAFKA_WORKSPACE_TOPIC', 'workspaceevents'),
+            'indexer_admin_events': os.environ.get('KAFKA_INDEXER_ADMIN_TOPIC', 'indexeradminevents'),
             'elasticsearch_updates': os.environ.get('KAFKA_ES_UPDATE_TOPIC', 'elasticsearch_updates')
         }
     }

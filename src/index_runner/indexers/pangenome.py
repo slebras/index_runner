@@ -1,5 +1,8 @@
 # generator that returns pangenome indexes
 
+_PANGENOME_INDEX_VERSION = 1
+_PANGENOME_ORTHOLOG_FAMILY_INDEX_VERSION = 1
+
 
 def index_pangenome(obj_data, ws_info, obj_data_v1):
     """
@@ -17,7 +20,7 @@ def index_pangenome(obj_data, ws_info, obj_data_v1):
             'pangenome_type': data.get('type', None),
             'genome_upas': data.get('genome_refs', []),
         },
-        'index': 'pangenome:1',
+        'index': 'pangenome:' + str(_PANGENOME_INDEX_VERSION),
         'id': f"{workspace_id}:{object_id}"
     }
 
@@ -33,7 +36,27 @@ def index_pangenome(obj_data, ws_info, obj_data_v1):
                 'function': ortholog_family.get('function', None),
                 'gene_ids': gene_ids,
             },
-            'index': 'pangenome_orthologfamily:1',
+            'index': 'pangenome_orthologfamily:' + str(_PANGENOME_ORTHOLOG_FAMILY_INDEX_VERSION),
             'id': f"{workspace_id}:{object_id}:{ortholog_id}",
             'no_defaults': True
+        }
+
+
+def delete_pangenome(obj_data):
+    """
+    """
+    info = obj_data['info']
+    data = obj_data['data']
+
+    workspace_id = info[6]
+    object_id = info[0]
+    yield {
+        'index': 'pangenome:' + str(_PANGENOME_INDEX_VERSION),
+        'id': f"{workspace_id}:{object_id}",
+    }
+    for ortholog_family in data.get('orthologs', []):
+        ortholog_id = ortholog_family.get('id', "")
+        yield {
+            'index': 'pangenome_orthologfamily:' + str(_PANGENOME_ORTHOLOG_FAMILY_INDEX_VERSION),
+            'id': f"{workspace_id}:{object_id}:{ortholog_id}",
         }
