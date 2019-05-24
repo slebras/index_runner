@@ -8,7 +8,8 @@ from confluent_kafka import Producer
 from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
 from .utils.threadify import threadify
-from .indexers.main import index_obj, delete_obj
+from .indexers.main import index_obj
+from .indexers.indexer_utils import check_object_deleted, check_workspace_deleted, fetch_objects_in_workspace
 
 _CONFIG = get_config()
 _PRODUCER = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
@@ -74,19 +75,18 @@ def _run_indexer(msg_data):
         _PRODUCER.poll(60)
 
 
-def _delete_obj(msg_data):
+def _run_obj_deleter(msg_data):
     """
-
     NOTE: Gavin said there should be a check when this message is received,
           that the state of the object we're querying actually is deleted.
     """
-
-    result_gen = delete_obj(msg_data)
-    for result in result_gen:
-        if not result:
-            sys.stderr.write(f"Unable to index object: {msg_data}.\n")
-            continue
-        # Produce an event in Kafka to save the index to elasticsearch
+    # result = delete_obj(msg_data)
+    # verify that object is deleted
+    if check_object_deleted(msg_data['wsid'], msg_data['objid']):
+        result = {
+            'index': '_all',
+            'id': f"{msg_data['wsid']}:{msg_data['objid']}"
+        }
         print('producing to', _CONFIG['topics']['elasticsearch_updates'])
         _PRODUCER.produce(
             _CONFIG['topics']['elasticsearch_updates'],
@@ -97,12 +97,60 @@ def _delete_obj(msg_data):
         _PRODUCER.poll(60)
 
 
+def _run_workspace_deleter(msg_data):
+    """
+    NOTE: Gavin said there should be a check when this message is received,
+          that the state of the object we're querying actually is deleted.
+    """
+    # 1.) Verify that this workspace is actually deleted
+    # 2.) Send workspace_id as 'id' field to 'elasticsearch_updates' topic
+    # NOTE: not sure if '_all' works here.
+    if check_workspace_deleted(msg_data['wsid']):
+        wsid = msg_data['wsid']
+        result = {
+            'index': '_all',
+            'id': f"{wsid}:"
+        }
+        print('producing to', _CONFIG['topics']['elasticsearch_updates'])
+        _PRODUCER.produce(
+            _CONFIG['topics']['elasticsearch_updates'],
+            json.dumps(result),
+            'delete_workspace',
+            callback=_delivery_report
+        )
+        _PRODUCER.poll(60)
+
+
+def _clone_workspace(msg_data):
+    """
+    """
+    workspace_data = fetch_objects_in_workspace(msg_data['wsid'], include_narrative=True)
+    for obj in workspace_data:
+        dummy_msg_data = {
+            "wsid": msg_data["wsid"],
+            "objid": obj["obj_id"],
+        }
+        _run_indexer(dummy_msg_data)
+
+
 # Handler functions for each event type ('evtype' key)
-event_type_handlers = {
+workspace_event_type_handlers = {
     'NEW_VERSION': _run_indexer,
     'REINDEX': _run_indexer,
-    'OBJECT_DELETE_STATE_CHANGE': _delete_obj,
+    'OBJECT_DELETE_STATE_CHANGE': _run_obj_deleter,
+    'WORKSPACE_DELETE_STATE_CHANGE': _run_workspace_deleter,
+    'COPY_OBJECT': _run_indexer,
+    # we could probably write a separate function, but this should be okay for now.
+    'RENAME_OBJECT': _run_indexer,
+    'CLONE_WORKSPACE': _clone_workspace,
+    # I Don't think we need to worry about these because the
+    # workspace is taking care of permissions for us (right?)
+    # 'SET_PERMISSION': ,
+    # 'SET_GLOBAL_PERMISSION': ,
+}
 
+event_type_handlers = {
+    **workspace_event_type_handlers
 }
 
 

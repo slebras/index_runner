@@ -116,7 +116,9 @@ _MAPPINGS = {
                 'contig_ids': {'type': 'keyword'},
                 'sequence_length': {'type': 'integer'},
                 'id': {'type': 'keyword'},
-                'genome_upa': {'type': 'keyword'},
+                # 'genome_upa': {'type': 'keyword'},
+                'guid': {'type': 'keyword'},
+                'genome_version': {'type': 'integer'},
                 # new fields to include:
                 'assembly_ref': {'type': 'keyword'},
                 'genome_feature_type': {'type': 'keyword'},

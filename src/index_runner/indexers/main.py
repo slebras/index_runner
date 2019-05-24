@@ -9,11 +9,11 @@ from ..utils.config import get_config
 from ..utils import ws_type, set_up_indexes
 from .narrative import index_narrative
 from .reads import index_reads
-from .genome import index_genome, delete_genome
+from .genome import index_genome
 from .assembly import index_assembly
 from .tree import index_tree
 from .taxon import index_taxon
-from .pangenome import index_pangenome, delete_pangenome
+from .pangenome import index_pangenome
 
 
 def delete_obj(msg_data):
@@ -24,26 +24,22 @@ def delete_obj(msg_data):
         msg_data - json event data recieved from the kafka workspace events
         stream. Must have keys for 'wsid' and 'objid'
     """
-    upa = _get_upa_from_msg_data(msg_data)
-    config = get_config()
-    ws_url = config['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
-    try:
-        obj_data = ws_client.admin_req('getObjects', {
-            'objects': [{'ref': upa}]
-        })
-    except WorkspaceResponseError as err:
-        print('Workspace response error:', err.resp_data)
-        raise err
-    obj_data = obj_data['data'][0]
-    obj_type = obj_data['info'][2]
-    (type_module, type_name, type_version) = ws_type.get_pieces(obj_type)
-    if (type_module + '.' + type_name) in _TYPE_BLACKLIST:
-        # Blacklisted type, so we don't delete it
-        return
-    deleter = _find_deleter(type_module, type_name, type_version)
-    for deleter_ret in deleter(obj_data):
-        yield deleter_ret
+    # 1.) Check if item is actually deleted
+
+    # NOTE: we can't get the object type from an object that is deleted (according to Gavin)
+    workspace_id = msg_data.get('wsid')
+    object_id = msg_data.get('objid')
+
+    # not sure if we should do '_all' or whether we should search for all 'search2' indexes
+    # NOTE: changed this in elasticsearch_writer
+    yield {
+        'index': "_all",
+        'id': f'{workspace_id}:{object_id}'
+    }
+
+    # deleter = _find_deleter(type_module, type_name, type_version)
+    # for deleter_ret in deleter(obj_data):
+    #     yield deleter_ret
 
 
 def index_obj(msg_data):
@@ -55,6 +51,8 @@ def index_obj(msg_data):
         stream. Must have keys for `wsid` and `objid`
     """
     # Fetch the object data from the workspace API
+
+    # this upa isn't a real upa, does this work?
     upa = _get_upa_from_msg_data(msg_data)
     config = get_config()
     ws_url = config['workspace_url']
@@ -102,18 +100,18 @@ def index_obj(msg_data):
         yield indexer_ret
 
 
-def _find_deleter(type_module, type_name, type_version):
-    """
-    """
-    for entry in _INDEXER_DIRECTORY:
-        module_match = ('module' not in entry) or entry['module'] == type_module
-        name_match = ('type' not in entry) or entry['type'] == type_name
-        ver_match = ('version' not in entry) or entry['version'] == type_version
-        if module_match and name_match and ver_match:
-            # returns generic deleter if no deleter specified
-            return entry.get('deleter', generic_deleter)
-    # No indexer found for this type
-    return generic_deleter
+# def _find_deleter(type_module, type_name, type_version):
+#     """
+#     """
+#     for entry in _INDEXER_DIRECTORY:
+#         module_match = ('module' not in entry) or entry['module'] == type_module
+#         name_match = ('type' not in entry) or entry['type'] == type_name
+#         ver_match = ('version' not in entry) or entry['version'] == type_version
+#         if module_match and name_match and ver_match:
+#             # returns generic deleter if no deleter specified
+#             return entry.get('deleter', generic_deleter)
+#     # No indexer found for this type
+#     return generic_deleter
 
 
 def _find_indexer(type_module, type_name, type_version):
@@ -168,10 +166,10 @@ _INDEXER_DIRECTORY = [
     {'module': 'KBaseFile', 'type': 'PairedEndLibrary', 'indexer': index_reads},
     {'module': 'KBaseFile', 'type': 'SingleEndLibrary', 'indexer': index_reads},
     {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly},
-    {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome, 'deleter': delete_genome},
+    {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome},  # 'deleter': delete_genome},
     {'module': 'KBaseTrees', 'type': 'Tree', 'indexer': index_tree},
     {'module': 'KBaseGenomeAnnotations', 'type': 'Taxon', 'indexer': index_taxon},
-    {'module': 'KBaseGenomes', 'type': 'Pangenome', 'indexer': index_pangenome, 'deleter': delete_pangenome}
+    {'module': 'KBaseGenomes', 'type': 'Pangenome', 'indexer': index_pangenome}  # 'deleter': delete_pangenome}
 ]
 
 # All types we don't want to index

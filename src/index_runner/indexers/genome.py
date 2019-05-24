@@ -61,7 +61,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
         'id': f"{workspace_id}:{object_id}"
     }
     yield genome_index
-    gupa = f"{workspace_id}/{object_id}/{version}"
+    # gupa = f"{workspace_id}/{object_id}/{version}"
     for feat_type, field in [('gene', 'features'), ('non_coding_feature', 'non_coding_features'),
                              ('CDS', 'cdss'), ('mrna', 'mrnas')]:
         for feat in data.get(field, []):
@@ -82,7 +82,9 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                     'contig_ids': contig_ids,
                     'sequence_length': seq_len,
                     'id': feature_id,
-                    'genome_upa': gupa,
+                    # 'genome_upa': gupa,
+                    'guid': f"{workspace_id}:{object_id}",
+                    'genome_version': int(version),
                     # may want to add the following
                     'assembly_ref': assembly_ref,
                     'genome_feature_type': feat_type,
@@ -99,23 +101,30 @@ def index_genome(obj_data, ws_info, obj_data_v1):
 
 
 # TODO: How do we handle which version of the indexer to send a delete message to?
-def delete_genome(obj_data):
-    info = obj_data['info']
-    # if not obj_data.get('data'):
-    #     raise Exception("no data in object")
-    workspace_id = info[6]
-    object_id = info[0]
-    data = obj_data['data']
-    genome_delete = {
-        'index': 'genome:' + str(_GENOME_INDEX_VERSION),
-        'id': f'{workspace_id}:{object_id}'
-    }
-    yield genome_delete
-    for field in ['features', 'non_coding_features', 'cdss', 'mrnas']:
-        for feat in data.get(field, []):
-            feature_id = feat.get('id', "")
-            feature_delete = {
-                'index': 'genome_features:' + str(_GENOME_FEATURE_INDEX_VERSION),
-                'id': f'{workspace_id}:{object_id}:{feature_id}',
-            }
-            yield feature_delete
+# def delete_genome(workspace_id, object_id):
+#     # info = obj_data['info']
+#     # # if not obj_data.get('data'):
+#     # #     raise Exception("no data in object")
+#     # workspace_id = info[6]
+#     # object_id = info[0]
+#     # data = obj_data['data']
+#     genome_delete = {
+#         'index': 'genome:' + str(_GENOME_INDEX_VERSION),
+#         'id': f'{workspace_id}:{object_id}',
+#         'del_str': 'delete'
+#     }
+#     yield genome_delete
+#     features_delete = {
+#         'index': "genome_features:" + str(_GENOME_FEATURE_INDEX_VERSION),
+#         'id': f"{workspace_id}:{object_id}",
+#         'del_str': 'delete_many'
+#     }
+#     yield features_delete
+    # for field in ['features', 'non_coding_features', 'cdss', 'mrnas']:
+    #     for feat in data.get(field, []):
+    #         feature_id = feat.get('id', "")
+    #         feature_delete = {
+    #             'index': 'genome_features:' + str(_GENOME_FEATURE_INDEX_VERSION),
+    #             'id': f'{workspace_id}:{object_id}:{feature_id}',
+    #         }
+    #         yield feature_delete
