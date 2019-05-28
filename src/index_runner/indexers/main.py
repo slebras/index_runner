@@ -16,32 +16,6 @@ from .taxon import index_taxon
 from .pangenome import index_pangenome
 
 
-def delete_obj(msg_data):
-    """
-    For a workspace object, create a deletion message to push to elasticsearch
-    topic on kafka
-    Args:
-        msg_data - json event data recieved from the kafka workspace events
-        stream. Must have keys for 'wsid' and 'objid'
-    """
-    # 1.) Check if item is actually deleted
-
-    # NOTE: we can't get the object type from an object that is deleted (according to Gavin)
-    workspace_id = msg_data.get('wsid')
-    object_id = msg_data.get('objid')
-
-    # not sure if we should do '_all' or whether we should search for all 'search2' indexes
-    # NOTE: changed this in elasticsearch_writer
-    yield {
-        'index': "_all",
-        'id': f'{workspace_id}:{object_id}'
-    }
-
-    # deleter = _find_deleter(type_module, type_name, type_version)
-    # for deleter_ret in deleter(obj_data):
-    #     yield deleter_ret
-
-
 def index_obj(msg_data):
     """
     For a newly created object, generate the index document for it and push to
@@ -100,20 +74,6 @@ def index_obj(msg_data):
         yield indexer_ret
 
 
-# def _find_deleter(type_module, type_name, type_version):
-#     """
-#     """
-#     for entry in _INDEXER_DIRECTORY:
-#         module_match = ('module' not in entry) or entry['module'] == type_module
-#         name_match = ('type' not in entry) or entry['type'] == type_name
-#         ver_match = ('version' not in entry) or entry['version'] == type_version
-#         if module_match and name_match and ver_match:
-#             # returns generic deleter if no deleter specified
-#             return entry.get('deleter', generic_deleter)
-#     # No indexer found for this type
-#     return generic_deleter
-
-
 def _find_indexer(type_module, type_name, type_version):
     """
     Find the indexer function for the given object type within the indexer_directory list.
@@ -126,20 +86,6 @@ def _find_indexer(type_module, type_name, type_version):
             return entry.get('indexer', generic_indexer)
     # No indexer found for this type
     return generic_indexer
-
-
-def generic_deleter(obj_data):
-    """
-    Handles deletion of object that lives in an index indexed by the default indexer
-    """
-    info = obj_data['info']
-    workspace_id = info[6]
-    object_id = info[0]
-    object_type_name = ws_type.get_pieces(info[2])[1]
-    yield {
-        'index': object_type_name.lower() + ":0",
-        'id': f'{workspace_id}:{object_id}'
-    }
 
 
 def generic_indexer(obj_data, ws_info, obj_data_v1):
@@ -166,10 +112,10 @@ _INDEXER_DIRECTORY = [
     {'module': 'KBaseFile', 'type': 'PairedEndLibrary', 'indexer': index_reads},
     {'module': 'KBaseFile', 'type': 'SingleEndLibrary', 'indexer': index_reads},
     {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly},
-    {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome},  # 'deleter': delete_genome},
+    {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome},
     {'module': 'KBaseTrees', 'type': 'Tree', 'indexer': index_tree},
     {'module': 'KBaseGenomeAnnotations', 'type': 'Taxon', 'indexer': index_taxon},
-    {'module': 'KBaseGenomes', 'type': 'Pangenome', 'indexer': index_pangenome}  # 'deleter': delete_pangenome}
+    {'module': 'KBaseGenomes', 'type': 'Pangenome', 'indexer': index_pangenome}
 ]
 
 # All types we don't want to index

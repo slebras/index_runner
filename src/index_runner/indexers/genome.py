@@ -26,7 +26,6 @@ def index_genome(obj_data, ws_info, obj_data_v1):
         functional_description
         genome_workspace_id (upa)
     '''
-    # iterate through the features and yield for each feature
     assembly_ref = ":".join(data.get('assembly_ref', data.get('contigset_ref', "")).split('/'))
 
     publication_titles = [pub[2] for pub in data.get('publications', [])]
@@ -62,6 +61,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
     }
     yield genome_index
     # gupa = f"{workspace_id}/{object_id}/{version}"
+    # iterate through the features and yield for each feature
     for feat_type, field in [('gene', 'features'), ('non_coding_feature', 'non_coding_features'),
                              ('CDS', 'cdss'), ('mrna', 'mrnas')]:
         for feat in data.get(field, []):
@@ -98,33 +98,3 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                 'no_defaults': True
             }
             yield feature_index
-
-
-# TODO: How do we handle which version of the indexer to send a delete message to?
-# def delete_genome(workspace_id, object_id):
-#     # info = obj_data['info']
-#     # # if not obj_data.get('data'):
-#     # #     raise Exception("no data in object")
-#     # workspace_id = info[6]
-#     # object_id = info[0]
-#     # data = obj_data['data']
-#     genome_delete = {
-#         'index': 'genome:' + str(_GENOME_INDEX_VERSION),
-#         'id': f'{workspace_id}:{object_id}',
-#         'del_str': 'delete'
-#     }
-#     yield genome_delete
-#     features_delete = {
-#         'index': "genome_features:" + str(_GENOME_FEATURE_INDEX_VERSION),
-#         'id': f"{workspace_id}:{object_id}",
-#         'del_str': 'delete_many'
-#     }
-#     yield features_delete
-    # for field in ['features', 'non_coding_features', 'cdss', 'mrnas']:
-    #     for feat in data.get(field, []):
-    #         feature_id = feat.get('id', "")
-    #         feature_delete = {
-    #             'index': 'genome_features:' + str(_GENOME_FEATURE_INDEX_VERSION),
-    #             'id': f'{workspace_id}:{object_id}:{feature_id}',
-    #         }
-    #         yield feature_delete

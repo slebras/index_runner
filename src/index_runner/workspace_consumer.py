@@ -19,7 +19,7 @@ def main():
     """
     Main consumer of Kafka messages from workspace updates, generating new indexes.
     """
-    topics = [_CONFIG['topics']['workspace_events']]
+    topics = [_CONFIG['topics']['workspace_events'], _CONFIG['topics']['indexer_admin_events']]
     for msg_data in kafka_consumer(topics):
         threadify(_process_event, [msg_data])
 
@@ -77,52 +77,67 @@ def _run_indexer(msg_data):
 
 def _run_obj_deleter(msg_data):
     """
+    checks that object that is received is deleted because the workspace object
+    delete event can refer to delete or undelete state changes.
+
     NOTE: Gavin said there should be a check when this message is received,
           that the state of the object we're querying actually is deleted.
     """
     # result = delete_obj(msg_data)
     # verify that object is deleted
-    if check_object_deleted(msg_data['wsid'], msg_data['objid']):
-        result = {
-            'index': '_all',
-            'id': f"{msg_data['wsid']}:{msg_data['objid']}"
-        }
-        print('producing to', _CONFIG['topics']['elasticsearch_updates'])
-        _PRODUCER.produce(
-            _CONFIG['topics']['elasticsearch_updates'],
-            json.dumps(result),
-            'delete',
-            callback=_delivery_report
-        )
-        _PRODUCER.poll(60)
+    wsid = msg_data['wsid']
+    objid = msg_data['objid']
+    if not check_object_deleted(wsid, objid):
+        print(f'object {objid} in workspace {wsid} not deleted')
+        return
+    result = {
+        'index': '_all',
+        'id': f"{msg_data['wsid']}:{msg_data['objid']}"
+    }
+    print('producing to', _CONFIG['topics']['elasticsearch_updates'])
+    _PRODUCER.produce(
+        _CONFIG['topics']['elasticsearch_updates'],
+        json.dumps(result),
+        'delete',
+        callback=_delivery_report
+    )
+    _PRODUCER.poll(60)
 
 
 def _run_workspace_deleter(msg_data):
     """
+    checks that workspace that is received is deleted because the workspace
+    delete event can refer to delete or undelete state changes.
+
     NOTE: Gavin said there should be a check when this message is received,
           that the state of the object we're querying actually is deleted.
     """
     # 1.) Verify that this workspace is actually deleted
     # 2.) Send workspace_id as 'id' field to 'elasticsearch_updates' topic
     # NOTE: not sure if '_all' works here.
-    if check_workspace_deleted(msg_data['wsid']):
-        wsid = msg_data['wsid']
-        result = {
-            'index': '_all',
-            'id': f"{wsid}:"
-        }
-        print('producing to', _CONFIG['topics']['elasticsearch_updates'])
-        _PRODUCER.produce(
-            _CONFIG['topics']['elasticsearch_updates'],
-            json.dumps(result),
-            'delete_workspace',
-            callback=_delivery_report
-        )
-        _PRODUCER.poll(60)
+    wsid = msg_data['wsid']
+    if not check_workspace_deleted(wsid):
+        print(f'workspace {wsid} not deleted')
+        return
+    result = {
+        'index': '_all',
+        'id': f"{wsid}"  # not sure if we want to include ':' to end here
+    }
+    print('producing to', _CONFIG['topics']['elasticsearch_updates'])
+    _PRODUCER.produce(
+        _CONFIG['topics']['elasticsearch_updates'],
+        json.dumps(result),
+        'delete_workspace',
+        callback=_delivery_report
+    )
+    _PRODUCER.poll(60)
 
 
 def _clone_workspace(msg_data):
     """
+    Handles CLONE_WORKSPACE event
+
+    iterate over each object in a given workspace and index it.
     """
     workspace_data = fetch_objects_in_workspace(msg_data['wsid'], include_narrative=True)
     for obj in workspace_data:
@@ -130,6 +145,8 @@ def _clone_workspace(msg_data):
             "wsid": msg_data["wsid"],
             "objid": obj["obj_id"],
         }
+        # NOTE: for now we run in same thread, but in future we may switch this to
+        #       producing a message to the indexer admin kafka topic
         _run_indexer(dummy_msg_data)
 
 

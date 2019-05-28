@@ -40,27 +40,3 @@ def index_pangenome(obj_data, ws_info, obj_data_v1):
             'id': f"{workspace_id}:{object_id}:{ortholog_id}",
             'no_defaults': True
         }
-
-# def delete_pangenome(workspace_id, object_id):
-#     """
-#     """
-#     # info = obj_data['info']
-#     # data = obj_data['data']
-#     # workspace_id = info[6]
-#     # object_id = info[0]
-#     yield {
-#         'index': 'pangenome:' + str(_PANGENOME_INDEX_VERSION),
-#         'id': f"{workspace_id}:{object_id}",
-#         'del_str': 'delete'
-#     }
-#     yield {
-#         'index': "pangenome_orthologfamily:" + str(_PANGENOME_ORTHOLOG_FAMILY_INDEX_VERSION),
-#         'id': f"{workspace_id}:{object_id}",
-#         'del_str': 'delete_many'
-#     }
-    # for ortholog_family in data.get('orthologs', []):
-    #     ortholog_id = ortholog_family.get('id', "")
-    #     yield {
-    #         'index': 'pangenome_orthologfamily:' + str(_PANGENOME_ORTHOLOG_FAMILY_INDEX_VERSION),
-    #         'id': f"{workspace_id}:{object_id}:{ortholog_id}",
-    #     }

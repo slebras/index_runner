@@ -18,7 +18,11 @@ def mean(array):
 
 def check_object_deleted(ws_id, obj_id):
     """
-    We check an object is deleted by
+    We check an object is deleted by listing the object in a workspace and
+    making sure the object we are looking for is missing.
+
+    We want to do this because the DELETE event can correspond to more than
+    just an object deletion, so we want to make sure the object is deleted
     """
     config = get_config()
     ws_url = config['workspace_url']
@@ -40,6 +44,9 @@ def check_object_deleted(ws_id, obj_id):
 
 def check_workspace_deleted(ws_id):
     """
+    Since the DELETE_WORKSPACE event can correspond to workspace undeletion as well as deletion,
+    we make sure that the workspace is deleted. This is done by making sure we get an excpetion
+    with the word 'delete' in the error body.
     """
     config = get_config()
     ws_url = config['workspace_url']
@@ -143,5 +150,5 @@ def default_fields(obj_data, ws_info, obj_data_v1):
         "tags": tags,
         "obj_type_version": type_version,
         "obj_type_module": type_module,
-        "obj_type_name": type_name,
+        "obj_type_name": type_name
     }

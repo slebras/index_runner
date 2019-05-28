@@ -24,7 +24,7 @@ _GLOBAL_MAPPINGS = {
     'tags': {'type': 'keyword'},
     'obj_type_version': {'type': 'keyword'},
     'obj_type_module': {'type': 'keyword'},
-    'obj_type': {'type': 'keyword'}
+    'obj_type_name': {'type': 'keyword'}
 }
 
 # Type-specific index mappings
@@ -33,8 +33,6 @@ _MAPPINGS = {
         'alias': 'narrative',
         'properties': {
             'narrative_title': {'type': 'text'},
-            'version': {'type': 'integer'},
-            'obj_id': {'type': 'integer'},
             'data_objects': {
                 'type': 'nested',
                 'properties': {

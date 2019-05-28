@@ -1,5 +1,7 @@
 from utils.get_path import get_path
 
+_READS_INDEX_VERSION = 1
+
 
 def index_reads(obj_data, ws_info, obj_data_v1):
     '''
@@ -42,6 +44,6 @@ def index_reads(obj_data, ws_info, obj_data_v1):
             'interleaved': interleaved,
             'single_genome': single_genome,
         },
-        'index': 'reads:1',
+        'index': 'reads:' + str(_READS_INDEX_VERSION),
         'id': f'{workspace_id}:{object_id}'
     }
