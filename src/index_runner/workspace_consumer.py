@@ -150,6 +150,19 @@ def _clone_workspace(msg_data):
         _run_indexer(dummy_msg_data)
 
 
+def _set_global_permission(msg_data):
+    """
+    Handles SET_GLOBAL_PERMISSION event
+    """
+    _PRODUCER.produce(
+        _CONFIG['topics']['elasticsearch_updates'],
+        json.dumps(result),
+        '',
+        callback=_delivery_report
+    )
+    _PRODUCER.poll(60)
+
+
 # Handler functions for each event type ('evtype' key)
 workspace_event_type_handlers = {
     'NEW_VERSION': _run_indexer,
@@ -162,8 +175,7 @@ workspace_event_type_handlers = {
     'CLONE_WORKSPACE': _clone_workspace,
     # I Don't think we need to worry about these because the
     # workspace is taking care of permissions for us (right?)
-    # 'SET_PERMISSION': ,
-    # 'SET_GLOBAL_PERMISSION': ,
+    'SET_GLOBAL_PERMISSION': _set_global_permission,
 }
 
 event_type_handlers = {
