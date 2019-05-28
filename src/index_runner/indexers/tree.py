@@ -1,3 +1,4 @@
+_TREE_INDEX_VERSION = 1
 
 
 def index_tree(obj_data, ws_info, obj_data_v1):
@@ -20,6 +21,6 @@ def index_tree(obj_data, ws_info, obj_data_v1):
                 for key, val in data.get('default_node_labels', {}).items()
             ],
         },
-        'index': 'tree:1',
+        'index': 'tree:' + str(_TREE_INDEX_VERSION),
         'id': f"{workspace_id}:{object_id}"
     }
