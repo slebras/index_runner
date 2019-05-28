@@ -13,6 +13,7 @@ from .genome import index_genome
 from .assembly import index_assembly
 from .tree import index_tree
 from .taxon import index_taxon
+from .pangenome import index_pangenome
 
 
 def index_obj(msg_data):
@@ -24,6 +25,8 @@ def index_obj(msg_data):
         stream. Must have keys for `wsid` and `objid`
     """
     # Fetch the object data from the workspace API
+
+    # this upa isn't a real upa, does this work?
     upa = _get_upa_from_msg_data(msg_data)
     config = get_config()
     ws_url = config['workspace_url']
@@ -80,15 +83,14 @@ def _find_indexer(type_module, type_name, type_version):
         name_match = ('type' not in entry) or entry['type'] == type_name
         ver_match = ('version' not in entry) or entry['version'] == type_version
         if module_match and name_match and ver_match:
-            return entry['indexer']
+            return entry.get('indexer', generic_indexer)
     # No indexer found for this type
     return generic_indexer
 
 
 def generic_indexer(obj_data, ws_info, obj_data_v1):
     workspace_id = obj_data['info'][6]
-    obj_id = obj_data['info'][0]
-    upa = f"{workspace_id}:{obj_id}"
+    object_id = obj_data['info'][0]
     obj_type = obj_data['info'][2]
     # Send an event to the elasticsearch_writer to initialize an index for this
     # type, if it does not exist.
@@ -96,12 +98,14 @@ def generic_indexer(obj_data, ws_info, obj_data_v1):
     obj_type_name = ws_type.get_pieces(obj_type)[1]
     yield {
         'doc': indexer_utils.default_fields(obj_data, ws_info, obj_data_v1),
-        'index': obj_type_name,
-        'id': upa
+        'index': obj_type_name.lower() + ":0",
+        'id': f"{workspace_id}:{object_id}",
+        'no_defaults': True
     }
 
 
 # Directory of all indexer functions.
+#    If a datatype has a special deleter, can be found here as well.
 # Higher up in the list gets higher precedence.
 _INDEXER_DIRECTORY = [
     {'module': 'KBaseNarrative', 'type': 'Narrative', 'indexer': index_narrative},
@@ -110,7 +114,8 @@ _INDEXER_DIRECTORY = [
     {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly},
     {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome},
     {'module': 'KBaseTrees', 'type': 'Tree', 'indexer': index_tree},
-    {'module': 'KBaseGenomeAnnotations', 'type': 'Taxon', 'indexer': index_taxon}
+    {'module': 'KBaseGenomeAnnotations', 'type': 'Taxon', 'indexer': index_taxon},
+    {'module': 'KBaseGenomes', 'type': 'Pangenome', 'indexer': index_pangenome}
 ]
 
 # All types we don't want to index

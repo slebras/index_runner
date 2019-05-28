@@ -1,3 +1,4 @@
+_TAXON_INDEX_VERSION = 1
 
 
 def index_taxon(obj_data, ws_info, obj_data_v1):
@@ -21,6 +22,6 @@ def index_taxon(obj_data, ws_info, obj_data_v1):
             'genetic_code': data.get('genetic_code', None),
             'aliases': data.get('aliases', [])
         },
-        'index': 'taxon:1',
+        'index': 'taxon:' + str(_TAXON_INDEX_VERSION),
         'id': f"{workspace_id}:{object_id}"
     }

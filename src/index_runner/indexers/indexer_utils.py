@@ -16,6 +16,52 @@ def mean(array):
     return float(sum(array))/float(len(array))
 
 
+def check_object_deleted(ws_id, obj_id):
+    """
+    We check an object is deleted by listing the object in a workspace and
+    making sure the object we are looking for is missing.
+
+    We want to do this because the DELETE event can correspond to more than
+    just an object deletion, so we want to make sure the object is deleted
+    """
+    config = get_config()
+    ws_url = config['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
+    try:
+        narr_data_obj_info = ws_client.admin_req("listObjects", {
+            'ids': [ws_id]
+        })
+    except WorkspaceResponseError as err:
+        print("Workspace response error: ", err.resp_data)
+        # NOTE: not sure if we want to raise err here, worth thinking about
+        raise err
+    # make sure obj_id is not in list of object ids of workspace (this means its deleted)
+    if obj_id not in [obj[0] for obj in narr_data_obj_info]:
+        return True
+    else:
+        return False
+
+
+def check_workspace_deleted(ws_id):
+    """
+    Since the DELETE_WORKSPACE event can correspond to workspace undeletion as well as deletion,
+    we make sure that the workspace is deleted. This is done by making sure we get an excpetion
+    with the word 'delete' in the error body.
+    """
+    config = get_config()
+    ws_url = config['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
+    try:
+        ws_client.ws_client.admin_req("getWorkspaceInfo", {
+            'id': ws_id
+        })
+    except WorkspaceResponseError as err:
+        if 'delete' in err.text:
+            # we want this
+            return True
+    return False
+
+
 def get_shared_users(ws_id):
     """
     Get the list of users that have read, write, or author access to a workspace object.
@@ -40,7 +86,7 @@ def get_shared_users(ws_id):
     return shared_users
 
 
-def fetch_objects_in_workspace(ws_id):
+def fetch_objects_in_workspace(ws_id, include_narrative=False):
     """
     Get a list of dicts with keys 'type' and 'name' corresponding to all data
     objects in the requested workspace.
@@ -58,11 +104,17 @@ def fetch_objects_in_workspace(ws_id):
     except WorkspaceResponseError as err:
         print("Workspace response error: ", err.resp_data)
         raise err
-    narrative_data = [
-        {"name": obj[1], "obj_type": obj[2]}
-        for obj in narr_data_obj_info
-        if 'KBaseNarrative' not in str(obj[2])
-    ]
+    if include_narrative:
+        narrative_data = [
+            {"obj_id": obj[0], "name": obj[1], "obj_type": obj[2], "ver": obj[4]}
+            for obj in narr_data_obj_info
+        ]
+    else:
+        narrative_data = [
+            {"name": obj[1], "obj_type": obj[2]}
+            for obj in narr_data_obj_info
+            if 'KBaseNarrative' not in str(obj[2])
+        ]
     return narrative_data
 
 
@@ -98,5 +150,5 @@ def default_fields(obj_data, ws_info, obj_data_v1):
         "tags": tags,
         "obj_type_version": type_version,
         "obj_type_module": type_module,
-        "obj_type_name": type_name,
+        "obj_type_name": type_name
     }

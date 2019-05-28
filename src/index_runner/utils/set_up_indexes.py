@@ -24,7 +24,7 @@ _GLOBAL_MAPPINGS = {
     'tags': {'type': 'keyword'},
     'obj_type_version': {'type': 'keyword'},
     'obj_type_module': {'type': 'keyword'},
-    'obj_type': {'type': 'keyword'}
+    'obj_type_name': {'type': 'keyword'}
 }
 
 # Type-specific index mappings
@@ -33,8 +33,6 @@ _MAPPINGS = {
         'alias': 'narrative',
         'properties': {
             'narrative_title': {'type': 'text'},
-            'version': {'type': 'integer'},
-            'obj_id': {'type': 'integer'},
             'data_objects': {
                 'type': 'nested',
                 'properties': {
@@ -96,6 +94,16 @@ _MAPPINGS = {
             'mean_contig_length': {'type': 'float'},
             'external_origination_date': {'type': 'keyword'},  # should maybe be of type 'date'?
             'original_source_file_name': {'type': 'keyword'},
+            # new fields to include:
+            'cds_count': {'type': 'integer'},
+            'feature_count': {'type': 'integer'},
+            'mrna_count': {'type': 'integer'},
+            'non_coding_feature_count': {'type': 'integer'},
+            'assembly_ref': {'type': 'keyword'},
+            'source_id': {'type': 'keyword'},
+            'feature_counts': {'type': 'object'},
+            'source': {'type': 'keyword'},
+            'warnings': {'type': 'text'},
         }
     },
     "genome_features:1": {
@@ -106,7 +114,16 @@ _MAPPINGS = {
                 'contig_ids': {'type': 'keyword'},
                 'sequence_length': {'type': 'integer'},
                 'id': {'type': 'keyword'},
-                'genome_upa': {'type': 'keyword'},
+                # 'genome_upa': {'type': 'keyword'},
+                'guid': {'type': 'keyword'},
+                'genome_version': {'type': 'integer'},
+                # new fields to include:
+                'assembly_ref': {'type': 'keyword'},
+                'genome_feature_type': {'type': 'keyword'},
+                'starts': {'type': 'integer'},
+                'strands': {'type': 'keyword'},
+                'stops': {'type': 'integer'},
+                'aliases': {'type': 'keyword'},
         }
     },
     "pangenome:1": {

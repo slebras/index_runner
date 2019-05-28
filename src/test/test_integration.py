@@ -113,6 +113,20 @@ class TestIntegration(unittest.TestCase):
         }
         self.assertEqual(msg_data['doc'], check_against)
 
+    def test_genome_delete_event(self):
+        print('producing to', _CONFIG['topics']['indexer_admin_events'])
+        producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
+        producer.produce(
+            _CONFIG['topics']['indexer_admin_events'],
+            json.dumps(_TEST_EVENTS['deleted_object']),
+            callback=_delivery_report
+        )
+        producer.poll(60)
+        print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
+        msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'delete')
+        check_against = "41347:5"
+        self.assertEqual(msg_data['id'], check_against)
+
 
 def _delivery_report(err, msg):
     if err is not None:
