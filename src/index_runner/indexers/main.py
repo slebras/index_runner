@@ -24,12 +24,10 @@ def index_obj(msg_data):
         msg_data - json event data received from the kafka workspace events
         stream. Must have keys for `wsid` and `objid`
     """
-    # Fetch the object data from the workspace API
-
-    # this upa isn't a real upa, does this work?
     upa = _get_upa_from_msg_data(msg_data)
     config = get_config()
     ws_url = config['workspace_url']
+    # Fetch the object data from the workspace API
     ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
     try:
         obj_data = ws_client.admin_req('getObjects', {
@@ -64,11 +62,13 @@ def index_obj(msg_data):
     obj_data_v1 = obj_data_v1['data'][0]
     # Dispatch to a specific type handler to produce the search document
     indexer = _find_indexer(type_module, type_name, type_version)
-    # all indexers should be generators.
+    # All indexers are generators that yield document data for ES.
     for indexer_ret in indexer(obj_data, ws_info, obj_data_v1):
         if indexer_ret.get('no_defaults'):
+            # Skip default fields.
             del indexer_ret['no_defaults']
         else:
+            # Inject all default fields into the index document.
             defaults = indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
             indexer_ret['doc'].update(defaults)
         yield indexer_ret
@@ -78,6 +78,7 @@ def _find_indexer(type_module, type_name, type_version):
     """
     Find the indexer function for the given object type within the indexer_directory list.
     """
+    # TODO iterate over the whole indexer directory list and return the *last* match
     for entry in _INDEXER_DIRECTORY:
         module_match = ('module' not in entry) or entry['module'] == type_module
         name_match = ('type' not in entry) or entry['type'] == type_name
