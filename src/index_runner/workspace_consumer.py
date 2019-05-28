@@ -19,7 +19,10 @@ def main():
     """
     Main consumer of Kafka messages from workspace updates, generating new indexes.
     """
-    topics = [_CONFIG['topics']['workspace_events'], _CONFIG['topics']['indexer_admin_events']]
+    topics = [
+        _CONFIG['topics']['workspace_events'],
+        _CONFIG['topics']['indexer_admin_events']
+    ]
     for msg_data in kafka_consumer(topics):
         threadify(_process_event, [msg_data])
 
@@ -27,7 +30,8 @@ def main():
 def _process_event(msg_data):
     """
     Process a new workspace event. This is the main switchboard for handling
-    new workspace events. Dispatches to modules in ./event_handlers
+    new workspace events. Dispatches to functions in the `event_type_handlers`
+    dict below.
     Args:
         msg_data - json data received in the kafka event
     Valid events for msg_data['evtype'] include:
@@ -37,7 +41,9 @@ def _process_event(msg_data):
         DELETE_* - deletion on an object
         COPY_ACCESS_GROUP - index all objects in the workspace
         RENAME_ALL_VERSIONS - rename all versions of an object
-        REINDEX_WORKSPACE - index all objects in the workspace
+    Admin events:
+        REINDEX - reindex an object by workspace and object id
+        REINDEX_MISSING - reindex an object only if it does not already have a document in ES
     """
     # Workspace events reference:
     # https://github.com/kbase/workspace_deluxe/blob/master/docsource/events.rst
@@ -170,11 +176,8 @@ workspace_event_type_handlers = {
     'OBJECT_DELETE_STATE_CHANGE': _run_obj_deleter,
     'WORKSPACE_DELETE_STATE_CHANGE': _run_workspace_deleter,
     'COPY_OBJECT': _run_indexer,
-    # we could probably write a separate function, but this should be okay for now.
     'RENAME_OBJECT': _run_indexer,
     'CLONE_WORKSPACE': _clone_workspace,
-    # I Don't think we need to worry about these because the
-    # workspace is taking care of permissions for us (right?)
     'SET_GLOBAL_PERMISSION': _set_global_permission,
 }
 
