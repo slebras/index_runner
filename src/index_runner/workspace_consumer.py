@@ -100,7 +100,6 @@ def _run_obj_deleter(msg_data):
         print(f'object {objid} in workspace {wsid} not deleted')
         return
     result = {
-        'index': '_all',
         'id': f"{msg_data['wsid']}:{msg_data['objid']}"
     }
     print('producing to', _CONFIG['topics']['elasticsearch_updates'])
@@ -123,13 +122,11 @@ def _run_workspace_deleter(msg_data):
     """
     # 1.) Verify that this workspace is actually deleted
     # 2.) Send workspace_id as 'id' field to 'elasticsearch_updates' topic
-    # NOTE: not sure if '_all' works here.
     wsid = msg_data['wsid']
     if not check_workspace_deleted(wsid):
         print(f'workspace {wsid} not deleted')
         return
     result = {
-        'index': '_all',
         'id': f"{wsid}"  # not sure if we want to include ':' to end here
     }
     print('producing to', _CONFIG['topics']['elasticsearch_updates'])
@@ -163,15 +160,17 @@ def _set_global_permission(msg_data):
     """
     Handles the SET_GLOBAL_PERMISSION event.
     eg. this happens when making a narrative public.
+    Sends a "make_public" or "make_private" event to the elasticsearch updates topic.
+    elasticsearch_writer will handle the update_by_query
     """
     # Check what the permission is on the workspace
-    is_public = is_workspace_public(msg_data['wsid'], _CONFIG)
     workspace_id = msg_data['wsid']
+    is_public = is_workspace_public(workspace_id, _CONFIG)
     event_name = 'make_public' if is_public else 'make_private'
-    print('producing to', _CONFIG['topics']['elasticsearch_updates'])
+    print(f"producing '{event_name}' to {_CONFIG['topics']['elasticsearch_updates']}")
     _PRODUCER.produce(
         _CONFIG['topics']['elasticsearch_updates'],
-        {'workspace_id': workspace_id},
+        json.dumps({'workspace_id': workspace_id}),
         event_name,
         callback=_delivery_report
     )

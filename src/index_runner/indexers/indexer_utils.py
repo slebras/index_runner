@@ -39,11 +39,9 @@ def is_workspace_public(ws_id, config):
     """
     ws_url = config['workspace_url']
     ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
-    ws_info = ws_client.admin_req('get_workspace_info', {
-        'ws_id': ws_id
-    })
+    ws_info = ws_client.admin_req('getWorkspaceInfo', {'id': ws_id})
     global_read = ws_info[6]
-    return global_read == 'r'
+    return global_read != 'n'
 
 
 def check_workspace_deleted(ws_id):

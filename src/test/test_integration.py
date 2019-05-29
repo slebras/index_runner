@@ -40,6 +40,12 @@ _TEST_EVENTS = {
         "objtype": None,
         "permusers": [],
         "user": "username"
+    },
+    'set_global_permission': {
+        "wsid": 41347,
+        "evtype": "SET_GLOBAL_PERMISSION",
+        "time": 1559165387436,
+        "user": "username"
     }
 }
 
@@ -122,10 +128,26 @@ class TestIntegration(unittest.TestCase):
             callback=_delivery_report
         )
         producer.poll(60)
-        print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
+        print('..finished producing OBJECT_DELETE_STATE_CHANGE event. Now consuming...')
         msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'delete')
         check_against = "41347:5"
         self.assertEqual(msg_data['id'], check_against)
+
+    def test_global_permission_change(self):
+        """
+        Test a SET_GLOBAL_PERMISSION event
+        """
+        print('producing to', _CONFIG['topics']['workspace_events'])
+        producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
+        producer.produce(
+            _CONFIG['topics']['workspace_events'],
+            json.dumps(_TEST_EVENTS['set_global_permission']),
+            callback=_delivery_report
+        )
+        producer.poll(60)
+        print('..finished producing SET_GLOBAL_PERMISSION event. Now consuming..')
+        msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'make_public')
+        print('MSG_DATA!', msg_data)
 
 
 def _delivery_report(err, msg):
