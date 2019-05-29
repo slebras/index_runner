@@ -166,12 +166,11 @@ def _set_global_permission(msg_data):
     # Check what the permission is on the workspace
     workspace_id = msg_data['wsid']
     is_public = is_workspace_public(workspace_id, _CONFIG)
-    event_name = 'make_public' if is_public else 'make_private'
-    print(f"producing '{event_name}' to {_CONFIG['topics']['elasticsearch_updates']}")
+    print(f"producing 'set_global_perm' to {_CONFIG['topics']['elasticsearch_updates']}")
     _PRODUCER.produce(
         _CONFIG['topics']['elasticsearch_updates'],
-        json.dumps({'workspace_id': workspace_id}),
-        event_name,
+        json.dumps({'workspace_id': workspace_id, 'is_public': is_public}),
+        'set_global_perm',
         callback=_delivery_report
     )
     _PRODUCER.poll(60)

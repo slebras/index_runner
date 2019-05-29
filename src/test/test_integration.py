@@ -146,8 +146,8 @@ class TestIntegration(unittest.TestCase):
         )
         producer.poll(60)
         print('..finished producing SET_GLOBAL_PERMISSION event. Now consuming..')
-        msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'make_public')
-        print('MSG_DATA!', msg_data)
+        msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'set_global_perm')
+        self.assertEqual(msg_data, {'workspace_id': 41347, 'is_public': True})
 
 
 def _delivery_report(err, msg):
