@@ -9,7 +9,9 @@ from confluent_kafka import Producer
 from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
 from .indexers.main import index_obj
-from .indexers.indexer_utils import check_object_deleted, check_workspace_deleted, fetch_objects_in_workspace
+from .indexers.indexer_utils import (
+    check_object_deleted, check_workspace_deleted, fetch_objects_in_workspace, is_workspace_public
+)
 
 _CONFIG = get_config()
 _PRODUCER = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
@@ -157,6 +159,25 @@ def _clone_workspace(msg_data):
         _run_indexer(dummy_msg_data)
 
 
+def _set_global_permission(msg_data):
+    """
+    Handles the SET_GLOBAL_PERMISSION event.
+    eg. this happens when making a narrative public.
+    """
+    # Check what the permission is on the workspace
+    is_public = is_workspace_public(msg_data['wsid'], _CONFIG)
+    workspace_id = msg_data['wsid']
+    event_name = 'make_public' if is_public else 'make_private'
+    print('producing to', _CONFIG['topics']['elasticsearch_updates'])
+    _PRODUCER.produce(
+        _CONFIG['topics']['elasticsearch_updates'],
+        {'workspace_id': workspace_id},
+        event_name,
+        callback=_delivery_report
+    )
+    _PRODUCER.poll(60)
+
+
 # Handler functions for each event type ('evtype' key)
 workspace_event_type_handlers = {
     'NEW_VERSION': _run_indexer,
@@ -166,7 +187,7 @@ workspace_event_type_handlers = {
     'COPY_OBJECT': _run_indexer,
     'RENAME_OBJECT': _run_indexer,
     'CLONE_WORKSPACE': _clone_workspace,
-    # 'SET_GLOBAL_PERMISSION': , # TODO handle narratives going public
+    'SET_GLOBAL_PERMISSION': _set_global_permission
 }
 
 event_type_handlers = {
