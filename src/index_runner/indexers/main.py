@@ -7,40 +7,13 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 from . import indexer_utils
 from ..utils.config import get_config
 from ..utils import ws_type, set_up_indexes
-from .narrative import index_narrative, _NARRATIVE_INDEX_NAME
-from .reads import index_reads, _READS_INDEX_NAME
-from .genome import index_genome, _GENOME_INDEX_NAME
-from .assembly import index_assembly, _ASSEMBLY_INDEX_NAME
-from .tree import index_tree, _TREE_INDEX_NAME
-from .taxon import index_taxon, _TAXON_INDEX_NAME
-from .pangenome import index_pangenome, _PANGENOME_INDEX_NAME
-
-
-def get_indexer_name(msg_data):
-    """
-    Args:
-        msg_data - json event data received from the kafka workspace events
-        stream. Must have keys for `wsid` and `objid`
-    """
-    upa = _get_upa_from_msg_data(msg_data)
-    config = get_config()
-    ws_url = config['workspace_url']
-    # Fetch the object data from the workspace API
-    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
-    try:
-        obj_data = ws_client.admin_req('getObjects', {
-            'objects': [{'ref': upa}]
-        })['data'][0]
-    except WorkspaceResponseError as err:
-        print('Workspace response error:', err.resp_data)
-        raise err
-    obj_type = obj_data['info'][2]
-    (type_module, type_name, type_version) = ws_type.get_pieces(obj_type)
-    if (type_module + '.' + type_name) in _TYPE_BLACKLIST:
-        # Blacklisted type, so we don't need to handle it
-        return
-    index_name = _find_index(type_module, type_name, type_version)
-    return index_name
+from .narrative import index_narrative
+from .reads import index_reads
+from .genome import index_genome
+from .assembly import index_assembly
+from .tree import index_tree
+from .taxon import index_taxon
+from .pangenome import index_pangenome
 
 
 def index_obj(msg_data):
@@ -101,18 +74,6 @@ def index_obj(msg_data):
         yield indexer_ret
 
 
-def _find_index(type_module, type_name, type_version):
-    """
-    """
-    for entry in _INDEXER_DIRECTORY:
-        module_match = ('module' not in entry) or entry['module'] == type_module
-        name_match = ('type' not in entry) or entry['type'] == type_name
-        ver_match = ('version' not in entry) or entry['version'] == type_version
-        if module_match and name_match and ver_match:
-            return entry.get('index', type_name.lower() + ":0")
-    return type_name.lower() + ":0"
-
-
 def _find_indexer(type_module, type_name, type_version):
     """
     Find the indexer function for the given object type within the indexer_directory list.
@@ -148,14 +109,14 @@ def generic_indexer(obj_data, ws_info, obj_data_v1):
 #    If a datatype has a special deleter, can be found here as well.
 # Higher up in the list gets higher precedence.
 _INDEXER_DIRECTORY = [
-    {'module': 'KBaseNarrative', 'type': 'Narrative', 'indexer': index_narrative, 'index': _NARRATIVE_INDEX_NAME},
-    {'module': 'KBaseFile', 'type': 'PairedEndLibrary', 'indexer': index_reads, 'index': _READS_INDEX_NAME},
-    {'module': 'KBaseFile', 'type': 'SingleEndLibrary', 'indexer': index_reads, 'index': _READS_INDEX_NAME},
-    {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly, 'index': _ASSEMBLY_INDEX_NAME},
-    {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome, 'index': _GENOME_INDEX_NAME},
-    {'module': 'KBaseTrees', 'type': 'Tree', 'indexer': index_tree, 'index': _TREE_INDEX_NAME},
-    {'module': 'KBaseGenomeAnnotations', 'type': 'Taxon', 'indexer': index_taxon, 'index': _TAXON_INDEX_NAME},
-    {'module': 'KBaseGenomes', 'type': 'Pangenome', 'indexer': index_pangenome, 'index': _PANGENOME_INDEX_NAME}
+    {'module': 'KBaseNarrative', 'type': 'Narrative', 'indexer': index_narrative},
+    {'module': 'KBaseFile', 'type': 'PairedEndLibrary', 'indexer': index_reads},
+    {'module': 'KBaseFile', 'type': 'SingleEndLibrary', 'indexer': index_reads},
+    {'module': 'KBaseGenomeAnnotations', 'type': 'Assembly', 'indexer': index_assembly},
+    {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome},
+    {'module': 'KBaseTrees', 'type': 'Tree', 'indexer': index_tree},
+    {'module': 'KBaseGenomeAnnotations', 'type': 'Taxon', 'indexer': index_taxon},
+    {'module': 'KBaseGenomes', 'type': 'Pangenome', 'indexer': index_pangenome}
 ]
 
 # All types we don't want to index

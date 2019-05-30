@@ -8,8 +8,10 @@ from confluent_kafka import Producer
 
 from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
-from .indexers.main import index_obj, get_indexer_name
-from .indexers.indexer_utils import check_object_deleted, check_workspace_deleted, fetch_objects_in_workspace
+from .indexers.main import index_obj
+from .indexers.indexer_utils import (
+    check_object_deleted, check_workspace_deleted, fetch_objects_in_workspace, is_workspace_public
+)
 
 _CONFIG = get_config()
 _PRODUCER = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
@@ -98,7 +100,6 @@ def _run_obj_deleter(msg_data):
         print(f'object {objid} in workspace {wsid} not deleted')
         return
     result = {
-        'index': '_all',
         'id': f"{msg_data['wsid']}:{msg_data['objid']}"
     }
     print('producing to', _CONFIG['topics']['elasticsearch_updates'])
@@ -121,13 +122,11 @@ def _run_workspace_deleter(msg_data):
     """
     # 1.) Verify that this workspace is actually deleted
     # 2.) Send workspace_id as 'id' field to 'elasticsearch_updates' topic
-    # NOTE: not sure if '_all' works here.
     wsid = msg_data['wsid']
     if not check_workspace_deleted(wsid):
         print(f'workspace {wsid} not deleted')
         return
     result = {
-        'index': '_all',
         'id': f"{wsid}"  # not sure if we want to include ':' to end here
     }
     print('producing to', _CONFIG['topics']['elasticsearch_updates'])
@@ -159,20 +158,19 @@ def _clone_workspace(msg_data):
 
 def _set_global_permission(msg_data):
     """
-    Handles SET_GLOBAL_PERMISSION event
+    Handles the SET_GLOBAL_PERMISSION event.
+    eg. this happens when making a narrative public.
+    Sends a "make_public" or "make_private" event to the elasticsearch updates topic.
+    elasticsearch_writer will handle the update_by_query
     """
-    wsid = msg_data['wsid']
-    objid = msg_data['objid']
-    index_name = get_indexer_name(msg_data)
-
-    result = {
-        'id': f"{wsid}:{objid}",
-        'index': index_name  # need to find the index
-    }
+    # Check what the permission is on the workspace
+    workspace_id = msg_data['wsid']
+    is_public = is_workspace_public(workspace_id, _CONFIG)
+    print(f"producing 'set_global_perm' to {_CONFIG['topics']['elasticsearch_updates']}")
     _PRODUCER.produce(
         _CONFIG['topics']['elasticsearch_updates'],
-        json.dumps(result),
-        'permission',
+        json.dumps({'workspace_id': workspace_id, 'is_public': is_public}),
+        'set_global_perm',
         callback=_delivery_report
     )
     _PRODUCER.poll(60)
@@ -187,7 +185,7 @@ workspace_event_type_handlers = {
     'COPY_OBJECT': _run_indexer,
     'RENAME_OBJECT': _run_indexer,
     'CLONE_WORKSPACE': _clone_workspace,
-    'SET_GLOBAL_PERMISSION': _set_global_permission,
+    'SET_GLOBAL_PERMISSION': _set_global_permission
 }
 
 event_type_handlers = {
