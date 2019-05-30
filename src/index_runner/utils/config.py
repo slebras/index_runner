@@ -27,6 +27,7 @@ def get_config():
         'workspace_url': workspace_url,
         'kafka_server': os.environ.get('KAFKA_SERVER', 'kafka'),
         'kafka_clientgroup': os.environ.get('KAFKA_CLIENTGROUP', 'search_indexer'),
+        'error_index_name': os.environ.get('ERROR_INDEX_NAME', 'indexing_errors'),
         'topics': {
             'workspace_events': os.environ.get('KAFKA_WORKSPACE_TOPIC', 'workspaceevents'),
             'indexer_admin_events': os.environ.get('KAFKA_INDEXER_ADMIN_TOPIC', 'indexeradminevents'),

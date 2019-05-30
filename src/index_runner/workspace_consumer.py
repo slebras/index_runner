@@ -3,6 +3,7 @@ Consume workspace update events from kafka and publish new indexes.
 """
 import sys
 import json
+import hashlib
 import concurrent.futures
 from confluent_kafka import Producer
 
@@ -10,7 +11,10 @@ from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
 from .indexers.main import index_obj
 from .indexers.indexer_utils import (
-    check_object_deleted, check_workspace_deleted, fetch_objects_in_workspace, is_workspace_public
+    check_object_deleted,
+    check_workspace_deleted,
+    fetch_objects_in_workspace,
+    is_workspace_public
 )
 
 _CONFIG = get_config()
@@ -58,8 +62,33 @@ def _process_event(msg_data):
         raise RuntimeError(f"Missing 'evtype' in event: {msg_data}")
     if event_type not in event_type_handlers:
         raise RuntimeError(f"Unrecognized event {event_type}.")
-    event_type_handlers[event_type](msg_data)
+    try:
+        event_type_handlers[event_type](msg_data)
+    except Exception as err:
+        print(f"Error indexing:\n{err}")
+        _log_error_to_es(msg_data, err)
     print(f"Handler finished for event {msg_data['evtype']}")
+
+
+def _log_error_to_es(msg_data, err):
+    """
+    Log an indexing error to elasticsearch
+    """
+    print(f"Producing index for '{_CONFIG['error_index_name']}' to topic '{_CONFIG['topics']['elasticsearch_updates']}'")  # noqa
+    # The key is a hash of the message data body
+    # The index document is the error string plus the message data itself
+    data = {
+        'id': hashlib.blake2b(json.dumps(msg_data).encode('utf-8')).hexdigest(),
+        'index': _CONFIG['error_index_name'],
+        'doc': {'error': str(err), **msg_data}
+    }
+    _PRODUCER.produce(
+        _CONFIG['topics']['elasticsearch_updates'],
+        json.dumps(data),
+        'index',
+        callback=_delivery_report
+    )
+    _PRODUCER.poll(60)
 
 
 def _run_indexer(msg_data):
@@ -74,7 +103,7 @@ def _run_indexer(msg_data):
             sys.stderr.write(f"Unable to index object: {msg_data}.\n")
             continue
         # Produce an event in Kafka to save the index to elasticsearch
-        print('producing to', _CONFIG['topics']['elasticsearch_updates'])
+        print('Producing to', _CONFIG['topics']['elasticsearch_updates'])
         _PRODUCER.produce(
             _CONFIG['topics']['elasticsearch_updates'],
             json.dumps(result),

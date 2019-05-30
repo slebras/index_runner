@@ -24,7 +24,7 @@ def index_obj(msg_data):
         msg_data - json event data received from the kafka workspace events
         stream. Must have keys for `wsid` and `objid`
     """
-    upa = _get_upa_from_msg_data(msg_data)
+    upa = indexer_utils.get_upa_from_msg_data(msg_data)
     config = get_config()
     ws_url = config['workspace_url']
     # Fetch the object data from the workspace API
@@ -260,14 +260,3 @@ _TYPE_BLACKLIST = [
     "KBaseNetworks.Network",
     "KBaseSequences.SequenceSet"
 ]
-
-
-def _get_upa_from_msg_data(msg_data):
-    """Get the UPA workspace reference from a Kafka workspace event payload."""
-    ws_id = msg_data.get('wsid')
-    if not ws_id:
-        raise RuntimeError(f'Event data missing the "wsid" field for workspace ID: {msg_data}')
-    obj_id = msg_data.get('objid')
-    if not obj_id:
-        raise RuntimeError(f'Event data missing the "objid" field for object ID: {msg_data}')
-    return f"{ws_id}/{obj_id}"

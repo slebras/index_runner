@@ -55,7 +55,7 @@ class TestIntegration(unittest.TestCase):
     maxDiff = None
 
     def test_narrative_update_event(self):
-        print('producing to', _CONFIG['topics']['workspace_events'])
+        print(f"Producing NEW_VERSION event to {_CONFIG['topics']['workspace_events']}")
         producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
         producer.produce(
             _CONFIG['topics']['workspace_events'],
@@ -63,7 +63,6 @@ class TestIntegration(unittest.TestCase):
             callback=_delivery_report
         )
         producer.poll(60)
-        print('..finished producing, now consuming. This may take a couple minutes as the workers restart...')
         msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'index')
         check_against = {
             "narrative_title": "Test Narrative Name",
@@ -148,6 +147,27 @@ class TestIntegration(unittest.TestCase):
         print('..finished producing SET_GLOBAL_PERMISSION event. Now consuming..')
         msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'set_global_perm')
         self.assertEqual(msg_data, {'workspace_id': 41347, 'is_public': True})
+
+    def test_es_error_logging(self):
+        """
+        Test an event that throws an error while trying to index. We check that
+        an error gets logged to ES.
+        """
+        print('producing to', _CONFIG['topics']['workspace_events'])
+        producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
+        producer.produce(
+            _CONFIG['topics']['workspace_events'],
+            json.dumps({
+                'evtype': 'NEW_VERSION',
+                'wsid': 1,
+                # Invalid message; missing data
+            }),
+            callback=_delivery_report
+        )
+        producer.poll(60)
+        print('..finished producing invalid NEW_VERSION event. Now consuming..')
+        msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'index')
+        self.assertEqual(msg_data['index'], 'indexing_errors')
 
 
 def _delivery_report(err, msg):
