@@ -3,11 +3,11 @@ Consume workspace update events from kafka and publish new indexes.
 """
 import sys
 import json
+import concurrent.futures
 from confluent_kafka import Producer
 
 from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
-from .utils.threadify import threadify
 from .indexers.main import index_obj, get_indexer_name
 from .indexers.indexer_utils import check_object_deleted, check_workspace_deleted, fetch_objects_in_workspace
 
@@ -23,8 +23,9 @@ def main():
         _CONFIG['topics']['workspace_events'],
         _CONFIG['topics']['indexer_admin_events']
     ]
+    pool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
     for msg_data in kafka_consumer(topics):
-        threadify(_process_event, [msg_data])
+        pool.submit(_process_event, msg_data)
 
 
 def _process_event(msg_data):
