@@ -33,6 +33,17 @@ def check_object_deleted(ws_id, obj_id):
         return False
 
 
+def is_workspace_public(ws_id, config):
+    """
+    Check if a workspace is public, returning bool.
+    """
+    ws_url = config['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
+    ws_info = ws_client.admin_req('getWorkspaceInfo', {'id': ws_id})
+    global_read = ws_info[6]
+    return global_read != 'n'
+
+
 def check_workspace_deleted(ws_id):
     """
     Since the DELETE_WORKSPACE event can correspond to workspace undeletion as well as deletion,
