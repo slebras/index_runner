@@ -8,7 +8,7 @@ from confluent_kafka import Producer
 from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
 from .utils.threadify import threadify
-from .indexers.main import index_obj
+from .indexers.main import index_obj, get_indexer_name
 from .indexers.indexer_utils import check_object_deleted, check_workspace_deleted, fetch_objects_in_workspace
 
 _CONFIG = get_config()
@@ -160,10 +160,18 @@ def _set_global_permission(msg_data):
     """
     Handles SET_GLOBAL_PERMISSION event
     """
+    wsid = msg_data['wsid']
+    objid = msg_data['objid']
+    index_name = get_indexer_name(msg_data)
+
+    result = {
+        'id': f"{wsid}:{objid}",
+        'index': index_name  # need to find the index
+    }
     _PRODUCER.produce(
         _CONFIG['topics']['elasticsearch_updates'],
         json.dumps(result),
-        '',
+        'permission',
         callback=_delivery_report
     )
     _PRODUCER.poll(60)
