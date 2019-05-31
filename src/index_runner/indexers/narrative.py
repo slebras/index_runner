@@ -7,6 +7,7 @@ from . import indexer_utils
 
 _MARKDOWNER = Markdown()
 _NARRATIVE_INDEX_VERSION = 1
+_NARRATIVE_INDEX_NAME = 'narrative:' + str(_NARRATIVE_INDEX_VERSION)
 
 
 def index_narrative(obj_data, ws_info, obj_data_v1):
@@ -61,7 +62,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             'creator': creator,
             'total_cells': len(cells),
         },
-        'index': 'narrative:' + str(_NARRATIVE_INDEX_VERSION),
+        'index': _NARRATIVE_INDEX_NAME,
         'id': f'{workspace_id}:{obj_id}',
     }
     yield result

@@ -2,6 +2,10 @@
 
 _PANGENOME_INDEX_VERSION = 1
 _PANGENOME_ORTHOLOG_FAMILY_INDEX_VERSION = 1
+_PANGENOME_INDEX_NAME = 'pangenome:' + str(_PANGENOME_INDEX_VERSION)
+_PANGENOME_ORTHOLOG_FAMILY_INDEX_NAME = (
+    'pangenome_orthologfamily:' + str(_PANGENOME_ORTHOLOG_FAMILY_INDEX_VERSION)
+)
 
 
 def index_pangenome(obj_data, ws_info, obj_data_v1):
@@ -20,7 +24,7 @@ def index_pangenome(obj_data, ws_info, obj_data_v1):
             'pangenome_type': data.get('type', None),
             'genome_upas': data.get('genome_refs', []),
         },
-        'index': 'pangenome:' + str(_PANGENOME_INDEX_VERSION),
+        'index': _PANGENOME_INDEX_NAME,
         'id': f"{workspace_id}:{object_id}"
     }
 
@@ -36,7 +40,7 @@ def index_pangenome(obj_data, ws_info, obj_data_v1):
                 'function': ortholog_family.get('function', None),
                 'gene_ids': gene_ids,
             },
-            'index': 'pangenome_orthologfamily:' + str(_PANGENOME_ORTHOLOG_FAMILY_INDEX_VERSION),
+            'index': _PANGENOME_ORTHOLOG_FAMILY_INDEX_NAME,
             'id': f"{workspace_id}:{object_id}:{ortholog_id}",
             'no_defaults': True
         }
