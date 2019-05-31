@@ -12,6 +12,7 @@ _CONFIG = get_config()
 
 _GLOBAL_MAPPINGS = _CONFIG['global']['global_mappings']
 _MAPPINGS = _CONFIG['global']['mappings']
+_ALIASES = _CONFIG['global']['aliases']
 
 
 def set_up_indexes():
@@ -25,7 +26,7 @@ def set_up_indexes():
             _CONFIG['topics']['elasticsearch_updates'],
             json.dumps({
                 'name': index,
-                'alias': mapping['alias'],
+                'alias': _ALIASES[index],
                 'props': {**mapping['properties'], **global_mappings}  # type: ignore
             }),
             'init_index',
