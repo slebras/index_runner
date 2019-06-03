@@ -45,7 +45,7 @@ def get_index_from_wsid_objid(wsid, objid):
         print("Workspace response error: ", err.resp_data)
         raise err
     (type_module, type_name, type_version) = ws_type.get_pieces(obj_info[2])
-    return _CONFIG['global']['ws_type_to_indexes'].get(type_name, type_name.lower()n + ":0")
+    return _CONFIG['global']['ws_type_to_indexes'].get(type_name, type_name.lower() + ":0")
 
 
 def is_workspace_public(ws_id):

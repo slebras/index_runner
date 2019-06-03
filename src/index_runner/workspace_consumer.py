@@ -10,7 +10,6 @@ from confluent_kafka import Producer
 
 from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
-from .utils.ws_type import get_pieces
 from .indexers.main import index_obj
 from .indexers.indexer_utils import (
     check_object_deleted,
@@ -144,7 +143,6 @@ def _run_obj_deleter(msg_data):
     _PRODUCER.poll(60)
 
 
-
 def _run_workspace_deleter(msg_data):
     """
     checks that workspace that is received is deleted because the workspace
@@ -218,14 +216,14 @@ def _update_if_unfound(msg_data):
     search_url = _CONFIG['kbase_endpoint'] + '/searchapi2/rpc'
     resp = requests.post(
         search_url,
-        data=json.dumps(
+        data=json.dumps({
             "method": "check_if_doc_exists",
             "params": {
                 'doc_id': msg_data['wsid'] + ':' + msg_data['objid'],
                 'index': index_name,
                 'es_datatype': _CONFIG['global']['elasticsearch_data_type']
             }
-        )
+        })
     )
     if resp.status_code == 200:
         # already exists
