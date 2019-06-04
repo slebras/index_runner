@@ -4,6 +4,7 @@ Consume workspace update events from kafka and publish new indexes.
 import sys
 import json
 import hashlib
+import requests
 import concurrent.futures
 from confluent_kafka import Producer
 
@@ -14,7 +15,8 @@ from .indexers.indexer_utils import (
     check_object_deleted,
     check_workspace_deleted,
     fetch_objects_in_workspace,
-    is_workspace_public
+    is_workspace_public,
+    get_index_from_wsid_objid
 )
 
 _CONFIG = get_config()
@@ -194,7 +196,7 @@ def _set_global_permission(msg_data):
     """
     # Check what the permission is on the workspace
     workspace_id = msg_data['wsid']
-    is_public = is_workspace_public(workspace_id, _CONFIG)
+    is_public = is_workspace_public(workspace_id)
     print(f"producing 'set_global_perm' to {_CONFIG['topics']['elasticsearch_updates']}")
     _PRODUCER.produce(
         _CONFIG['topics']['elasticsearch_updates'],
@@ -205,10 +207,42 @@ def _set_global_permission(msg_data):
     _PRODUCER.poll(60)
 
 
+def _update_if_unfound(msg_data):
+    """
+    handler for UPDATE_IF_UNFOUND
+    expects msg_data to have both 'wsid' and 'objid'
+    """
+    index_name = get_index_from_wsid_objid(msg_data['wsid'], msg_data['objid'])
+    search_url = _CONFIG['kbase_endpoint'] + '/searchapi2/rpc'
+    resp = requests.post(
+        search_url,
+        data=json.dumps({
+            "method": "check_if_doc_exists",
+            "params": {
+                'doc_id': msg_data['wsid'] + ':' + msg_data['objid'],
+                'index': index_name,
+                'es_datatype': _CONFIG['global']['elasticsearch_data_type']
+            }
+        })
+    )
+    if resp.status_code == 200:
+        # already exists
+        pass
+    if resp.status_code == 404:
+        # doc not found, run indexer
+        _run_indexer(msg_data)
+    else:
+        raise RuntimeError(resp.text)
+
+
+indexer_admin_event_type_handlers = {
+    'REINDEX': _run_indexer,
+    'UPDATE_IF_UNFOUND': _update_if_unfound,
+}
+
 # Handler functions for each event type ('evtype' key)
 workspace_event_type_handlers = {
     'NEW_VERSION': _run_indexer,
-    'REINDEX': _run_indexer,
     'OBJECT_DELETE_STATE_CHANGE': _run_obj_deleter,
     'WORKSPACE_DELETE_STATE_CHANGE': _run_workspace_deleter,
     'COPY_OBJECT': _run_indexer,
@@ -218,7 +252,8 @@ workspace_event_type_handlers = {
 }
 
 event_type_handlers = {
-    **workspace_event_type_handlers
+    **workspace_event_type_handlers,
+    **indexer_admin_event_type_handlers
 }
 
 
