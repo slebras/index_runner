@@ -2,6 +2,7 @@
 from .indexer_utils import mean
 
 _ASSEMBLY_INDEX_VERSION = 1
+_ASSEMBLY_INDEX_NAME = 'assembly:' + str(_ASSEMBLY_INDEX_VERSION)
 
 
 def index_assembly(obj_data, ws_info, obj_data_v1):
@@ -39,6 +40,6 @@ def index_assembly(obj_data, ws_info, obj_data_v1):
             "external_source_id": data.get('external_source_id', None),
             "external_source": data.get('external_source', None),
         },
-        'index': "assembly:" + str(_ASSEMBLY_INDEX_VERSION),
+        'index': _ASSEMBLY_INDEX_NAME,
         'id': f"{workspace_id}:{object_id}",
     }

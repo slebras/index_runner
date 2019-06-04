@@ -3,6 +3,8 @@ from .indexer_utils import mean
 
 _GENOME_INDEX_VERSION = 1
 _GENOME_FEATURE_INDEX_VERSION = 1
+_GENOME_INDEX_NAME = 'genome:' + str(_GENOME_INDEX_VERSION)
+_GENOME_FEATURE_INDEX_NAME = 'genome_features:' + str(_GENOME_FEATURE_INDEX_VERSION)
 
 
 def index_genome(obj_data, ws_info, obj_data_v1):
@@ -56,7 +58,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
             'source': data.get('source', None),
             'warnings': data.get('warnings', None)
         },
-        'index': "genome:" + str(_GENOME_INDEX_VERSION),
+        'index': _GENOME_INDEX_NAME,
         'id': f"{workspace_id}:{object_id}"
     }
     yield genome_index
@@ -93,7 +95,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                     'stops': stops,
                     'aliases': feat.get('aliases', None),
                 },
-                'index': 'genome_features:' + str(_GENOME_FEATURE_INDEX_VERSION),
+                'index': _GENOME_FEATURE_INDEX_NAME,
                 'id': f'{workspace_id}:{object_id}:{feature_id}',
                 'no_defaults': True
             }
