@@ -100,7 +100,7 @@ def generic_indexer(obj_data, ws_info, obj_data_v1):
     yield {
         'doc': indexer_utils.default_fields(obj_data, ws_info, obj_data_v1),
         'index': obj_type_name.lower() + ":0",
-        'id': f"{workspace_id}:{object_id}",
+        'id': f"WS::{workspace_id}:{object_id}",
         'no_defaults': True
     }
 

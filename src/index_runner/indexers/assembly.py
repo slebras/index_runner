@@ -1,6 +1,7 @@
 # from utils.get_path import get_path
 from .indexer_utils import mean
 
+_NAMESPACE = "WS"
 _ASSEMBLY_INDEX_VERSION = 1
 _ASSEMBLY_INDEX_NAME = 'assembly:' + str(_ASSEMBLY_INDEX_VERSION)
 
@@ -41,5 +42,5 @@ def index_assembly(obj_data, ws_info, obj_data_v1):
             "external_source": data.get('external_source', None),
         },
         'index': _ASSEMBLY_INDEX_NAME,
-        'id': f"{workspace_id}:{object_id}",
+        'id': f"{_NAMESPACE}::{workspace_id}:{object_id}",
     }

@@ -1,6 +1,7 @@
 # genome indexer
 from .indexer_utils import mean
 
+_NAMESPACE = "WS"
 _GENOME_INDEX_VERSION = 1
 _GENOME_FEATURE_INDEX_VERSION = 1
 _GENOME_INDEX_NAME = 'genome:' + str(_GENOME_INDEX_VERSION)
@@ -32,6 +33,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
 
     publication_titles = [pub[2] for pub in data.get('publications', [])]
     publication_authors = [pub[5] for pub in data.get('publications', [])]
+    genome_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
     genome_index = {
         'doc': {
             'genome_id': data.get('id', None),
@@ -59,7 +61,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
             'warnings': data.get('warnings', None)
         },
         'index': _GENOME_INDEX_NAME,
-        'id': f"{workspace_id}:{object_id}"
+        'id': genome_id
     }
     yield genome_index
     # gupa = f"{workspace_id}/{object_id}/{version}"
@@ -76,18 +78,15 @@ def index_genome(obj_data, ws_info, obj_data_v1):
             # contig_ids = [l[0] for l in feat.get('location', [])]
             seq_len = feat.get('dna_sequence_length', None)
             feature_id = feat.get('id', "")
-
             feature_index = {
                 'doc': {
+                    'id': feature_id,
                     'feature_type': feat.get('type', None),
                     'functions': functions,
                     'contig_ids': contig_ids,
                     'sequence_length': seq_len,
-                    'id': feature_id,
-                    # 'genome_upa': gupa,
-                    'guid': f"{workspace_id}:{object_id}",
+                    'parent_id': genome_id,
                     'genome_version': int(version),
-                    # may want to add the following
                     'assembly_ref': assembly_ref,
                     'genome_feature_type': feat_type,
                     'starts': starts,
@@ -96,7 +95,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                     'aliases': feat.get('aliases', None),
                 },
                 'index': _GENOME_FEATURE_INDEX_NAME,
-                'id': f'{workspace_id}:{object_id}:{feature_id}',
+                'id': genome_id + f'::ft::{feature_id}',
                 'no_defaults': True
             }
             yield feature_index
