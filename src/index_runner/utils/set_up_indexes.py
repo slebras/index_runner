@@ -10,7 +10,7 @@ _HEADERS = {"Content-Type": "application/json"}
 _CONFIG = get_config()
 # Universal type mappings for every doc in every index.
 
-_GLOBAL_MAPPINGS = _CONFIG['global']['global_mappings']['ws_object']
+_GLOBAL_MAPPINGS = _CONFIG['global']['global_mappings']
 _MAPPINGS = _CONFIG['global']['mappings']
 _ALIASES = _CONFIG['global']['aliases']
 
@@ -48,7 +48,7 @@ def set_up_generic_index(full_type_name):
         json.dumps({
             'name': index_name + ':0',
             'alias': index_name,
-            'props': _GLOBAL_MAPPINGS
+            'props': _GLOBAL_MAPPINGS['ws_object']
         }),
         'init_index',
         callback=_delivery_report
