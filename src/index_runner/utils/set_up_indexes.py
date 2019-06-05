@@ -10,7 +10,7 @@ _HEADERS = {"Content-Type": "application/json"}
 _CONFIG = get_config()
 # Universal type mappings for every doc in every index.
 
-_GLOBAL_MAPPINGS = _CONFIG['global']['global_mappings']['ws_object']
+_GLOBAL_MAPPINGS = _CONFIG['global']['global_mappings']
 _MAPPINGS = _CONFIG['global']['mappings']
 _ALIASES = _CONFIG['global']['aliases']
 
