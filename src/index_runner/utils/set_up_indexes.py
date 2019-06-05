@@ -10,7 +10,7 @@ _HEADERS = {"Content-Type": "application/json"}
 _CONFIG = get_config()
 # Universal type mappings for every doc in every index.
 
-_GLOBAL_MAPPINGS = _CONFIG['global']['global_mappings']
+_GLOBAL_MAPPINGS = _CONFIG['global']['global_mappings']['ws_object']
 _MAPPINGS = _CONFIG['global']['mappings']
 _ALIASES = _CONFIG['global']['aliases']
 
@@ -19,7 +19,7 @@ def set_up_indexes():
     print("Setting up indices...")
     producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
     for index, mapping in _MAPPINGS.items():
-        global_mappings = {}
+        global_mappings = {}  # type: dict
         for g_map in mapping['global_mappings']:
             global_mappings.update(_GLOBAL_MAPPINGS[g_map])
         producer.produce(
