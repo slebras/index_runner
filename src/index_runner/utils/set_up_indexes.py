@@ -19,7 +19,7 @@ def set_up_indexes():
     print("Setting up indices...")
     producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
     for index, mapping in _MAPPINGS.items():
-        global_mappings = {}
+        global_mappings = {}  # type: dict
         for g_map in mapping['global_mappings']:
             global_mappings.update(_GLOBAL_MAPPINGS[g_map])
         producer.produce(
@@ -48,7 +48,7 @@ def set_up_generic_index(full_type_name):
         json.dumps({
             'name': index_name + ':0',
             'alias': index_name,
-            'props': _GLOBAL_MAPPINGS
+            'props': _GLOBAL_MAPPINGS['ws_object']
         }),
         'init_index',
         callback=_delivery_report

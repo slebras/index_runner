@@ -103,7 +103,6 @@ class TestIntegration(unittest.TestCase):
                 }
             ],
             "creator": "username",
-            "guid": "41347:1",
             "shared_users": ['username'],
             "total_cells": 3,
             "access_group": 41347,

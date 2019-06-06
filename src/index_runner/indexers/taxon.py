@@ -1,3 +1,4 @@
+_NAMESPACE = "WS"
 _TAXON_INDEX_VERSION = 1
 _TAXON_INDEX_NAME = 'taxon:' + str(_TAXON_INDEX_VERSION)
 
@@ -24,5 +25,5 @@ def index_taxon(obj_data, ws_info, obj_data_v1):
             'aliases': data.get('aliases', [])
         },
         'index': _TAXON_INDEX_NAME,
-        'id': f"{workspace_id}:{object_id}"
+        'id': f"{_NAMESPACE}::{workspace_id}:{object_id}"
     }

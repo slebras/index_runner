@@ -151,7 +151,6 @@ def default_fields(obj_data, ws_info, obj_data_v1):
         "access_group": ws_id,
         "obj_name": obj_data['info'][1],
         "shared_users": shared_users,
-        "guid": ":".join([str(ws_id), str(obj_id)]),
         "timestamp": obj_data['epoch'],
         "creation_date": v1_info[3],
         "is_public": is_public,
