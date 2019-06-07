@@ -33,21 +33,6 @@ def check_object_deleted(ws_id, obj_id):
         return False
 
 
-def get_index_from_wsid_objid(wsid, objid):
-    """
-    get the name of the index
-    """
-    ws_url = _CONFIG['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
-    try:
-        obj_info = ws_client.admin_req('getObjectInfo', {'objects': [{'ref': f"wsid/objid"}]})
-    except WorkspaceResponseError as err:
-        print("Workspace response error: ", err.resp_data)
-        raise err
-    (type_module, type_name, type_version) = ws_type.get_pieces(obj_info[2])
-    return _CONFIG['global']['ws_type_to_indexes'].get(type_name, type_name.lower() + ":0")
-
-
 def is_workspace_public(ws_id):
     """
     Check if a workspace is public, returning bool.

@@ -165,7 +165,6 @@ class TestIntegration(unittest.TestCase):
         )
         producer.poll(60)
         print('..finished producing invalid NEW_VERSION event. Now consuming..')
-        msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'index')
         self.assertEqual(msg_data['index'], 'indexing_errors')
 
 
