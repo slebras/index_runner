@@ -191,12 +191,11 @@ def _delete_from_elastic(batch_deletes):
         if msg.get('workspace_id'):
             wsid = msg['workspace_id']
             for obj_id in get_obj_ids_from_ws(wsid):
-                id_set.add(f"{wsid}:{obj_id}")
+                id_set.add(f"WS::{wsid}:{obj_id}")
         else:
-            id_set.add(f"{_PREFIX}::{msg['object_id']}")
-    for id_ in id_set:
-        prefix_body = {'prefix': {'guid': id_}}
-        should_body.append(prefix_body)
+            id_set.add(f"WS::{msg['object_id']}")
+    for _id in id_set:
+        should_body.append({'term': {'_id': _id}})
     json_body = json.dumps({'query': {'bool': {'should': should_body}}})
     # Perform the delete_by_query using the elasticsearch http api.
     resp = requests.post(
@@ -207,7 +206,6 @@ def _delete_from_elastic(batch_deletes):
     if not resp.ok:
         # Unsuccesful save to elasticsearch.
         raise RuntimeError(f"Error saving to elasticsearch:\n{resp.text}")
-    # _kafka_log({'_action': 'delete',
     log('info', f"Elasticsearch delete by query successful.")
 
 
@@ -259,6 +257,5 @@ def _update_by_query(query, script, config):
         }),
         headers={'Content-Type': 'application/json'}
     )
-    print('URLLLL', resp.url)
     if not resp.ok:
         raise RuntimeError(f'Error updating by query:\n{resp.text}')

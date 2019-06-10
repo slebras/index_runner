@@ -9,17 +9,6 @@ from index_runner.utils.config import get_config
 _CONFIG = get_config()
 _HEADERS = {"Content-Type": "application/json"}
 _TEST_EVENTS = {
-    'narrative_save': {
-        "wsid": 41347,
-        "ver": 16,
-        "perm": None,
-        "evtype": "NEW_VERSION",
-        "objid": 1,
-        "time": 1554408508419,
-        "objtype": "KBaseNarrative.Narrative-4.0",
-        "permusers": [],
-        "user": "username"
-    },
     # This object will not be found in the listObjects method
     'narrative_save_nonexistent': {
         "wsid": 41347,
@@ -67,22 +56,9 @@ class TestIntegration(unittest.TestCase):
 
     maxDiff = None
 
-    @unittest.skip('x')
-    def test_narrative_update_event(self):
+    def test_object_save_and_delete(self):
         """
-        Test NEW_VERSION.
-        """
-        print(f"Producing NEW_VERSION event to {_CONFIG['topics']['workspace_events']}")
-        _produce(_TEST_EVENTS['narrative_save'])
-        time.sleep(30)
-        _id = 'WS::41347:1'
-        doc = _get_doc(_id)
-        self.assertEqual(doc['_id'], _id)
-        self.assertEqual(doc['_index'], 'search2.narrative:1')
-
-    def test_genome_delete_event(self):
-        """
-        Test an OBJECT_DELETE_STATE_CHANGE.
+        Test a NEW_VERSION event plus an OBJECT_DELETE_STATE_CHANGE.
         """
         print(f"Producing NEW_VERSION event to {_CONFIG['topics']['workspace_events']}")
         _produce(_TEST_EVENTS['narrative_save_nonexistent'])
@@ -93,48 +69,27 @@ class TestIntegration(unittest.TestCase):
         print(f"Producing OBJECT_DELETE_STATE_CHANGE event to {_CONFIG['topics']['workspace_events']}")
         _produce(_TEST_EVENTS['deleted_object'])
         time.sleep(30)
-        try:
+        with self.assertRaises(RuntimeError):
             _get_doc(_id)
-        except RuntimeError as e:
-            print('Error?!', e)
+        print("Producing a SET_GLOBAL_PERMISSION event.")
+        _produce(_TEST_EVENTS['set_global_permission'])
+        time.sleep(30)
 
-    @unittest.skip('x')
-    def test_global_permission_change(self):
-        """
-        Test a SET_GLOBAL_PERMISSION event
-        """
-        print('producing to', _CONFIG['topics']['workspace_events'])
-        producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
-        producer.produce(
-            _CONFIG['topics']['workspace_events'],
-            json.dumps(_TEST_EVENTS['set_global_permission']),
-            callback=_delivery_report
-        )
-        producer.poll(60)
-        print('..finished producing SET_GLOBAL_PERMISSION event. Now consuming..')
-        msg_data = _consume_last(_CONFIG['topics']['elasticsearch_updates'], b'set_global_perm')
-        self.assertEqual(msg_data, {'workspace_id': 41347, 'is_public': True})
-
-    @unittest.skip('x')
     def test_es_error_logging(self):
         """
         Test an event that throws an error while trying to index. We check that
         an error gets logged to ES.
         """
-        print('producing to', _CONFIG['topics']['workspace_events'])
-        producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
-        producer.produce(
-            _CONFIG['topics']['workspace_events'],
-            json.dumps({
-                'evtype': 'NEW_VERSION',
-                'wsid': 1,
-                # Invalid message; missing data
-            }),
-            callback=_delivery_report
-        )
-        producer.poll(60)
-        print('..finished producing invalid NEW_VERSION event. Now consuming..')
-        # self.assertEqual(msg_data['index'], 'indexing_errors')
+        print('Producing an invalid NEW_VERSION event..')
+        _produce({
+            'evtype': 'NEW_VERSION',
+            'wsid': 1,
+            # Invalid message; missing data
+        })
+        time.sleep(30)
+        # _id = 'xyz'  # todo
+        # doc = _get_doc(_id)
+        # self.assertEqual(doc['_id'], _id)
 
 
 def _consume_last(topic, key, timeout=120):
