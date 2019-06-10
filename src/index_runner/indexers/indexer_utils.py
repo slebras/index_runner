@@ -2,7 +2,7 @@ from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from ..utils.config import get_config
-from ..utils import ws_type
+from ..utils.ws_utils import get_type_pieces
 
 _REF_DATA_WORKSPACES = []  # type: list
 _CONFIG = get_config()
@@ -127,7 +127,7 @@ def default_fields(obj_data, ws_info, obj_data_v1):
     shared_users = get_shared_users(ws_id)
     copy_ref = obj_data.get('copied')
     obj_type = obj_data['info'][2]
-    (type_module, type_name, type_version) = ws_type.get_pieces(obj_type)
+    (type_module, type_name, type_version) = get_type_pieces(obj_type)
     tags = []
     if ws_id in _REF_DATA_WORKSPACES:
         tags.append("refdata")

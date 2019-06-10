@@ -2,10 +2,7 @@
 Consume workspace update events from kafka and publish new indexes.
 """
 import sys
-import json
-import hashlib
 import concurrent.futures
-from confluent_kafka import Producer
 
 from .utils.kafka_consumer import kafka_consumer
 from .utils.config import get_config
@@ -19,7 +16,6 @@ from .indexers.indexer_utils import (
 )
 
 _CONFIG = get_config()
-_PRODUCER = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
 
 
 def main(es_queue):
@@ -74,18 +70,18 @@ def _log_error(msg_data, err=None):
     print('n{err}\n{msg_data}')
     # The key is a hash of the message data body
     # The index document is the error string plus the message data itself
-    data = {
-        'id': hashlib.blake2b(json.dumps(msg_data).encode('utf-8')).hexdigest(),
-        'index': _CONFIG['error_index_name'],
-        'doc': {'error': str(err), **msg_data}
-    }
-    _PRODUCER.produce(
-        _CONFIG['topics']['elasticsearch_updates'],
-        json.dumps(data),
-        'index',
-        callback=_delivery_report
-    )
-    _PRODUCER.poll(60)
+    # data = {
+    #     'id': hashlib.blake2b(json.dumps(msg_data).encode('utf-8')).hexdigest(),
+    #     'index': _CONFIG['error_index_name'],
+    #     'doc': {'error': str(err), **msg_data}
+    # }
+    # _PRODUCER.produce(
+    #     _CONFIG['topics']['elasticsearch_updates'],
+    #     json.dumps(data),
+    #     'index',
+    #     callback=_delivery_report
+    # )
+    # _PRODUCER.poll(60)
 
 
 def _run_indexer(msg_data, es_queue):
@@ -94,11 +90,12 @@ def _run_indexer(msg_data, es_queue):
     This will be threaded and backgrounded.
     """
     # index_obj returns a generator
-    for result in index_obj(msg_data):
+    for result in index_obj(msg_data, es_queue):
         if not result:
             _log_error(msg_data)
             continue
         # Push to the elasticsearch write queue
+        print('Pushing index action to queue...')
         es_queue.put({'_action': 'index', **result})
 
 
@@ -114,6 +111,7 @@ def _run_obj_deleter(msg_data, es_queue):
     wsid = msg_data['wsid']
     objid = msg_data['objid']
     if not check_object_deleted(wsid, objid):
+        # Object is not deleted
         print(f'object {objid} in workspace {wsid} not deleted')
         return
     es_queue.put({'_action': 'delete', 'object_id': f"{wsid}:{objid}"})
