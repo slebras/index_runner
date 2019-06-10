@@ -33,11 +33,12 @@ def index_genome(obj_data, ws_info, obj_data_v1):
 
     publication_titles = [pub[2] for pub in data.get('publications', [])]
     publication_authors = [pub[5] for pub in data.get('publications', [])]
+    genome_scientific_name = data.get('scientific_name', None)
     genome_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
     genome_index = {
         'doc': {
             'genome_id': data.get('id', None),
-            'scientific_name': data.get('scientific_name', None),
+            'scientific_name': genome_scientific_name,
             'publication_titles': publication_titles,
             'publication_authors': publication_authors,
             'size': data.get('dna_size', None),
@@ -85,6 +86,11 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                     'functions': functions,
                     'contig_ids': contig_ids,
                     'sequence_length': seq_len,
+                    'id': feature_id,
+                    'genome_scientific_name': genome_scientific_name,
+                    'obj_type_name': "GenomeFeature",  # hack to get ui for features to work.
+                    # 'genome_upa': gupa,
+                    'guid': f"{workspace_id}:{object_id}",
                     'parent_id': genome_id,
                     'genome_version': int(version),
                     'assembly_ref': assembly_ref,
