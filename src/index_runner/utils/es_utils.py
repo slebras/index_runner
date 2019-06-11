@@ -12,7 +12,7 @@ _ES_URL = "http://" + _CONFIG['elasticsearch_host'] + ":" + str(_CONFIG['elastic
 
 def does_doc_exist(wsid, objid):
     """Check if a document exists on elasticsearch based on workspace and object id."""
-    _id = f"{_PREFIX}::{wsid}:{objid}"
+    _id = f"WS::{wsid}:{objid}"
     resp = requests.post(
         _ES_URL + f"/{_PREFIX}.*/_search",
         data=json.dumps({'query': {'term': {'_id': _id}}}),
