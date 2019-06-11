@@ -75,6 +75,13 @@ class TestIntegration(unittest.TestCase):
         _produce(_TEST_EVENTS['set_global_permission'])
         time.sleep(30)
 
+    def test_index_nonexistent(self):
+        _produce({
+            'evtype': 'INDEX_NONEXISTENT',
+            'wsid': 41347,
+            'objid': 5
+        })
+
     def test_es_error_logging(self):
         """
         Test an event that throws an error while trying to index. We check that
