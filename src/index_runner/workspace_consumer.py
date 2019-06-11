@@ -2,6 +2,7 @@
 Consume workspace update events from kafka and publish new indexes.
 """
 import sys
+import traceback
 import concurrent.futures
 
 from .utils.kafka_consumer import kafka_consumer
@@ -56,7 +57,8 @@ def _process_event(msg_data, es_queue):
     try:
         event_type_handlers[event_type](msg_data, es_queue)
     except Exception as err:
-        print(f"Error indexing:\n{err}")
+        print(f"Error indexing:\n{type(err)} - {err}")
+        traceback.print_exc()
         _log_error(msg_data, err)
 
 
