@@ -28,7 +28,7 @@ def main(es_queue):
         _CONFIG['topics']['workspace_events'],
         _CONFIG['topics']['indexer_admin_events']
     ]
-    pool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+    pool = concurrent.futures.ThreadPoolExecutor(max_workers=4)
     for msg_data in kafka_consumer(topics):
         pool.submit(_process_event, msg_data, es_queue)
 
@@ -58,7 +58,6 @@ def _process_event(msg_data, es_queue):
     except Exception as err:
         print(f"Error indexing:\n{err}")
         _log_error(msg_data, err)
-    print(f"Handler finished for event {msg_data['evtype']}")
 
 
 def _log_error(msg_data, err=None):
@@ -96,7 +95,6 @@ def _run_indexer(msg_data, es_queue):
             _log_error(msg_data)
             continue
         # Push to the elasticsearch write queue
-        print('Pushing index action to queue...')
         es_queue.put({'_action': 'index', **result})
 
 

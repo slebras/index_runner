@@ -48,7 +48,6 @@ def main(queue):
     while True:
         while queue.qsize():
             msg = queue.get()
-            print(f'Received message {msg}')
             if not msg.get('_action') or (msg['_action'] not in _MSG_HANDLERS):
                 raise RuntimeError(f"Invalid message to elasticsearch writer: {msg}")
             _MSG_HANDLERS[msg['_action']](msg, state)  # type: ignore
