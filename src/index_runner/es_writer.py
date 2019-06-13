@@ -41,7 +41,7 @@ def main(queue):
             global_mappings.update(_GLOBAL_MAPPINGS[g_map])
         _handle_init_index({
             'name': index,
-            'alias': _ALIASES[index],
+            'alias': _ALIASES.get(index),
             'props': {**mapping['properties'], **global_mappings}
         }, state)
     # Main event loop
@@ -139,6 +139,7 @@ def _create_alias(alias_name, index_name):
     resp = requests.post(url, data=json.dumps(body), headers=_HEADERS)
     if not resp.ok:
         raise RuntimeError(f"Error creating alias '{alias_name}':\n{resp.text}")
+    print(f'Created alias from {alias_name} to {index_name}')
 
 
 def _create_index(index_name):
