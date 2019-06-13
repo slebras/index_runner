@@ -65,8 +65,6 @@ def index_genome(obj_data, ws_info, obj_data_v1):
         'id': genome_id
     }
     yield genome_index
-
-    is_public = ws_info[6] == 'r'
     # gupa = f"{workspace_id}/{object_id}/{version}"
     # iterate through the features and yield for each feature
     for feat_type, field in [('gene', 'features'), ('non_coding_feature', 'non_coding_features'),
@@ -93,8 +91,6 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                     'obj_type_name': "GenomeFeature",  # hack to get ui for features to work.
                     # 'genome_upa': gupa,
                     'guid': f"{workspace_id}:{object_id}",
-                    'access_group': workspace_id,
-                    'is_public': is_public,
                     'parent_id': genome_id,
                     'genome_version': int(version),
                     'assembly_ref': assembly_ref,
@@ -105,7 +101,6 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                     'aliases': feat.get('aliases', None),
                 },
                 'index': _GENOME_FEATURE_INDEX_NAME,
-                'id': genome_id + f'::ft::{feature_id}',
-                'no_defaults': True
+                'id': genome_id + f'::ft::{feature_id}'
             }
             yield feature_index
