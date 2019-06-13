@@ -53,12 +53,11 @@ def check_workspace_deleted(ws_id):
     ws_url = _CONFIG['workspace_url']
     ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
     try:
-        ws_client.ws_client.admin_req("getWorkspaceInfo", {
+        ws_client.admin_req("getWorkspaceInfo", {
             'id': ws_id
         })
     except WorkspaceResponseError as err:
         if 'delete' in err.text:
-            # we want this
             return True
     return False
 

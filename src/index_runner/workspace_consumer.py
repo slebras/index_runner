@@ -68,7 +68,6 @@ def _log_error(msg_data, err=None):
     print('-' * 80)
     print(err)
     print(msg_data)
-    print('n{err}\n{msg_data}')
     # TODO error log to es index
     # The key is a hash of the message data body
     # The index document is the error string plus the message data itself
