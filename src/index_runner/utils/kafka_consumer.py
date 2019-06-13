@@ -36,6 +36,5 @@ def kafka_consumer(topics):
             # JSON parsing error
             print(f'JSON message error: {err}')
             continue
-        print(f"New message in {topics} with data '{data}'")
         yield data
     consumer.close()
