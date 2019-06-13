@@ -10,7 +10,7 @@ from .utils.config import get_config
 from .utils.ws_utils import get_obj_ids_from_ws, get_type_pieces
 
 # How many documents we accumulate before writing in bulk
-_WRITE_THRESHOLD = 1000
+_WRITE_THRESHOLD = 10000
 
 # Initialize configuration data
 _CONFIG = get_config()
