@@ -2,6 +2,9 @@
 Consume workspace update events from kafka and publish new indexes.
 """
 import sys
+import json
+import hashlib
+import traceback
 import concurrent.futures
 
 from .utils.kafka_consumer import kafka_consumer
@@ -56,32 +59,26 @@ def _process_event(msg_data, es_queue):
     try:
         event_type_handlers[event_type](msg_data, es_queue)
     except Exception as err:
-        print(f"Error indexing:\n{err}")
-        _log_error(msg_data, err)
+        print(f"Error indexing:\n{type(err)} - {err}")
+        traceback.print_exc()
+        _log_error(msg_data, es_queue, err)
 
 
-def _log_error(msg_data, err=None):
+def _log_error(msg_data, es_queue, err=None):
     """Log an indexing error to elasticsearch and stdout."""
     print('Error writing index')
     print('-' * 80)
     print(err)
-    print(msg_data)
-    print('n{err}\n{msg_data}')
-    # TODO error log to es index
+    print('=' * 80)
     # The key is a hash of the message data body
     # The index document is the error string plus the message data itself
-    # data = {
-    #     'id': hashlib.blake2b(json.dumps(msg_data).encode('utf-8')).hexdigest(),
-    #     'index': _CONFIG['error_index_name'],
-    #     'doc': {'error': str(err), **msg_data}
-    # }
-    # _PRODUCER.produce(
-    #     _CONFIG['topics']['elasticsearch_updates'],
-    #     json.dumps(data),
-    #     'index',
-    #     callback=_delivery_report
-    # )
-    # _PRODUCER.poll(60)
+    _id = hashlib.blake2b(json.dumps(msg_data).encode('utf-8')).hexdigest()
+    es_queue.put({
+        '_action': 'index',
+        'index': _CONFIG['error_index_name'],
+        'id': _id,
+        'doc': {'error': str(err), **msg_data}
+    })
 
 
 def _run_indexer(msg_data, es_queue):
@@ -92,7 +89,7 @@ def _run_indexer(msg_data, es_queue):
     # index_obj returns a generator
     for result in index_obj(msg_data, es_queue):
         if not result:
-            _log_error(msg_data)
+            _log_error(msg_data, es_queue)
             continue
         # Push to the elasticsearch write queue
         es_queue.put({'_action': 'index', **result})

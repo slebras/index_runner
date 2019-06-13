@@ -62,18 +62,18 @@ class TestIntegration(unittest.TestCase):
         """
         print(f"Producing NEW_VERSION event to {_CONFIG['topics']['workspace_events']}")
         _produce(_TEST_EVENTS['narrative_save_nonexistent'])
-        time.sleep(30)
-        _id = 'WS::41347:5'
-        doc = _get_doc(_id)
-        self.assertEqual(doc['_id'], _id)
+        # time.sleep(30)
+        # _id = 'WS::41347:5'
+        # doc = _get_doc(_id)
+        # self.assertEqual(doc['_id'], _id)
         print(f"Producing OBJECT_DELETE_STATE_CHANGE event to {_CONFIG['topics']['workspace_events']}")
         _produce(_TEST_EVENTS['deleted_object'])
-        time.sleep(30)
-        with self.assertRaises(RuntimeError):
-            _get_doc(_id)
+        # time.sleep(30)
+        # with self.assertRaises(RuntimeError):
+        #     _get_doc(_id)
         print("Producing a SET_GLOBAL_PERMISSION event.")
         _produce(_TEST_EVENTS['set_global_permission'])
-        time.sleep(30)
+        # time.sleep(30)
 
     def test_index_nonexistent(self):
         _produce({
@@ -93,7 +93,7 @@ class TestIntegration(unittest.TestCase):
             'wsid': 1,
             # Invalid message; missing data
         })
-        time.sleep(30)
+        # time.sleep(30)
         # _id = 'xyz'  # todo
         # doc = _get_doc(_id)
         # self.assertEqual(doc['_id'], _id)
