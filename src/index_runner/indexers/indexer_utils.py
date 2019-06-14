@@ -114,7 +114,7 @@ def fetch_objects_in_workspace(ws_id, include_narrative=False):
     return narrative_data
 
 
-def get_tags(ws_info):
+def _get_tags(ws_info):
     """Get the tags relevant to search from the ws_info metadata"""
     metadata = ws_info[-1]
     if metadata.get('searchtags'):
@@ -138,7 +138,7 @@ def default_fields(obj_data, ws_info, obj_data_v1):
     copy_ref = obj_data.get('copied')
     obj_type = obj_data['info'][2]
     (type_module, type_name, type_version) = get_type_pieces(obj_type)
-    tags = get_tags(ws_info)
+    tags = _get_tags(ws_info)
     return {
         "creator": obj_data["creator"],
         "access_group": ws_id,
