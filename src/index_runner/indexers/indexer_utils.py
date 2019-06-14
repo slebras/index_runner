@@ -114,6 +114,14 @@ def fetch_objects_in_workspace(ws_id, include_narrative=False):
     return narrative_data
 
 
+def get_tags(ws_info):
+    """Get the tags relevant to search from the ws_info metadata"""
+    metadata = ws_info[-1]
+    if isinstance(metadata['searchtags'], list):
+        return metadata['searchtags']
+    return [metadata['searchtags']]
+
+
 def default_fields(obj_data, ws_info, obj_data_v1):
     """
     Produce data for fields that are present in any workspace object document on elasticsearch.
@@ -127,9 +135,7 @@ def default_fields(obj_data, ws_info, obj_data_v1):
     copy_ref = obj_data.get('copied')
     obj_type = obj_data['info'][2]
     (type_module, type_name, type_version) = get_type_pieces(obj_type)
-    tags = []
-    if ws_id in _REF_DATA_WORKSPACES:
-        tags.append("refdata")
+    tags = get_tags(ws_info)
     return {
         "creator": obj_data["creator"],
         "access_group": ws_id,
