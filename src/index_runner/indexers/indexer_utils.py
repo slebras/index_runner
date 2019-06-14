@@ -117,10 +117,13 @@ def fetch_objects_in_workspace(ws_id, include_narrative=False):
 def get_tags(ws_info):
     """Get the tags relevant to search from the ws_info metadata"""
     metadata = ws_info[-1]
-    if isinstance(metadata['searchtags'], list):
-        return metadata['searchtags']
-    return [metadata['searchtags']]
-
+    if metadata.get('searchtags'):
+        if isinstance(metadata['searchtags'], list):
+            return metadata['searchtags']
+        else:
+            return [metadata['searchtags']]
+    else:
+        return []
 
 def default_fields(obj_data, ws_info, obj_data_v1):
     """
