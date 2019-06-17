@@ -125,6 +125,7 @@ def _get_tags(ws_info):
     else:
         return []
 
+
 def default_fields(obj_data, ws_info, obj_data_v1):
     """
     Produce data for fields that are present in any workspace object document on elasticsearch.

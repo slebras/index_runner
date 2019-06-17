@@ -49,6 +49,13 @@ def index_obj(msg_data, es_queue):
     except WorkspaceResponseError as err:
         print('Workspace response error:', err.resp_data)
         raise err
+
+    # check if this particular object has the tag "noindex"
+    metadata = ws_info[-1]
+    if metadata.get('searchtags'):
+        if 'noindex' in metadata['searchtags']:
+            return
+
     # Get the info of the first object to get the origin creation date of the
     # object.
     try:
