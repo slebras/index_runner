@@ -15,6 +15,7 @@ def index_taxon(obj_data, ws_info, obj_data_v1):
     object_id = info[0]
 
     yield {
+        '_action': 'index',
         'doc': {
             'scientific_name': data.get('scientific_name'),
             'scientific_lineage': data.get('scientific_lineage'),

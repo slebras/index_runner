@@ -56,6 +56,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
     metadata = obj_info[-1] or {}  # last elem of obj info is a metadata dict
     narrative_title = metadata.get('name')
     result = {
+        '_action': 'index',
         'doc': {
             'narrative_title': narrative_title,
             'data_objects': narrative_data_objects,

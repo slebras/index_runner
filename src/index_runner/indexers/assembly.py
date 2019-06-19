@@ -27,6 +27,7 @@ def index_assembly(obj_data, ws_info, obj_data_v1):
     else:
         mean_contig_length, percent_complete_contigs, percent_circle_contigs = None, None, None
     yield {
+        '_action': 'index',
         'doc': {
             "assembly_name": data.get("name", None),
             "mean_contig_length": mean_contig_length,

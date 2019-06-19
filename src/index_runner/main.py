@@ -1,35 +1,50 @@
 """
-Main daemon runner, launching child threads that consume and produce messages
-on Kafka.
+This is the entrypoint for running the app. A parent supervisor process that
+launches and monitors child processes and threads.
+
+Architecture:
+    Nodes:
+        - index_runner -- consumes workspace and admin indexing events from kafka, runs indexers.
+        - es_writer -- receives updates from index_runner and bulk-updates elasticsearch.
+    The index_runner and es_writer run in separate threads with a thread queue between them.
+
+Everything in this app is IO bound, so we use threads everywhere, not processes.
 """
 import time
-import queue
+import zmq
+from zmq.devices import ProcessDevice
 
-from . import workspace_consumer
-from . import es_writer
-from .utils.threadify import threadify
+from .index_runner import IndexRunner
+from .es_writer import ESWriter
+from .utils.config import get_config
+from .utils.thread_group import ThreadGroup
+
+_CONFIG = get_config()
+
+
+def main():
+    # Message queue between services
+    queue_device = ProcessDevice(zmq.QUEUE, zmq.XREP, zmq.XREQ)
+    # req_uri = f'inproc://{_CONFIG["zmq"]["socket_name"]}_req'
+    # rep_uri = f'inproc://{_CONFIG["zmq"]["socket_name"]}_rep'
+    # req_uri = f'tcp://127.0.0.1:5559'
+    # rep_uri = f'tcp://127.0.0.1:5560'
+    req_uri = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_req'
+    rep_uri = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_rep'
+    print('URIs', req_uri, rep_uri)
+    queue_device.bind_in(req_uri)  # requests
+    queue_device.bind_out(rep_uri)  # replies
+    queue_device.start()
+    # Start the kafka consumer / index runner and elasticsearch writer
+    # For some reason, mypy does not figure out these types correctly
+    indexers = ThreadGroup(IndexRunner, (req_uri,), count=_CONFIG['zmq']['num_indexers'])  # type: ignore
+    writer = ThreadGroup(ESWriter, (rep_uri,), count=1)  # type: ignore
+    while True:
+        # Monitor processes/threads and restart any that have crashed
+        indexers.health_check()
+        writer.health_check()
+        time.sleep(5)
+
 
 if __name__ == '__main__':
-    es_queue = queue.Queue()  # type: queue.Queue
-    print('Starting consumer threads..')
-    # A list of threads, saving their functions and arguments
-    threads = [
-        {
-            'fn': workspace_consumer.main,
-            'args': [es_queue],
-            'thread': threadify(workspace_consumer.main, [es_queue])
-        },
-        {
-            'fn': es_writer.main,
-            'args': [es_queue],
-            'thread': threadify(es_writer.main, [es_queue])
-        }
-    ]
-    # Parent process event loop that checks our threads.
-    # If a thread dies, we restart it.
-    while True:
-        for t in threads:
-            if not t['thread'].is_alive():
-                print(f'Thread for {t["fn"]} died, restarting..')
-                t['thread'] = threadify(t['fn'], t['args'])
-        time.sleep(10)
+    main()

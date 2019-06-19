@@ -18,6 +18,7 @@ def index_pangenome(obj_data, ws_info, obj_data_v1):
     object_id = info[0]
     parent_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
     yield {
+        '_action': 'index',
         'doc': {
             'pangenome_id': data.get('id'),
             'pangenome_name': data.get('name'),
@@ -31,6 +32,7 @@ def index_pangenome(obj_data, ws_info, obj_data_v1):
         ortholog_id = ortholog_family.get('id', '')
         gene_ids = [ortho[0] for ortho in ortholog_family.get('orthologs', [])]
         yield {
+            '_action': 'index',
             'doc': {
                 'ortholog_id': ortholog_id,
                 'ortholog_type': ortholog_family.get('type', None),
@@ -39,5 +41,5 @@ def index_pangenome(obj_data, ws_info, obj_data_v1):
             },
             'index': _PANGENOME_ORTHOLOG_FAMILY_INDEX_NAME,
             'id': parent_id + f'::orth::{ortholog_id}',
-            'no_defaults': True
+            '_no_defaults': True
         }

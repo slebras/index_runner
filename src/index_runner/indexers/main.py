@@ -16,7 +16,7 @@ from .taxon import index_taxon
 from .pangenome import index_pangenome
 
 
-def index_obj(msg_data, es_queue):
+def index_obj(msg_data):
     """
     For a newly created object, generate the index document for it and push to
     the elasticsearch topic on Kafka.
@@ -61,20 +61,18 @@ def index_obj(msg_data, es_queue):
         raise err
     obj_data_v1 = obj_data_v1['data'][0]
     # Dispatch to a specific type handler to produce the search document
-    indexer = _find_indexer(type_module, type_name, type_version, es_queue)
+    indexer = _find_indexer(type_module, type_name, type_version)
     # All indexers are generators that yield document data for ES.
     for indexer_ret in indexer(obj_data, ws_info, obj_data_v1):
-        if indexer_ret.get('no_defaults'):
-            # Skip default fields.
-            del indexer_ret['no_defaults']
-        else:
-            # Inject all default fields into the index document.
-            defaults = indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
-            indexer_ret['doc'].update(defaults)
+        if indexer_ret['_action'] == 'index':
+            if '_no_defaults' not in indexer_ret:
+                # Inject all default fields into the index document.
+                defaults = indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
+                indexer_ret['doc'].update(defaults)
         yield indexer_ret
 
 
-def _find_indexer(type_module, type_name, type_version, es_queue):
+def _find_indexer(type_module, type_name, type_version):
     """
     Find the indexer function for the given object type within the indexer_directory list.
     """
@@ -86,22 +84,23 @@ def _find_indexer(type_module, type_name, type_version, es_queue):
         if module_match and name_match and ver_match:
             return entry.get('indexer', generic_indexer)
     # No indexer found for this type
-    return generic_indexer(es_queue)
+    return generic_indexer()
 
 
-def generic_indexer(es_queue):
+def generic_indexer():
     def fn(obj_data, ws_info, obj_data_v1):
         workspace_id = obj_data['info'][6]
         object_id = obj_data['info'][0]
         obj_type = obj_data['info'][2]
         # Send an event to the elasticsearch_writer to initialize an index for this
         # type, if it does not exist.
-        es_queue.put({
+        yield {
             '_action': 'init_generic_index',
             'full_type_name': obj_type
-        })
+        }
         obj_type_name = ws_utils.get_type_pieces(obj_type)[1]
         yield {
+            '_action': 'index',
             'doc': indexer_utils.default_fields(obj_data, ws_info, obj_data_v1),
             'index': obj_type_name.lower() + ":0",
             'id': f"WS::{workspace_id}:{object_id}",
