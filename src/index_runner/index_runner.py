@@ -26,17 +26,17 @@ _CONFIG = get_config()
 
 @dataclass
 class IndexRunner:
-    queue_uri: str  # work queue for es_writer
+    sock_url: str  # address of socket to push work to
 
     def __post_init__(self):
         context = zmq.Context.instance()
-        self.sock = context.socket(zmq.REQ)  # send requests to the es_writer
-        self.sock.connect(self.queue_uri)
+        self.sock = context.socket(zmq.PUSH)  # send work to the es_writer
+        self.sock.connect(self.sock_url)
         # Start the main event loop
         self._run()
 
     def _run(self):
-        """Run the main event loop, ie. the Kafka Consumer, dispatching to self._recv."""
+        """Run the main event loop, ie. the Kafka Consumer, dispatching to self._handle_message."""
         topics = [
             _CONFIG['topics']['workspace_events'],
             _CONFIG['topics']['indexer_admin_events']
@@ -44,9 +44,9 @@ class IndexRunner:
         print("index_runner started.")
         for msg in kafka_consumer(topics):
             print('index_runner received', msg)
-            self._recv(msg)
+            self._handle_message(msg)
 
-    def _recv(self, msg):
+    def _handle_message(self, msg):
         """Receive a kafka message."""
         event_type = msg.get('evtype')
         ws_id = msg.get('wsid')
@@ -91,13 +91,7 @@ class IndexRunner:
                 self._log_err_to_es(msg)
                 continue
             # Push to the elasticsearch write queue
-            print('-' * 80)
-            print(f'Sending {result} to es_writer..')
             self.sock.send_json(result)
-            print('receiving..')
-            self.sock.recv()
-            print('received')
-            print('-' * 80)
 
     def _run_obj_deleter(self, msg):
         """
@@ -110,11 +104,7 @@ class IndexRunner:
             # Object is not deleted
             print(f'object {objid} in workspace {wsid} not deleted')
             return
-        print('sending to es_writer..')
         self.sock.send_json({'_action': 'delete', 'object_id': f"{wsid}:{objid}"})
-        print('receiving..')
-        self.sock.recv()
-        print('received.')
 
     def _run_workspace_deleter(self, msg):
         """
@@ -126,11 +116,7 @@ class IndexRunner:
         if not check_workspace_deleted(wsid):
             print(f'Workspace {wsid} not deleted')
             return
-        print('sending to es_writer..')
-        self.sock.send_json({'workspace_id': str(wsid), '_action': 'delete'})
-        print('receiving..')
-        self.sock.recv()
-        print('received.')
+        self.sock.send_json({'_action': 'delete', 'workspace_id': str(wsid)})
 
     def _clone_workspace(self, msg):
         """
@@ -154,15 +140,11 @@ class IndexRunner:
         workspace_id = msg['wsid']
         is_public = is_workspace_public(workspace_id)
         # Push the event to the elasticsearch writer queue
-        print('sending..')
         self.sock.send_json({
             '_action': 'set_global_perm',
             'workspace_id': workspace_id,
             'is_public': is_public
         })
-        print('receiving..')
-        self.sock.recv()
-        print('received.')
 
     def _index_nonexistent(self, msg):
         """
@@ -185,4 +167,3 @@ class IndexRunner:
             'id': _id,
             'doc': {'error': str(err), **msg}
         })
-        self.sock.recv()
