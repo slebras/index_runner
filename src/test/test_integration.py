@@ -30,10 +30,9 @@ class TestIntegration(unittest.TestCase):
     def test_basic(self):
         # Produce an event on Kafka
         _produce(_TEST_EVENT)
-        time.sleep(30)  # Wait for write to ES
         _id = f"WS::{_TEST_EVENT['wsid']}:{_TEST_EVENT['objid']}"
         # Fetch the doc from Elasticsearch
-        doc = _get_doc(_id)
+        doc = _get_doc_blocking(_id)
         self.assertEqual(doc['_id'], _id)
 
 
@@ -53,6 +52,18 @@ def _produce(data, topic=_CONFIG['topics']['workspace_events']):
     producer.poll(60)
 
 
+def _get_doc_blocking(_id, timeout=60):
+    """Fetch a doc on ES, waiting for it to become available, with a timeout."""
+    start_time = int(time.time())
+    while True:
+        result = _get_doc(_id)
+        if result:
+            return result
+        if (int(time.time()) - start_time) > timeout:
+            raise RuntimeError(f"Document {_id} not found in {timeout}s.")
+        time.sleep(5)
+
+
 def _get_doc(_id):
     """Fetch a document from elastic based on ID."""
     prefix = _CONFIG['elasticsearch_index_prefix']
@@ -68,7 +79,8 @@ def _get_doc(_id):
         raise RuntimeError(resp.text)
     respj = resp.json()
     if not respj['hits']['total']:
-        raise RuntimeError(f"Document {_id} not found.")
+        return None
+        # raise RuntimeError(f"Document {_id} not found.")
     return respj['hits']['hits'][0]
 
 # _HEADERS = {"Content-Type": "application/json"}
