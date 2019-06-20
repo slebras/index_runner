@@ -1,7 +1,6 @@
 sudo: required
+language: python
 services:
 - docker
 script:
-- docker-compose up --build -d
-- sleep 30
 - make test
