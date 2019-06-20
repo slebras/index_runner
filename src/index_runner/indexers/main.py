@@ -97,8 +97,8 @@ def _find_indexer(type_module, type_name, type_version):
     # No indexer found for this type, check if there is a sdk indexer app
     if type_module + '.' + type_name in _CONFIG['global']['sdk_indexer_apps']:
         indexer_app_vars = _CONFIG['global']['sdk_indexer_apps'][type_module + '.' + type_name]
-        sdk_app     = indexer_app_vars['sdk_app']
-        sdk_func    = indexer_app_vars['sdk_func']
+        sdk_app = indexer_app_vars['sdk_app']
+        sdk_func = indexer_app_vars['sdk_func']
         sdk_version = indexer_app_vars.get('sdk_version', None)
         return partial(index_from_sdk, sdk_app, sdk_func, sdk_version)
     return generic_indexer()

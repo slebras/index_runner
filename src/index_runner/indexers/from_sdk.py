@@ -1,16 +1,13 @@
-"""
-Import 
-"""
+import os
 import uuid
 import json
 import docker
 import requests
-import tempfile
 from ..utils.config import get_config
 
 _CONFIG = get_config()
 _DOCKER = docker.from_env()
-_SCRATCH = _CONFIG['scratch']
+_SCRATCH = "/indexer_data"
 _NAMESPACE = "WS"
 
 
@@ -25,7 +22,7 @@ def _get_docker_image_name(module_name, module_version=None):
             "module_name": module_name
         }]
     }
-    if module_version != None:
+    if module_version is not None:
         params['params'][0]['version'] = module_version
 
     resp = requests.post(catalog_service_url, json.dumps(params))
@@ -38,27 +35,31 @@ def _get_docker_image_name(module_name, module_version=None):
 
 
 def _verify_and_format_output(data_path, workspace_id, object_id):
+    index_name = ""
+    index_version = ""
+
     """make sure the sdk indexers follow conventions, and stream the if necessary."""
     def check_datatypes(d):
         """verify that the outputs of the sdk indexer follows these rather strict conventions"""
         if isinstance(d, dict):
             for key, val in d.items():
                 # not sure if we want to do recursive here or not (not for now)
-                assert isinstance(key, str), "Keys returned from indexer must be strings"
-                assert isinstance(val, str) or isinstance(val, int) or isinstance(val, float) or val is None or isinstance(val, bool), \
-                       "Values returned from indexer must be strings, integers, floats or Nonetype"
+                if isinstance(key, str):
+                    raise ValueError("Keys returned from indexer must be strings")
+                if isinstance(val, str) or isinstance(val, int) or isinstance(val, float) or \
+                   val is None or isinstance(val, bool):
+                    raise ValueError("Values returned from indexer must be strings, integers, floats or Nonetype")
         if isinstance(d, list):
-            for val in d: check_datatypes(val)
+            for val in d:
+                check_datatypes(val)
 
     def format_data(d):
-        sub_type = d.get('sub_type', None)
-        sub_id = d.get('sub_id', None)
         if d.get('sub_type') and d.get('sub_id'):
             es_id = f"{_NAMESPACE}::{workspace_id}:{object_id}::{d.get('sub_type')}::{d.get('sub_id')}"
         else:
             es_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
         return {
-            "index": index_name + ":" + indexer_version,
+            "index": index_name + ":" + index_version,
             "id": es_id,
             "doc": d['doc']
         }
@@ -77,20 +78,20 @@ def _pull_docker_image(image):
     pulled = False
     for im in li:
         if image in im.tags:
-            id_ = im.id
+            # id_ = im.id
             pulled = True
     if not pulled:
-        print("Pulling %s"%image)
-        id_ = _DOCKER.images.pull(image).id
-    return id_
+        print("Pulling %s" % image)
+        _DOCKER.images.pull(image).id
+    # return id_
 
 
-def _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1):
+def _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_image, sdk_func):
     """set up parameters for input to the sdk application"""
     data_dir = job_dir + "/data"
     os.makedirs(data_dir)
-    obj_data_path    = data_dir + "/obj_data.json"
-    ws_info_path     = data_dir + "/ws_info.json"
+    obj_data_path = data_dir + "/obj_data.json"
+    ws_info_path = data_dir + "/ws_info.json"
     obj_data_v1_path = data_dir + "/obj_data_v1.json"
 
     # write data to file
@@ -117,12 +118,12 @@ def _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1):
 
 
 def index_from_sdk(sdk_image, sdk_func, sdk_version, obj_data, ws_info, obj_data_v1):
-	"""Index from an sdk application"""
+    """Index from an sdk application"""
     workspace_id = obj_data['info'][6]
     object_id = obj_data['info'][0]
 
-    image = _get_docker_image_name(sdk_image, module_version=sdk_version)
-    id_   = _pull_docker_image(image)
+    image = _get_docker_image_name(sdk_image, sdk_version)
+    _pull_docker_image(image)
 
     # maybe make this tempfile stuff?
     job_id = str(uuid.uuid1())
@@ -130,7 +131,7 @@ def index_from_sdk(sdk_image, sdk_func, sdk_version, obj_data, ws_info, obj_data
     os.makedirs(job_dir)
 
     # write inputs to files
-    _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1)
+    _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_image, sdk_func)
 
     # with open(job_dir + "/token", "w") as f:
     #     f.write(self.token)
@@ -144,8 +145,8 @@ def index_from_sdk(sdk_image, sdk_func, sdk_version, obj_data, ws_info, obj_data
 
     # Run docker container.
     _DOCKER.containers.run(image, 'async',
-                          environment=env,
-                          volumes=vols)
+                           environment=env,
+                           volumes=vols)
 
     # DO SOME ERROR CHECKING HERE
     yield _verify_and_format_output(job_dir + "/output.json", workspace_id, object_id)

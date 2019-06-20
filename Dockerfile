@@ -24,6 +24,7 @@ RUN pip install --upgrade pip && \
 
 COPY src /app
 COPY src/scripts /app/scripts
+RUN mkdir /indexer_data
 
 WORKDIR /app
 ENV KB_DEPLOYMENT_CONFIG=/app/deploy.cfg
