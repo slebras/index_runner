@@ -43,7 +43,6 @@ class IndexRunner:
         ]
         print("index_runner started.")
         for msg in kafka_consumer(topics):
-            print('index_runner received', msg)
             self._handle_message(msg)
 
     def _handle_message(self, msg):
@@ -54,6 +53,7 @@ class IndexRunner:
             raise RuntimeError(f'Invalid wsid in event: {ws_id}')
         if not event_type:
             raise RuntimeError(f"Missing 'evtype' in event: {msg}")
+        print(f'index_runner received {msg["evtype"]} for workspace {ws_id}')
         try:
             if event_type == 'REINDEX' or event_type == 'NEW_VERSION':
                 self._run_indexer(msg)

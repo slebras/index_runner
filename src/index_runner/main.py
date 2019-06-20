@@ -33,7 +33,6 @@ def main():
         index_runner--╯
     """
     _wait_for_services()
-    context = zmq.Context().instance()
     # Was unable to use inproc with Streamer. Issue here: https://github.com/zeromq/pyzmq/issues/1297
     # frontend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_front'
     # backend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_back'
