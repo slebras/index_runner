@@ -62,7 +62,6 @@ class TestIntegration(unittest.TestCase):
         """
         print(f"Producing NEW_VERSION event to {_CONFIG['topics']['workspace_events']}")
         _produce(_TEST_EVENTS['narrative_save_nonexistent'])
-        # time.sleep(30)
         # _id = 'WS::41347:5'
         # doc = _get_doc(_id)
         # self.assertEqual(doc['_id'], _id)
@@ -75,6 +74,7 @@ class TestIntegration(unittest.TestCase):
         _produce(_TEST_EVENTS['set_global_permission'])
         # time.sleep(30)
 
+    @unittest.skip('x')
     def test_index_nonexistent(self):
         _produce({
             'evtype': 'INDEX_NONEXISTENT',
@@ -82,6 +82,7 @@ class TestIntegration(unittest.TestCase):
             'objid': 5
         })
 
+    @unittest.skip('x')
     def test_es_error_logging(self):
         """
         Test an event that throws an error while trying to index. We check that

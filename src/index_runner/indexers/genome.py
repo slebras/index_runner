@@ -36,6 +36,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
     genome_scientific_name = data.get('scientific_name', None)
     genome_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
     genome_index = {
+        '_action': 'index',
         'doc': {
             'genome_id': data.get('id', None),
             'scientific_name': genome_scientific_name,
@@ -80,6 +81,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
             seq_len = feat.get('dna_sequence_length', None)
             feature_id = feat.get('id', "")
             feature_index = {
+                '_action': 'index',
                 'doc': {
                     'id': feature_id,
                     'feature_type': feat.get('type', None),
