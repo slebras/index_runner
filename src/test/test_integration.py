@@ -201,7 +201,3 @@ def _get_doc(_id):
 #         # We got our message
 #         consumer.close()
 #         return json.loads(msg.value())
-#
-#
-#
-#
