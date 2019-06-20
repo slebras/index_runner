@@ -2,8 +2,13 @@
 
 
 test:
-	docker-compose up -d
-	sleep 15
+	docker-compose up -d workspace
+	docker-compose up -d zookeeper
+	sleep 10
+	docker-compose up -d kafka
+	docker-compose up -d elasticsearch
+	sleep 30
+	docker-compose up -d app
 	docker-compose exec app sh scripts/run_tests.sh
 	docker-compose down -v --remove-orphans
 
