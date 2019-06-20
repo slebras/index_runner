@@ -30,8 +30,10 @@ def main():
         index_runner--┤
         index_runner--╯
     """
+    # Was unable to use inproc with Streamer. Issue here: https://github.com/zeromq/pyzmq/issues/1297
     # frontend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_front'
     # backend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_back'
+    # IPC works well here but is a little slower than inproc
     frontend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_req'
     backend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_rep'
     streamer = zmq.devices.ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
@@ -40,7 +42,6 @@ def main():
     streamer.setsockopt_in(zmq.IDENTITY, b'PULL')
     streamer.setsockopt_out(zmq.IDENTITY, b'PUSH')
     streamer.start()
-    time.sleep(3)
     # Start the index_runner and es_writer
     # For some reason, mypy does not figure out these types correctly
     indexers = ThreadGroup(IndexRunner, (frontend_url,), count=_CONFIG['zmq']['num_indexers'])  # type: ignore

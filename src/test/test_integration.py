@@ -30,7 +30,7 @@ class TestIntegration(unittest.TestCase):
     def test_basic(self):
         # Produce an event on Kafka
         _produce(_TEST_EVENT)
-        time.sleep(30)  # Wait for write to ES
+        time.sleep(60)  # Wait for write to ES
         _id = f"WS::{_TEST_EVENT['wsid']}:{_TEST_EVENT['objid']}"
         # Fetch the doc from Elasticsearch
         doc = _get_doc(_id)
