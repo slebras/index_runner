@@ -34,9 +34,6 @@ def main():
     """
     _wait_for_services()
     context = zmq.Context().instance()
-    # Create a tcp port to accept external messages sans kafka
-    external_sock = context.socket(zmq.PULL)
-    external_sock.bind('tcp://127.0.0.1:5000')  # TODO -- pass messages to index_runner
     # Was unable to use inproc with Streamer. Issue here: https://github.com/zeromq/pyzmq/issues/1297
     # frontend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_front'
     # backend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_back'

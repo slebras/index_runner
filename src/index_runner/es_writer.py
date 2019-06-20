@@ -74,7 +74,6 @@ class ESWriter:
         Receive a JSON message over self.sock.
         Message "action" name should go in msg._action.
         """
-        print('es_writer received', msg)
         if not msg.get('_action'):
             raise RuntimeError(f"Message to elasticsearch writer missing `_action` field: {msg}")
         action = msg['_action']
