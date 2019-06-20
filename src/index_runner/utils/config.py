@@ -25,7 +25,7 @@ def get_config():
     return {
         # All zeromq-related configuration
         'zmq': {
-            'num_indexers': os.environ.get('NUM_INDEXERS', 4),
+            'num_indexers': int(os.environ.get('NUM_INDEXERS', 4)),
             'logger_port': os.environ.get('LOGGER_PORT', 5561),  # tcp port for the logger
             'socket_name': 'indexrunner'
         },
