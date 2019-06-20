@@ -13,6 +13,8 @@ Everything in this app is IO bound, so we use threads everywhere, not processes.
 import time
 import zmq
 import zmq.devices
+import requests
+import subprocess  # nosec
 
 from .index_runner import IndexRunner
 from .es_writer import ESWriter
@@ -30,17 +32,23 @@ def main():
         index_runner--┤
         index_runner--╯
     """
+    _wait_for_services()
+    context = zmq.Context().instance()
+    # Create a tcp port to accept external messages sans kafka
+    external_sock = context.socket(zmq.PULL)
+    external_sock.bind('tcp://127.0.0.1:5000')  # TODO -- pass messages to index_runner
+    # Was unable to use inproc with Streamer. Issue here: https://github.com/zeromq/pyzmq/issues/1297
     # frontend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_front'
     # backend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_back'
-    frontend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_req'
-    backend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_rep'
+    # IPC works well here but is a little slower than inproc
+    frontend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_front'
+    backend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_back'
     streamer = zmq.devices.ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
     streamer.bind_in(frontend_url)
     streamer.bind_out(backend_url)
     streamer.setsockopt_in(zmq.IDENTITY, b'PULL')
     streamer.setsockopt_out(zmq.IDENTITY, b'PUSH')
     streamer.start()
-    time.sleep(3)
     # Start the index_runner and es_writer
     # For some reason, mypy does not figure out these types correctly
     indexers = ThreadGroup(IndexRunner, (frontend_url,), count=_CONFIG['zmq']['num_indexers'])  # type: ignore
@@ -50,6 +58,34 @@ def main():
         indexers.health_check()
         writer.health_check()
         time.sleep(5)
+
+
+def _wait_for_services():
+    """Block and wait for service dependencies (Kafka and Elasticsearch) with a timeout."""
+    timeout = 180  # in seconds
+    start_time = int(time.time())
+    es_started = False
+    kafka_started = False
+    while not es_started:
+        # Check for Elasticsearch
+        try:
+            requests.get(_CONFIG['elasticsearch_url']).raise_for_status()
+            es_started = True
+        except Exception:
+            print('Unable to connect to elasticsearch, waiting..')
+            time.sleep(5)
+            if (int(time.time()) - start_time) > timeout:
+                raise RuntimeError(f"Failed to connect to other services in {timeout}s")
+    while not kafka_started:
+        try:
+            subprocess.check_output(["/usr/bin/kafkacat", "-L", "-b", _CONFIG['kafka_server']])  # nosec
+            kafka_started = True
+        except subprocess.CalledProcessError:
+            print('Unable to connect to Kafka, waiting..')
+            time.sleep(5)
+            if (int(time.time()) - start_time) > timeout:
+                raise RuntimeError(f"Failed to connect to other services in {timeout}s")
+    print('Services started! Now starting the app..')
 
 
 if __name__ == '__main__':

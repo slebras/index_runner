@@ -60,7 +60,7 @@ class ESWriter:
         poller.register(self.sock, zmq.POLLIN)
         # Main event loop
         while True:
-            polled = poller.poll(30000)  # timeout at 30 seconds
+            polled = poller.poll(5000)  # timeout at 5 seconds
             if self.sock in dict(polled):
                 msg = self.sock.recv_json()
                 self._handle_message(msg)
