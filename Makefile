@@ -2,15 +2,10 @@
 
 
 test:
-	docker-compose up -d workspace
-	docker-compose up -d zookeeper
-	sleep 10
-	docker-compose up -d kafka
-	docker-compose up -d elasticsearch
-	sleep 30
-	docker-compose up -d app
+	docker-compose up -d
+	docker-compose exec app python -m test.wait_for_service
 	docker-compose exec app sh scripts/run_tests.sh
-	docker-compose down -v --remove-orphans
+	docker-compose down
 
 reset:
 	# Remove everything in the docker-compose cluster and rebuild

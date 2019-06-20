@@ -5,15 +5,6 @@ ARG BUILD_DATE
 ARG VCS_REF
 ARG BRANCH=develop
 
-# Install pip requirements
-COPY requirements.txt dev-requirements.txt /tmp/
-
-# Install pip requirements
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r /tmp/requirements.txt && \
-    if [ "$DEVELOPMENT" ]; then pip install --no-cache-dir -r /tmp/dev-requirements.txt; fi && \
-    rm /tmp/*requirements.txt
-
 # Install dockerize
 RUN apt-get update && \
     apt-get install -y wget
@@ -21,6 +12,15 @@ ENV DOCKERIZE_VERSION v0.6.1
 RUN wget https://github.com/kbase/dockerize/raw/master/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
     tar -C /usr/local/bin -xvzf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
     rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+
+# apt dependencies
+RUN apt-get install -y kafkacat gcc
+
+# Install pip requirements
+COPY requirements.txt dev-requirements.txt /tmp/
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements.txt && \
+    if [ "$DEVELOPMENT" ]; then pip install --no-cache-dir -r /tmp/dev-requirements.txt; fi
 
 COPY src /app
 COPY src/scripts /app/scripts
