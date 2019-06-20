@@ -15,6 +15,8 @@ from .tree import index_tree
 from .taxon import index_taxon
 from .pangenome import index_pangenome
 
+_CONFIG = get_config()
+
 
 def index_obj(msg_data, es_queue):
     """
@@ -25,10 +27,9 @@ def index_obj(msg_data, es_queue):
         stream. Must have keys for `wsid` and `objid`
     """
     upa = indexer_utils.get_upa_from_msg_data(msg_data)
-    config = get_config()
-    ws_url = config['workspace_url']
+    ws_url = _CONFIG['workspace_url']
     # Fetch the object data from the workspace API
-    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
+    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
     try:
         obj_data = ws_client.admin_req('getObjects', {
             'objects': [{'ref': upa}]
@@ -92,7 +93,9 @@ def _find_indexer(type_module, type_name, type_version, es_queue):
         ver_match = ('version' not in entry) or entry['version'] == type_version
         if module_match and name_match and ver_match:
             return entry.get('indexer', generic_indexer)
-    # No indexer found for this type
+    # No indexer found for this type, see if theres an sdk app for it.
+    if _CONFIG['indexer_apps'].get(type_module + '.' + type_name):
+        return _CONFIG['indexer_apps'][type_module + '.' + type_name]
     return generic_indexer(es_queue)
 
 
