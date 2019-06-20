@@ -36,6 +36,7 @@ def index_reads(obj_data, ws_info, obj_data_v1):
     phred_type = data.get('phred_type', None)
 
     yield {
+        '_action': 'index',
         'doc': {
             'phred_type': phred_type,
             'gc_content': gc_content,

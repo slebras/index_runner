@@ -6,9 +6,7 @@ import functools
 
 @functools.lru_cache(maxsize=2)
 def get_config():
-    """
-    Initialize configuration data.
-    """
+    """Initialize configuration data from the environment."""
     if not os.environ.get('WORKSPACE_TOKEN'):
         raise RuntimeError('WORKSPACE_TOKEN env var is not set.')
     es_host = os.environ.get("ELASTICSEARCH_HOST", 'elasticsearch')
@@ -25,6 +23,12 @@ def get_config():
     with urllib.request.urlopen(config_url) as res:  # nosec
         global_config = yaml.safe_load(res)  # type: ignore
     return {
+        # All zeromq-related configuration
+        'zmq': {
+            'num_indexers': os.environ.get('NUM_INDEXERS', 4),
+            'logger_port': os.environ.get('LOGGER_PORT', 5561),  # tcp port for the logger
+            'socket_name': 'indexrunner'
+        },
         'global': global_config,
         'ws_token': os.environ['WORKSPACE_TOKEN'],
         'kbase_endpoint': kbase_endpoint,

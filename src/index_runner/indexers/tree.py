@@ -13,6 +13,7 @@ def index_tree(obj_data, ws_info, obj_data_v1):
     workspace_id = info[6]
     object_id = info[0]
     yield {
+        '_action': 'index',
         'doc': {
             'tree_name': data.get('name', None),
             'type': data.get('type', None),
