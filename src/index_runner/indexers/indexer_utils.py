@@ -57,7 +57,7 @@ def check_workspace_deleted(ws_id):
             'id': ws_id
         })
     except WorkspaceResponseError as err:
-        if 'delete' in err.text:
+        if 'delete' in err.resp_text:
             return True
     return False
 
