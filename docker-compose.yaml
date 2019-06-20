@@ -24,6 +24,8 @@ services:
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    ports:
+      - 2181:2181
     environment:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -45,10 +47,6 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_HEAP_OPTS: -Xmx512m -Xms512m
-    deploy:
-      resources:
-        limits:
-          memory: 550M
 
   # Mock workspace server (see src/test/mock_workspace/endpoints.json)
   workspace:
