@@ -33,13 +33,9 @@ def main():
         index_runner--╯
     """
     _wait_for_services()
-    # Was unable to use inproc with Streamer. Issue here: https://github.com/zeromq/pyzmq/issues/1297
-    # frontend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_front'
-    # backend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_back'
-    # IPC works well here but is a little slower than inproc
-    frontend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_front'
-    backend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_back'
-    streamer = zmq.devices.ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
+    frontend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_front'
+    backend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_back'
+    streamer = zmq.devices.ThreadDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
     streamer.bind_in(frontend_url)
     streamer.bind_out(backend_url)
     streamer.setsockopt_in(zmq.IDENTITY, b'PULL')
