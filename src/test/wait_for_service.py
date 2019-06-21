@@ -12,7 +12,7 @@ start_time = int(time.time())
 
 while not service_up:
     print("Waiting app to start..")
-    if os.path.exists(f'/tmp/{_CONFIG["zmq"]["socket_name"]}_front'):  # nosec
+    if os.path.exists(f'/tmp/app_started'):  # nosec
         service_up = True
     else:
         time.sleep(5)
