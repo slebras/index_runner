@@ -16,6 +16,12 @@ Run the tests (servers must be running):
 make test
 ```
 
+## Admininstration
+
+Some CLI admin tools are provided in `src/admin_tools/main.py`.
+
+Running `python main.py` will give you a list of available commands.
+
 ### Deployment
 
 Build the image:
