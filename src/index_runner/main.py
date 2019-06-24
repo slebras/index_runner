@@ -38,8 +38,9 @@ def main():
     streamer = zmq.devices.ThreadDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
     streamer.bind_in(frontend_url)
     streamer.bind_out(backend_url)
-    streamer.setsockopt_in(zmq.IDENTITY, b'PULL')
-    streamer.setsockopt_out(zmq.IDENTITY, b'PUSH')
+    # The 'high water mark' options sets a maximum queue size for both the frontend and backend sockets.
+    streamer.setsockopt_in(zmq.RCVHWM, _CONFIG['zmq']['queue_max'])
+    streamer.setsockopt_out(zmq.SNDHWM, _CONFIG['zmq']['queue_max'])
     streamer.start()
     # Start the index_runner and es_writer
     # For some reason, mypy does not figure out these types correctly
