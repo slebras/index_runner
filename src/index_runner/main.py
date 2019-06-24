@@ -44,7 +44,7 @@ def main():
     # Start the index_runner and es_writer
     # For some reason, mypy does not figure out these types correctly
     indexers = ThreadGroup(IndexRunner, (frontend_url,), count=_CONFIG['zmq']['num_indexers'])  # type: ignore
-    writer = ThreadGroup(ESWriter, (backend_url,), count=1)  # type: ignore
+    writer = ThreadGroup(ESWriter, (backend_url,), count=_CONFIG['zmq']['num_es_writers'])  # type: ignore
     # Signal that the app has started to any other processes
     open('/tmp/app_started', 'a').close()  # nosec
     while True:
