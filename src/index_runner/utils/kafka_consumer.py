@@ -1,5 +1,5 @@
 """
-Convenience wrapper / generator function arounda kafka consumer for a given
+Convenience wrapper / generator function around a kafka consumer for a given
 topic/client group.
 """
 import json
@@ -19,11 +19,13 @@ def kafka_consumer(topics):
     print('Subscribing to topics:', topics)
     consumer.subscribe(topics)
     while True:
-        msg = consumer.poll(0.5)
+        msg = consumer.poll(120)
         if msg is None:
+            print('No new messages.')
             continue
         if msg.error():
             if msg.error().code() == KafkaError._PARTITION_EOF:
+                print('End of stream.')
                 continue
             else:
                 raise RuntimeError(f"Kafka message error: {msg.error()}")

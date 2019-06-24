@@ -27,7 +27,7 @@ def get_config():
         'zmq': {
             'queue_max': int(os.environ.get('QUEUE_MAX', 10000)),
             'num_indexers': int(os.environ.get('NUM_INDEXERS', 4)),
-            'num_es_writers': int(os.environ.get('NUM_ES_WRITERS', 1)),
+            'num_es_writers': int(os.environ.get('NUM_ES_WRITERS', 2)),
             'logger_port': os.environ.get('LOGGER_PORT', 5561),  # tcp port for the logger
             'socket_name': 'indexrunner'
         },
