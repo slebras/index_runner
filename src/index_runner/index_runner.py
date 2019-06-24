@@ -53,7 +53,7 @@ class IndexRunner:
             raise RuntimeError(f'Invalid wsid in event: {ws_id}')
         if not event_type:
             raise RuntimeError(f"Missing 'evtype' in event: {msg}")
-        print(f'index_runner received {msg["evtype"]} for workspace {ws_id}')
+        print(f'index_runner received {msg["evtype"]} for {ws_id}/{msg.get("objid", "?")}')
         try:
             if event_type == 'REINDEX' or event_type == 'NEW_VERSION':
                 self._run_indexer(msg)
