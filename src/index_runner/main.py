@@ -19,7 +19,7 @@ import subprocess  # nosec
 from .index_runner import IndexRunner
 from .es_writer import ESWriter
 from .utils.config import get_config
-from .utils.thread_group import ThreadGroup
+from .utils.worker_group import WorkerGroup
 
 _CONFIG = get_config()
 
@@ -33,9 +33,9 @@ def main():
         index_runner--╯
     """
     _wait_for_services()
-    frontend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_front'
-    backend_url = f'inproc://{_CONFIG["zmq"]["socket_name"]}_back'
-    streamer = zmq.devices.ThreadDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
+    frontend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_front'
+    backend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_back'
+    streamer = zmq.devices.ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
     streamer.bind_in(frontend_url)
     streamer.bind_out(backend_url)
     # The 'high water mark' options sets a maximum queue size for both the frontend and backend sockets.
@@ -44,8 +44,8 @@ def main():
     streamer.start()
     # Start the index_runner and es_writer
     # For some reason, mypy does not figure out these types correctly
-    indexers = ThreadGroup(IndexRunner, (frontend_url,), count=_CONFIG['zmq']['num_indexers'])  # type: ignore
-    writer = ThreadGroup(ESWriter, (backend_url,), count=_CONFIG['zmq']['num_es_writers'])  # type: ignore
+    indexers = WorkerGroup(IndexRunner, (frontend_url,), count=_CONFIG['zmq']['num_indexers'])  # type: ignore
+    writer = WorkerGroup(ESWriter, (backend_url,), count=_CONFIG['zmq']['num_es_writers'])  # type: ignore
     # Signal that the app has started to any other processes
     open('/tmp/app_started', 'a').close()  # nosec
     while True:
