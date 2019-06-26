@@ -44,6 +44,7 @@ class IndexRunner:
         print("index_runner started.")
         for msg in kafka_consumer(topics):
             self._handle_message(msg)
+            print("Finished receiving.")
 
     def _handle_message(self, msg):
         """Receive a kafka message."""
