@@ -27,7 +27,8 @@ def kafka_consumer(topics):
                 print('End of stream.')
                 continue
             else:
-                raise RuntimeError(f"Kafka message error: {msg.error()}")
+                print(f"Kafka message error: {msg.error()}")
+                continue
         val = msg.value().decode('utf-8')
         try:
             data = json.loads(val)
