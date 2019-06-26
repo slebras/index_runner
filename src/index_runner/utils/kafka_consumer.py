@@ -19,9 +19,8 @@ def kafka_consumer(topics):
     print('Subscribing to topics:', topics)
     consumer.subscribe(topics)
     while True:
-        msg = consumer.poll(120)
+        msg = consumer.poll(1)
         if msg is None:
-            print('No new messages.')
             continue
         if msg.error():
             if msg.error().code() == KafkaError._PARTITION_EOF:
