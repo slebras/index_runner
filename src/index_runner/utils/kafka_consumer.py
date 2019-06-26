@@ -14,7 +14,8 @@ def kafka_consumer(topics):
     consumer = Consumer({
         'bootstrap.servers': config['kafka_server'],
         'group.id': config['kafka_clientgroup'],
-        'auto.offset.reset': 'earliest'
+        'auto.offset.reset': 'earliest',
+        'enable.auto.commit': True
     })
     print('Subscribing to topics:', topics)
     consumer.subscribe(topics)
