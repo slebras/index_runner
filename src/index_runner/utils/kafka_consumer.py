@@ -17,13 +17,14 @@ def kafka_consumer(topics):
         'auto.offset.reset': 'earliest',
         'enable.auto.commit': True
     })
-    print('Subscribing to topics:', topics)
+    print(f"Subscribing to: {topics}")
+    print(f"Client group: {config['kafka_clientgroup']}")
+    print(f"Kafka server: {config['kafka_server']}")
     consumer.subscribe(topics)
     try:
         while True:
-            msg = consumer.poll(timeout=1.0)
+            msg = consumer.poll(timeout=0.5)
             if msg is None:
-                print('No message.', consumer.list_topics())
                 continue
             if msg.error():
                 if msg.error().code() == KafkaError._PARTITION_EOF:

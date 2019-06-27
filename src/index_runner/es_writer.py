@@ -6,6 +6,7 @@ Receives messages from index_runner.
 import zmq
 import json
 import requests
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -35,6 +36,7 @@ class ESWriter:
 
     def __post_init__(self):
         """Initialize the socket, plus indices, aliases, and type mappings on ES."""
+        _wait_for_es()  # Wait for elasticsearch.
         context = zmq.Context.instance()
         self.sock = context.socket(zmq.PULL)  # Socket for sending replies to index_runner
         self.sock.connect(self.sock_url)
@@ -75,7 +77,8 @@ class ESWriter:
         Message "action" name should go in msg._action.
         """
         if not msg.get('_action'):
-            raise RuntimeError(f"Message to elasticsearch writer missing `_action` field: {msg}")
+            print(f"Message to elasticsearch writer missing `_action` field: {msg}")
+            return
         action = msg['_action']
         if action == 'delete':
             self.batch_deletes.append(msg)
@@ -283,6 +286,24 @@ def _update_by_query(query, script, config):
     )
     if not resp.ok:
         raise RuntimeError(f'Error updating by query:\n{resp.text}')
+
+
+def _wait_for_es():
+    """Block and wait for elasticsearch."""
+    timeout = 180  # in seconds
+    start_time = int(time.time())
+    es_started = False
+    while not es_started:
+        # Check for Elasticsearch
+        try:
+            requests.get(_CONFIG['elasticsearch_url']).raise_for_status()
+            es_started = True
+        except Exception:
+            print('Unable to connect to elasticsearch, waiting..')
+            time.sleep(5)
+            if (int(time.time()) - start_time) > timeout:
+                raise RuntimeError(f"Failed to connect to other services in {timeout}s")
+    print('Services started! Now starting the app..')
 
 
 class Status(Enum):

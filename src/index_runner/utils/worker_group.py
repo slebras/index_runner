@@ -24,6 +24,11 @@ class WorkerGroup:
                 print(f"Worker {proc} died, restarting..")
                 self.workers[idx] = _create_proc(self.fn, self.args)
 
+    def kill(self):
+        """Kill all workers."""
+        for proc in self.workers:
+            proc.kill()
+
 
 # -- Utilities
 

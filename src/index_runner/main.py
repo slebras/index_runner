@@ -13,8 +13,6 @@ Everything in this app is IO bound, so we use threads everywhere, not processes.
 import time
 import zmq
 import zmq.devices
-import requests
-import subprocess  # nosec
 
 from .index_runner import IndexRunner
 from .es_writer import ESWriter
@@ -32,7 +30,6 @@ def main():
         index_runner--┤
         index_runner--╯
     """
-    _wait_for_services()
     frontend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_front'
     backend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_back'
     streamer = zmq.devices.ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
@@ -53,34 +50,6 @@ def main():
         indexers.health_check()
         writer.health_check()
         time.sleep(5)
-
-
-def _wait_for_services():
-    """Block and wait for service dependencies (Kafka and Elasticsearch) with a timeout."""
-    timeout = 180  # in seconds
-    start_time = int(time.time())
-    es_started = False
-    kafka_started = False
-    while not es_started:
-        # Check for Elasticsearch
-        try:
-            requests.get(_CONFIG['elasticsearch_url']).raise_for_status()
-            es_started = True
-        except Exception:
-            print('Unable to connect to elasticsearch, waiting..')
-            time.sleep(5)
-            if (int(time.time()) - start_time) > timeout:
-                raise RuntimeError(f"Failed to connect to other services in {timeout}s")
-    while not kafka_started:
-        try:
-            subprocess.check_output(["/usr/bin/kafkacat", "-L", "-b", _CONFIG['kafka_server']])  # nosec
-            kafka_started = True
-        except subprocess.CalledProcessError:
-            print('Unable to connect to Kafka, waiting..')
-            time.sleep(5)
-            if (int(time.time()) - start_time) > timeout:
-                raise RuntimeError(f"Failed to connect to other services in {timeout}s")
-    print('Services started! Now starting the app..')
 
 
 if __name__ == '__main__':

@@ -2,8 +2,10 @@ import unittest
 import json
 import time
 import requests
-from confluent_kafka import Producer  # , Consumer, KafkaError
+from multiprocessing import Process
+from confluent_kafka import Producer
 from index_runner.utils.config import get_config
+from index_runner.main import main
 
 _CONFIG = get_config()
 
@@ -27,7 +29,20 @@ class TestIntegration(unittest.TestCase):
     index_runner, it gets pushed to es_writer, and then it gets saved to ES.
     """
 
+    @classmethod
+    def setUpClass(cls):
+        cls.proc = Process(target=main)
+        cls.proc.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.proc.kill()
+
     def test_basic(self):
+        """
+        Test the full workflow from kafka to ES.
+        This just validates that things are connected.
+        """
         # Produce an event on Kafka
         _produce(_TEST_EVENT)
         _id = f"WS::{_TEST_EVENT['wsid']}:{_TEST_EVENT['objid']}"
@@ -86,17 +101,6 @@ def _get_doc(_id):
 # _HEADERS = {"Content-Type": "application/json"}
 # _TEST_EVENTS = {
 #     # This object will not be found in the listObjects method
-#     'narrative_save_nonexistent': {
-#         "wsid": 41347,
-#         "ver": 16,
-#         "perm": None,
-#         "evtype": "NEW_VERSION",
-#         "objid": 5,
-#         "time": 1554408508419,
-#         "objtype": "KBaseNarrative.Narrative-4.0",
-#         "permusers": [],
-#         "user": "username"
-#     },
 #     'new_object_version': {
 #         "wsid": 41347,
 #         "ver": 1,

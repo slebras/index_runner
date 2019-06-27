@@ -13,9 +13,6 @@ RUN wget https://github.com/kbase/dockerize/raw/master/dockerize-linux-amd64-$DO
     tar -C /usr/local/bin -xvzf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && \
     rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
-# apt dependencies
-RUN apt-get install -y kafkacat gcc
-
 # Install pip requirements
 COPY requirements.txt dev-requirements.txt /tmp/
 RUN pip install --upgrade pip && \

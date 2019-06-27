@@ -51,12 +51,14 @@ class IndexRunner:
         event_type = msg.get('evtype')
         ws_id = msg.get('wsid')
         if not ws_id:
-            raise RuntimeError(f'Invalid wsid in event: {ws_id}')
+            print(f'Invalid wsid in event: {ws_id}')
+            return
         if not event_type:
-            raise RuntimeError(f"Missing 'evtype' in event: {msg}")
+            print(f"Missing 'evtype' in event: {msg}")
+            return
         print(f'index_runner received {msg["evtype"]} for {ws_id}/{msg.get("objid", "?")}')
         try:
-            if event_type == 'REINDEX' or event_type == 'NEW_VERSION':
+            if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
                 self._run_indexer(msg)
             elif event_type == 'INDEX_NONEXISTENT':
                 self._index_nonexistent(msg)
@@ -64,14 +66,13 @@ class IndexRunner:
                 self._run_obj_deleter(msg)
             elif event_type == 'WORKSPACE_DELETE_STATE_CHANGE':
                 self._run_workspace_deleter(msg)
-            elif event_type == 'COPY_OBJECT' or event_type == 'RENAME_OBJECT':
-                self._run_indexer(msg)
             elif event_type == 'CLONE_WORKSPACE':
                 self._clone_workspace(msg)
             elif event_type == 'SET_GLOBAL_PERMISSION':
                 self._set_global_permission(msg)
             else:
-                raise RuntimeError(f"Unrecognized event {event_type}.")
+                print(f"Unrecognized event {event_type}.")
+                return
         except Exception as err:
             print('=' * 80)
             print(f"Error indexing:\n{type(err)} - {err}")
