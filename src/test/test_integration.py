@@ -2,8 +2,10 @@ import unittest
 import json
 import time
 import requests
-from confluent_kafka import Producer  # , Consumer, KafkaError
+from multiprocessing import Process
+from confluent_kafka import Producer
 from index_runner.utils.config import get_config
+from index_runner.main import main
 
 _CONFIG = get_config()
 
@@ -27,13 +29,25 @@ class TestIntegration(unittest.TestCase):
     index_runner, it gets pushed to es_writer, and then it gets saved to ES.
     """
 
+    @classmethod
+    def setUpClass(cls):
+        cls.proc = Process(target=main)
+        cls.proc.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.proc.kill()
+
     def test_basic(self):
+        """
+        Test the full workflow from kafka to ES.
+        This just validates that things are connected.
+        """
         # Produce an event on Kafka
         _produce(_TEST_EVENT)
-        time.sleep(10)  # Wait for write to ES
         _id = f"WS::{_TEST_EVENT['wsid']}:{_TEST_EVENT['objid']}"
         # Fetch the doc from Elasticsearch
-        doc = _get_doc(_id)
+        doc = _get_doc_blocking(_id)
         self.assertEqual(doc['_id'], _id)
 
 
@@ -53,6 +67,18 @@ def _produce(data, topic=_CONFIG['topics']['workspace_events']):
     producer.poll(60)
 
 
+def _get_doc_blocking(_id, timeout=60):
+    """Fetch a doc on ES, waiting for it to become available, with a timeout."""
+    start_time = int(time.time())
+    while True:
+        result = _get_doc(_id)
+        if result:
+            return result
+        if (int(time.time()) - start_time) > timeout:
+            raise RuntimeError(f"Document {_id} not found in {timeout}s.")
+        time.sleep(5)
+
+
 def _get_doc(_id):
     """Fetch a document from elastic based on ID."""
     prefix = _CONFIG['elasticsearch_index_prefix']
@@ -68,23 +94,13 @@ def _get_doc(_id):
         raise RuntimeError(resp.text)
     respj = resp.json()
     if not respj['hits']['total']:
-        raise RuntimeError(f"Document {_id} not found.")
+        return None
+        # raise RuntimeError(f"Document {_id} not found.")
     return respj['hits']['hits'][0]
 
 # _HEADERS = {"Content-Type": "application/json"}
 # _TEST_EVENTS = {
 #     # This object will not be found in the listObjects method
-#     'narrative_save_nonexistent': {
-#         "wsid": 41347,
-#         "ver": 16,
-#         "perm": None,
-#         "evtype": "NEW_VERSION",
-#         "objid": 5,
-#         "time": 1554408508419,
-#         "objtype": "KBaseNarrative.Narrative-4.0",
-#         "permusers": [],
-#         "user": "username"
-#     },
 #     'new_object_version': {
 #         "wsid": 41347,
 #         "ver": 1,

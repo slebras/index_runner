@@ -2,9 +2,7 @@
 
 
 test:
-	docker-compose up -d
-	docker-compose exec app python -m test.wait_for_service
-	docker-compose exec app sh scripts/run_tests.sh
+	docker-compose run app sh scripts/run_tests.sh
 	docker-compose down
 
 reset:

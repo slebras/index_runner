@@ -37,7 +37,11 @@ def index_obj(msg_data):
         })
     except WorkspaceResponseError as err:
         print('Workspace response error:', err.resp_data)
-        raise err
+        # Workspace has deleted; ignore the error
+        if err.resp_data and err.resp_data['error'] and err.resp_data['error']['code'] == -32500:
+            return
+        else:
+            raise err
     obj_data = obj_data['data'][0]
     obj_type = obj_data['info'][2]
     (type_module, type_name, type_version) = ws_utils.get_type_pieces(obj_type)
