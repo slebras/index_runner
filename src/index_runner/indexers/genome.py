@@ -80,11 +80,16 @@ def index_genome(obj_data, ws_info, obj_data_v1):
             # contig_ids = [l[0] for l in feat.get('location', [])]
             seq_len = feat.get('dna_sequence_length', None)
             feature_id = feat.get('id', "")
+            if feat_type == 'non_coding_feature':
+                feat_type_ = feat.get('type', feat_type)
+            else:
+                feat_type_ = feat_type
+
             feature_index = {
                 '_action': 'index',
                 'doc': {
                     'id': feature_id,
-                    'feature_type': feat.get('type', None),
+                    'feature_type': feat_type_,
                     'functions': functions,
                     'contig_ids': contig_ids,
                     'sequence_length': seq_len,
@@ -96,7 +101,6 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                     'parent_id': genome_id,
                     'genome_version': int(version),
                     'assembly_ref': assembly_ref,
-                    'genome_feature_type': feat_type,
                     'starts': starts,
                     'strands': strands,
                     'stops': stops,

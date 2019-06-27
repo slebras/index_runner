@@ -42,3 +42,66 @@ docker push kbase/index_runner2:{VERSION}
 * [Elasticsearch Writer](https://github.com/kbaseIncubator/elasticsearch_writer<Paste>) - Kafka consumer to bulk update documents in ES.
 * [Search API](https://github.com/kbaseIncubator/search_api_deluxe) - HTTP API for performing search queries.
 * [Search Config](https://github.com/kbaseIncubator/search_config) - Global search configuration.
+
+## Creating a SKD Indexer application
+
+The index_runner has the ability to use sdk applications for indexing.
+
+All apps should use the following as input:
+```
+{
+    string obj_data_path
+    string ws_info_path
+    string obj_data_v1_path
+}
+```
+Each of the above are json file paths that contain relevant object data (written to disk to avoid using too much memory)
+
+The output for the indexer applications is expected to be written to a file. Each line of the returned file corresponds to one document in elasticsearch to be indexed and should be valid json.
+
+```python
+{
+	'doc': {
+		# this dictionary contains all the fields you want indexed in elasticsearch
+		'key1': value,
+		'key2': value
+	},
+}
+```
+
+If an object should result in more than one elasticsearch document, the `sub_type` and `sub_id` fields must be specified for all but the 'parent' document. The `sub_type` field should be the same for all the sub objects and should only contain alphanumeric characters excluding whitespaces. The `sub_id` field, MUST be unique for each subobject. If the `sub_id` field is not unique, only one of the objects will be indexed.
+```python
+{
+	'doc': {#...
+	},
+	'sub_type': "sub_type",
+	'sub_id': "UNIQID123" # unique id for sub object,
+}
+```
+
+The Resulting output file should look something like:
+```
+{"doc": {"key1": 1, "key2": "string of interest"}}
+{"doc": {"sub_key1": 3, "sub_key2": "value"}, "sub_type": "feature", "sub_id": "LKJCID"}
+{"doc": {"sub_key1": 6, "sub_key2": "different value"}, "sub_type": "feature", "sub_id": "OIMQME"}
+```
+The return value from the SDK indexer application should contain the filepath. NOTE: all other output, is not utilized.
+```
+{
+	"filepath": "/path/to/file.json",
+	...
+}
+```
+
+NOTE: The application must be registered, just as any other KBase application, in the KBase environment you would like it to be utilized in.
+
+## Registering your SDK Indexer application
+
+To Register your application with the KBase Index Runner, you must open a pull request against the [Search Config](https://github.com/kbaseIncubator/search_config). In the `config.yaml` the `sdk_indexer_apps` section is a mapping from KBase object types (excluding version) to their appropriate sdk applications and corresponding functions within those SDK applications.
+```
+  KBaseMatrices.MetaboliteMatrix:
+    sdk_app: kbasematrices_indexer # required
+    sdk_func: run_kbasematrices_indexer # required
+    sub_obj_index: attribute_mapping # required for indexers that have subobjects
+```
+A Elasticsearch type mapping is also required. This can be added to the `mappings` field. Several examples are available in the `config.yaml` file.

@@ -1,6 +1,7 @@
 import os
 import json
 import unittest
+from functools import partial
 
 from index_runner.utils.config import get_config
 from index_runner.indexers.reads import index_reads
@@ -9,6 +10,7 @@ from index_runner.indexers.assembly import index_assembly
 from index_runner.indexers.pangenome import index_pangenome
 from index_runner.indexers.taxon import index_taxon
 from index_runner.indexers.tree import index_tree
+from index_runner.indexers.from_sdk import index_from_sdk
 
 _CONFIG = get_config()
 
@@ -78,6 +80,17 @@ _TEST_EVENTS = {
         "objtype": "KBaseGenomeAnnotations.Taxon-1.0",
         "permusers": [],
         "user": "username"
+    },
+    'genomeset_save': {
+        'wsid': 39794,
+        'ver': 1,
+        'perm': None,
+        'evtype': "NEW_VERSION",
+        'objid': 11,
+        'time': 1554408311320,
+        'objtype': "KBaseSets.GenomeSet-2.1",
+        'permusers': [],
+        'user': "username"
     }
 }
 
@@ -98,6 +111,12 @@ class TestIndexers(unittest.TestCase):
             # print(json.dumps(msg_data['doc']), ',')
             self.assertEqual(msg_data['doc'], check_against[idx])
         # print(']')
+
+    # @unittest.skip('x')
+    def test_from_sdk(self):
+        check_against = [{}]
+        self._default_obj_test('genomeset_save', index_from_sdk, check_against)
+
 
     @unittest.skip('x')
     def test_reads_indexer(self):

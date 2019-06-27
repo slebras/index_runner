@@ -4,8 +4,6 @@ Indexer logic based on type
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
-from functools import partial
-
 from . import indexer_utils
 from ..utils.config import get_config
 from ..utils import ws_utils
@@ -93,14 +91,10 @@ def _find_indexer(type_module, type_name, type_version):
         name_match = ('type' not in entry) or entry['type'] == type_name
         ver_match = ('version' not in entry) or entry['version'] == type_version
         if module_match and name_match and ver_match:
-            return entry.get('indexer', generic_indexer)
+            return entry.get('indexer', generic_indexer())
     # No indexer found for this type, check if there is a sdk indexer app
     if type_module + '.' + type_name in _CONFIG['global']['sdk_indexer_apps']:
-        indexer_app_vars = _CONFIG['global']['sdk_indexer_apps'][type_module + '.' + type_name]
-        sdk_app = indexer_app_vars['sdk_app']
-        sdk_func = indexer_app_vars['sdk_func']
-        sdk_version = indexer_app_vars.get('sdk_version', None)
-        return partial(index_from_sdk, sdk_app, sdk_func, sdk_version)
+        return index_from_sdk
     return generic_indexer()
 
 
