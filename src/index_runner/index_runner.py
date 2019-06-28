@@ -93,7 +93,9 @@ class IndexRunner:
                 self._log_err_to_es(msg)
                 continue
             # Push to the elasticsearch write queue
+            print('index_runner sending...')
             self.sock.send_json(result)
+            print('index_runner sent.')
 
     def _run_obj_deleter(self, msg):
         """
@@ -106,7 +108,9 @@ class IndexRunner:
             # Object is not deleted
             print(f'object {objid} in workspace {wsid} not deleted')
             return
+        print('index_runner sending...')
         self.sock.send_json({'_action': 'delete', 'object_id': f"{wsid}:{objid}"})
+        print('index_runner sent.')
 
     def _run_workspace_deleter(self, msg):
         """
@@ -118,7 +122,9 @@ class IndexRunner:
         if not check_workspace_deleted(wsid):
             print(f'Workspace {wsid} not deleted')
             return
+        print('index_runner sending...')
         self.sock.send_json({'_action': 'delete', 'workspace_id': str(wsid)})
+        print('index_runner sent.')
 
     def _clone_workspace(self, msg):
         """
@@ -142,11 +148,13 @@ class IndexRunner:
         workspace_id = msg['wsid']
         is_public = is_workspace_public(workspace_id)
         # Push the event to the elasticsearch writer queue
+        print('index_runner sending...')
         self.sock.send_json({
             '_action': 'set_global_perm',
             'workspace_id': workspace_id,
             'is_public': is_public
         })
+        print('index_runner sent.')
 
     def _index_nonexistent(self, msg):
         """
@@ -163,9 +171,11 @@ class IndexRunner:
         # The key is a hash of the message data body
         # The index document is the error string plus the message data itself
         _id = hashlib.blake2b(json.dumps(msg).encode('utf-8')).hexdigest()
+        print('index_runner sending...')
         self.sock.send_json({
             '_action': 'index',
             'index': _CONFIG['error_index_name'],
             'id': _id,
             'doc': {'error': str(err), **msg}
         })
+        print('index_runner sent.')
