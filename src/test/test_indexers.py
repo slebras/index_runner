@@ -88,15 +88,6 @@ class TestIndexers(unittest.TestCase):
 
     maxDiff = None
 
-    def _write_results(self, event_data_str, indexer, check_against_path):
-        event_data = _TEST_EVENTS[event_data_str]
-        json_data_path = f"{event_data_str}_{event_data['wsid']}_{event_data['objid']}.json"
-        with open(os.path.join(_DIR, 'test_data', json_data_path)) as fd:
-            test_data = json.load(fd)
-        result = [doc for doc in indexer(test_data['obj'], test_data['ws_info'], test_data['obj'])]
-        with open(check_against_path, 'w') as fd:
-            json.dump(result, fd, indent=2)
-
     def _default_obj_test(self, event_data_str, indexer, check_against):
         print(f'Testing {event_data_str} indexer...')
         event_data = _TEST_EVENTS[event_data_str]
