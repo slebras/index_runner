@@ -95,7 +95,6 @@ class TestIndexers(unittest.TestCase):
         with open(os.path.join(_DIR, 'test_data', json_data_path)) as fd:
             test_data = json.load(fd)
         for (idx, msg_data) in enumerate(indexer(test_data['obj'], test_data['ws_info'], test_data['obj'])):
-            self.assertTrue(len(check_against) > idx)
             self.assertEqual(msg_data, check_against[idx])
 
     def test_reads_indexer(self):
