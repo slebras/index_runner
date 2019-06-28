@@ -164,6 +164,7 @@ class IndexRunner:
         """
         exists = es_utils.does_doc_exist(msg['wsid'], msg['objid'])
         if not exists:
+            print('Doc does not exist..')
             self._run_indexer(msg)
 
     def _log_err_to_es(self, msg, err=None):
