@@ -50,8 +50,6 @@ def index_genome(obj_data, ws_info, obj_data_v1):
             'mean_contig_length': mean(data.get('contig_lengths', [])),
             'external_origination_date': data.get('external_source_origination_date', None),
             'original_source_file_name': data.get('original_source_file_name', None),
-
-            # Things we may want to add that are used in current genome search.
             'cds_count': len(data.get('cdss', [])),
             'feature_count': len(data.get('features', [])),
             'mrna_count': len(data.get('mrnas', [])),
@@ -80,31 +78,32 @@ def index_genome(obj_data, ws_info, obj_data_v1):
             # contig_ids = [l[0] for l in feat.get('location', [])]
             seq_len = feat.get('dna_sequence_length', None)
             feature_id = feat.get('id', "")
-            if feat_type == 'non_coding_feature':
-                feat_type_ = feat.get('type', feat_type)
-            else:
-                feat_type_ = feat_type
-
             feature_index = {
                 '_action': 'index',
                 'doc': {
                     'id': feature_id,
-                    'feature_type': feat_type_,
+                    'feature_type': feat.get('type', feat_type),
                     'functions': functions,
                     'contig_ids': contig_ids,
                     'sequence_length': seq_len,
                     'id': feature_id,
-                    'genome_scientific_name': genome_scientific_name,
                     'obj_type_name': "GenomeFeature",  # hack to get ui for features to work.
-                    # 'genome_upa': gupa,
-                    'guid': f"{workspace_id}:{object_id}",
-                    'parent_id': genome_id,
-                    'genome_version': int(version),
                     'assembly_ref': assembly_ref,
                     'starts': starts,
                     'strands': strands,
                     'stops': stops,
                     'aliases': feat.get('aliases', None),
+                    # Parent data from the Genome
+                    'parent_id': genome_id,
+                    'genome_version': int(version),
+                    'genome_scientific_name': genome_scientific_name,
+                    'genome_taxonomy': data.get('taxonomy'),
+                    'genome_source': data.get('source'),
+                    'genome_source_id': data.get('source_id'),
+                    'genome_size': data.get('dna_size'),
+                    'genome_num_contigs': data.get('num_contigs'),
+                    'genome_feature_count': len(data.get('features', [])),
+                    'genome_gc_content': data.get('gc_content')
                 },
                 'index': _GENOME_FEATURE_INDEX_NAME,
                 'id': genome_id + f'::ft::{feature_id}'
