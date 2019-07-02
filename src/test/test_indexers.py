@@ -106,21 +106,29 @@ class TestIndexers(unittest.TestCase):
         json_data_path = f"{event_data_str}_{event_data['wsid']}_{event_data['objid']}.json"
         with open(os.path.join(_DIR, 'test_data', json_data_path)) as fd:
             test_data = json.load(fd)
+        # print('[')
         for (idx, msg_data) in enumerate(indexer(test_data['obj'], test_data['ws_info'], test_data['obj'])):
+            # print(json.dumps(msg_data['doc']), ',')
             self.assertEqual(msg_data, check_against[idx])
+        # print(']')
 
-    @unittest.skip('x')
+    # @unittest.skip('x')
     def test_from_sdk(self):
         check_against = [{
-            "genomes": [
-                {"label": "gen1", "genome_ref": "22385/65/1"},
-                {"label": "gen2", "genome_ref": "22385/68/1"},
-                {"label": "gen3", "genome_ref": "22385/70/1"},
-                {"label": "gen4", "genome_ref": "22385/74/1"},
-                {"label": "gen5", "genome_ref": "22385/76/1"},
-                {"label": "gen6", "genome_ref": "22385/80/1"}
-            ],
-            "description": "Listeria monocytogenes Roary Test"
+            '_action': 'index',
+            'index': "genomeset:1",
+            'id': "WS::22385:82",
+            'doc': {
+                "genomes": [
+                    {"label": "gen1", "genome_ref": "22385/65/1"},
+                    {"label": "gen2", "genome_ref": "22385/68/1"},
+                    {"label": "gen3", "genome_ref": "22385/70/1"},
+                    {"label": "gen4", "genome_ref": "22385/74/1"},
+                    {"label": "gen5", "genome_ref": "22385/76/1"},
+                    {"label": "gen6", "genome_ref": "22385/80/1"}
+                ],
+                "description": "Listeria monocytogenes Roary Test"
+            }
         }]
         self._default_obj_test('genomeset_save', index_from_sdk, check_against)
 

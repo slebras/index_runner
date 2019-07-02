@@ -71,6 +71,7 @@ def _verify_and_format_output(data_path, job_dir, workspace_id, object_id, index
             index_name = index_name_ver
             es_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
         return {
+            "_action": "index",
             "index": index_name,
             "id": es_id,
             "doc": d['doc']
