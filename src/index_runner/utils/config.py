@@ -16,7 +16,7 @@ def get_config():
         'KBASE_WORKSPACE_URL',
         kbase_endpoint + '/ws'
     )
-    config_url = os.environ.get('GLOBAL_CONFIG_URL', 'https://github.com/kbase/search_config/releases/download/0.0.1/config.yaml')  # noqa
+    config_url = os.environ.get('GLOBAL_CONFIG_URL', 'https://github.com/kbase/search_config/releases/download/0.0.2/config.yaml')  # noqa
     # Load the global configuration release (non-environment specific, public config)
     if not config_url.startswith('http'):
         raise RuntimeError(f"Invalid global config url: {config_url}")

@@ -17,7 +17,9 @@ services:
     ports:
       - 5000:5000
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - ${PWD}/src:/app
+      - ${PWD}/scratch:/scratch
     environment:
       - DEVELOPMENT=1
       - PYTHONUNBUFFERED=true
