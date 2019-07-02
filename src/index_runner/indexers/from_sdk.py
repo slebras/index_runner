@@ -13,6 +13,9 @@ _CONFIG = get_config()
 _DOCKER = docker.from_env()
 _SCRATCH = "/scratch"
 _NAMESPACE = "WS"
+# the mount needs to be the absolute path on the machine that started the index_runner
+_MOUNT_DIR = "/Users/slebras/Desktop/kbase-dev/services/index_runner_deluxe"
+_IN_APP_JOB_DIR = "/kb/module/work"
 
 
 def _get_docker_image_name(sdk_app, module_version=None):
@@ -103,7 +106,7 @@ def _pull_docker_image(image):
     # return id_
 
 
-def _setup_docker_inputs(job_dir, in_app_job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_func):
+def _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_func):
     """set up parameters for input to the sdk application"""
     data_dir = job_dir + "/data"
     os.makedirs(data_dir)
@@ -123,9 +126,9 @@ def _setup_docker_inputs(job_dir, in_app_job_dir, obj_data, ws_info, obj_data_v1
         json.dump(obj_data_v1, fd)
 
     # we want to provide the app the path within its context.
-    obj_data_path = in_app_job_dir + "/data/obj_data.json"
-    ws_info_path = in_app_job_dir + "/data/ws_info.json"
-    obj_data_v1_path = in_app_job_dir + "/data/obj_data_v1.json"
+    obj_data_path = _IN_APP_JOB_DIR + "/data/obj_data.json"
+    ws_info_path = _IN_APP_JOB_DIR + "/data/ws_info.json"
+    obj_data_v1_path = _IN_APP_JOB_DIR + "/data/obj_data_v1.json"
 
     input_ = {
         "version": "1.1",
@@ -158,26 +161,8 @@ def _setup_docker_inputs(job_dir, in_app_job_dir, obj_data, ws_info, obj_data_v1
         # fd.write(_CONFIG['ws_token'])
 
 
-def index_from_sdk(obj_data, ws_info, obj_data_v1):
-    """Index from an sdk application"""
-    type_module, type_name, type_version = ws_utils.get_type_pieces(obj_data['info'][2])
-
-    indexer_app_vars = _CONFIG['global']['sdk_indexer_apps'][type_module + '.' + type_name]
-    sdk_app = indexer_app_vars['sdk_app']
-    sdk_func = indexer_app_vars['sdk_func']
-    sdk_version = indexer_app_vars.get('sdk_version', None)
-    sub_obj_index = indexer_app_vars.get('sub_obj_index', None)
-    if _CONFIG['global']['latest_versions'].get(sub_obj_index):
-        sub_obj_index = _CONFIG['global']['latest_versions'][sub_obj_index]
-    elif sub_obj_index is None:
-        # here we expect no sub_obj_index, so we move on
-        pass
-    else:
-        raise ValueError(f"No 'latest_versions' field specified for {sub_obj_index} index in global config")
-
-    workspace_id = obj_data['info'][6]
-    object_id = obj_data['info'][0]
-
+def _get_index_name(type_module, type_name, type_version):
+    """"""
     if _CONFIG['global']['ws_type_to_indexes'].get(type_module + "." + type_name):
         index_name = _CONFIG['global']['ws_type_to_indexes'][type_module + "." + type_name]
     else:
@@ -187,23 +172,47 @@ def index_from_sdk(obj_data, ws_info, obj_data_v1):
     else:
         raise ValueError(f"global config does not have 'latest_versions' field for {index_name} \
                 index with workspace object type {type_module}.{type_name}:{type_version}")
+    return index_name_ver
 
+
+def _get_sub_obj_index(indexer_app_vars):
+    """"""
+    sub_obj_index = indexer_app_vars.get('sub_obj_index', None)
+    if _CONFIG['global']['latest_versions'].get(sub_obj_index):
+        sub_obj_index = _CONFIG['global']['latest_versions'][sub_obj_index]
+    elif sub_obj_index is None:
+        # here we expect no sub_obj_index, so we move on
+        pass
+    else:
+        raise ValueError(f"No 'latest_versions' field specified for {sub_obj_index} index in global config")
+    return sub_obj_index
+
+
+def index_from_sdk(obj_data, ws_info, obj_data_v1):
+    """Index from an sdk application"""
+    type_module, type_name, type_version = ws_utils.get_type_pieces(obj_data['info'][2])
+
+    indexer_app_vars = _CONFIG['global']['sdk_indexer_apps'][type_module + '.' + type_name]
+    sdk_app = indexer_app_vars['sdk_app']
+    sdk_func = indexer_app_vars['sdk_func']
+    sdk_version = indexer_app_vars.get('sdk_version', None)
+    sub_obj_index = _get_sub_obj_index(indexer_app_vars)
+
+    workspace_id = obj_data['info'][6]
+    object_id = obj_data['info'][0]
+
+    index_name_ver = _get_index_name(type_module, type_name, type_version)
     image = _get_docker_image_name(sdk_app, sdk_version)
     _pull_docker_image(image)
 
     # maybe make this tempfile stuff?
-    job_id = str(uuid.uuid1())
-    job_dir = _SCRATCH + "/" + job_id
+    job_dir = _SCRATCH + "/" + str(uuid.uuid1())
     os.makedirs(job_dir)
-    in_app_job_dir = "/kb/module/work"
     # write inputs to files
-    _setup_docker_inputs(job_dir, in_app_job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_func)
-
-    # the mount needs to be the absolute path on the machine that started the index_runner
-    mount_dir = "/Users/slebras/Desktop/kbase-dev/services/index_runner_deluxe"
+    _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_func)
 
     vols = {
-        mount_dir + job_dir: {'bind': in_app_job_dir, 'mode': 'rw'}
+        _MOUNT_DIR + job_dir: {'bind': _IN_APP_JOB_DIR, 'mode': 'rw'}
     }
     env = {
         'SDK_CALLBACK_URL': 'not_supported_yet',
@@ -221,9 +230,8 @@ def index_from_sdk(obj_data, ws_info, obj_data_v1):
         raise RuntimeError(f"Error from sdk application: {job_out['error']}")
     job_out = job_out['result'][0]
     if job_out.get('filepath'):
-        filepath = job_out['filepath'].replace(in_app_job_dir, job_dir, 1)
+        filepath = job_out['filepath'].replace(_IN_APP_JOB_DIR, job_dir, 1)
     else:
         raise RuntimeError(f"Unknown sdk application error: {job_out}")
 
-    # DO SOME ERROR CHECKING HERE
     return _verify_and_format_output(filepath, job_dir, workspace_id, object_id, index_name_ver, sub_obj_index)
