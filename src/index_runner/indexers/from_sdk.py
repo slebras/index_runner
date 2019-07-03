@@ -14,7 +14,12 @@ _DOCKER = docker.from_env()
 _SCRATCH = "/scratch"
 _NAMESPACE = "WS"
 # the mount needs to be the absolute path on the machine that started the index_runner
-_MOUNT_DIR = "/Users/slebras/Desktop/kbase-dev/services/index_runner_deluxe"
+# _MOUNT_DIR = os.getcwd() + "/index_runner_deluxe"
+_MOUNT_DIR = _CONFIG["mount_dir"]
+# print("current working directory", os.getcwd())
+# print("file directory", os.path.dirname(os.path.realpath(__file__)))
+# _TOKEN = "H7MCKC27WOD4FMGQZK26BTLMJBW6IDPU"
+_TOKEN = _CONFIG['ws_token']
 _IN_APP_JOB_DIR = "/kb/module/work"
 
 
@@ -157,7 +162,7 @@ def _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_f
 
     # set up token.
     with open(job_dir + '/token', 'w') as fd:
-        fd.write("H7MCKC27WOD4FMGQZK26BTLMJBW6IDPU")
+        fd.write(_TOKEN)
         # fd.write(_CONFIG['ws_token'])
 
 

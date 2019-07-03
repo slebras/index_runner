@@ -24,7 +24,9 @@ services:
       - DEVELOPMENT=1
       - PYTHONUNBUFFERED=true
       - KBASE_WORKSPACE_URL=http://workspace:5000
-      - WORKSPACE_TOKEN=valid_admin_token
+      - WORKSPACE_TOKEN=H7MCKC27WOD4FMGQZK26BTLMJBW6IDPU
+      # - WORKSPACE_TOKEN=valid_admin_token
+      - MOUNT_DIR=/Users/slebras/Desktop/kbase-dev/services/index_runner_deluxe
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
