@@ -14,11 +14,7 @@ _DOCKER = docker.from_env()
 _SCRATCH = "/scratch"
 _NAMESPACE = "WS"
 # the mount needs to be the absolute path on the machine that started the index_runner
-# _MOUNT_DIR = os.getcwd() + "/index_runner_deluxe"
 _MOUNT_DIR = _CONFIG["mount_dir"]
-# print("current working directory", os.getcwd())
-# print("file directory", os.path.dirname(os.path.realpath(__file__)))
-# _TOKEN = "H7MCKC27WOD4FMGQZK26BTLMJBW6IDPU"
 _TOKEN = _CONFIG['ws_token']
 _IN_APP_JOB_DIR = "/kb/module/work"
 
@@ -94,6 +90,7 @@ def _verify_and_format_output(data_path, job_dir, workspace_id, object_id, index
 
 
 def _cleanup(job_dir):
+    """Cleanup after all indices are yielded, delete the job directory to avoid excessive memory usage."""
     shutil.rmtree(job_dir)
 
 
@@ -108,7 +105,6 @@ def _pull_docker_image(image):
     if not pulled:
         print("Pulling %s" % image)
         _DOCKER.images.pull(image).id
-    # return id_
 
 
 def _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_func):
@@ -163,11 +159,10 @@ def _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_f
     # set up token.
     with open(job_dir + '/token', 'w') as fd:
         fd.write(_TOKEN)
-        # fd.write(_CONFIG['ws_token'])
 
 
 def _get_index_name(type_module, type_name, type_version):
-    """"""
+    """Get the name of the index we write to, defined in the global config."""
     if _CONFIG['global']['ws_type_to_indexes'].get(type_module + "." + type_name):
         index_name = _CONFIG['global']['ws_type_to_indexes'][type_module + "." + type_name]
     else:
@@ -181,7 +176,7 @@ def _get_index_name(type_module, type_name, type_version):
 
 
 def _get_sub_obj_index(indexer_app_vars):
-    """"""
+    """Get the name of the sub object index, if applicable, return None otherwise."""
     sub_obj_index = indexer_app_vars.get('sub_obj_index', None)
     if _CONFIG['global']['latest_versions'].get(sub_obj_index):
         sub_obj_index = _CONFIG['global']['latest_versions'][sub_obj_index]
@@ -213,9 +208,9 @@ def index_from_sdk(obj_data, ws_info, obj_data_v1):
     # maybe make this tempfile stuff?
     job_dir = _SCRATCH + "/" + str(uuid.uuid1())
     os.makedirs(job_dir)
-    # write inputs to files
     _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_func)
 
+    # the volume mount must be relative to the Host, so we add _MOUNT_DIR to job_directory.
     vols = {
         _MOUNT_DIR + job_dir: {'bind': _IN_APP_JOB_DIR, 'mode': 'rw'}
     }
