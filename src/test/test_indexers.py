@@ -106,13 +106,10 @@ class TestIndexers(unittest.TestCase):
         json_data_path = f"{event_data_str}_{event_data['wsid']}_{event_data['objid']}.json"
         with open(os.path.join(_DIR, 'test_data', json_data_path)) as fd:
             test_data = json.load(fd)
-        # print('[')
         for (idx, msg_data) in enumerate(indexer(test_data['obj'], test_data['ws_info'], test_data['obj'])):
-            # print(json.dumps(msg_data['doc']), ',')
             self.assertEqual(msg_data, check_against[idx])
-        # print(']')
 
-    # @unittest.skip('x')
+    @unittest.skip('x')
     def test_from_sdk(self):
         check_against = [{
             '_action': 'index',

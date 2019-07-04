@@ -21,11 +21,11 @@ _IN_APP_JOB_DIR = "/kb/module/work"
 
 def _get_docker_image_name(sdk_app, module_version=None):
     """Query the Catalog to get the docker image name for the indexer application"""
-    catalog_service_url = _CONFIG['kbase_endpoint'] + '/catalog'
+    catalog_service_url = _CONFIG['catalog_url']
     params = {
         "method": "Catalog.get_module_version",
         "version": "1.1",
-        "id": 'id',
+        "id": 'id',  # this is arbitrary/not used (but required).
         "params": [{
             "module_name": sdk_app
         }]
@@ -37,13 +37,13 @@ def _get_docker_image_name(sdk_app, module_version=None):
     try:
         json_resp = resp.json()
     except Exception:
-        raise resp.text
+        raise ValueError(resp.text)
     result = json_resp['result'][0]
     return result["docker_img_name"]
 
 
 def _verify_and_format_output(data_path, job_dir, workspace_id, object_id, index_name_ver, sub_obj_index):
-    """make sure the sdk indexers follow conventions, and stream the if necessary."""
+    """make sure the sdk indexers follow conventions."""
     def check_datatypes(d):
         """verify that the outputs of the sdk indexer follows these rather strict conventions"""
         if isinstance(d, dict):
@@ -71,6 +71,8 @@ def _verify_and_format_output(data_path, job_dir, workspace_id, object_id, index
                 raise ValueError(f"Received 'sub_type' and 'sub_id' fields from indexer with no 'sub_obj_index' \
                                    field specified in the 'sdk_indexer_apps' field for the {index_name_ver} index. ")
             es_id = f"{_NAMESPACE}::{workspace_id}:{object_id}::{d.get('sub_type')}::{d.get('sub_id')}"
+        elif d.get('sub_type') or d.get('sub_id'):
+            raise ValueError(f"Only one of sub_id or sub_type specified, both or neither required. object: {d}")
         else:
             index_name = index_name_ver
             es_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
@@ -86,6 +88,8 @@ def _verify_and_format_output(data_path, job_dir, workspace_id, object_id, index
                 data = json.loads(line)
                 check_datatypes(data['doc'])
                 yield format_data(data)
+    else:
+        raise RuntimeError(f"filepath {data_path} does not exist.")
     _cleanup(job_dir)
 
 
@@ -205,7 +209,6 @@ def index_from_sdk(obj_data, ws_info, obj_data_v1):
     image = _get_docker_image_name(sdk_app, sdk_version)
     _pull_docker_image(image)
 
-    # maybe make this tempfile stuff?
     job_dir = _SCRATCH + "/" + str(uuid.uuid1())
     os.makedirs(job_dir)
     _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_func)

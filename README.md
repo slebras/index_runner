@@ -49,19 +49,19 @@ docker push kbase/index_runner2:{VERSION}
 * [Search API](https://github.com/kbaseIncubator/search_api_deluxe) - HTTP API for performing search queries.
 * [Search Config](https://github.com/kbaseIncubator/search_config) - Global search configuration.
 
-## Creating a SKD Indexer application
+## Creating a SDK Indexer application
 
 The index_runner has the ability to use sdk applications for indexing.
 
 All apps should use the following as input:
 ```
-{
-    string obj_data_path
-    string ws_info_path
-    string obj_data_v1_path
-}
+typedef structure {
+	string obj_data_path;
+	string ws_info_path;
+	string obj_data_v1_path;
+} inputParams;
 ```
-Each of the above are json file paths that contain relevant object data (written to disk to avoid using too much memory)
+Each of the above are paths to json files that contain relevant object data (written to disk to avoid using too much memory) and can be read/parsed directly using the python json library.
 
 The output for the indexer applications is expected to be written to a file. Each line of the returned file corresponds to one document in elasticsearch to be indexed and should be valid json.
 
@@ -91,23 +91,27 @@ The Resulting output file should look something like:
 {"doc": {"sub_key1": 3, "sub_key2": "value"}, "sub_type": "feature", "sub_id": "LKJCID"}
 {"doc": {"sub_key1": 6, "sub_key2": "different value"}, "sub_type": "feature", "sub_id": "OIMQME"}
 ```
-The return value from the SDK indexer application should contain the filepath. NOTE: all other output, is not utilized.
+The return value from the SDK indexer application should contain the filepath. NOTE: all other output, is not utilized. The file must be written to the scratch space of the sdk application, whose path can be accessed from `config['scratch']`.
 ```
 {
-	"filepath": "/path/to/file.json",
-	...
+	"filepath": "/path/to/file.json"
 }
 ```
 
-NOTE: The application must be registered, just as any other KBase application, in the KBase environment you would like it to be utilized in.
+NOTE: The application must be registered, just as any other KBase application, in the KBase environment you would like it to be used in.
 
 ## Registering your SDK Indexer application
 
-To Register your application with the KBase Index Runner, you must open a pull request against the [Search Config](https://github.com/kbaseIncubator/search_config). In the `config.yaml` the `sdk_indexer_apps` section is a mapping from KBase object types (excluding version) to their appropriate sdk applications and corresponding functions within those SDK applications.
+To Register your application with the KBase Index Runner, you must open a pull request against the [Search Config](https://github.com/kbaseIncubator/search_config). In the `config.yaml` file the `sdk_indexer_apps` section is a mapping from KBase object types (excluding version) to their appropriate sdk applications and corresponding functions within those SDK applications.
+
+Below is an example:
 ```
   KBaseMatrices.MetaboliteMatrix:
     sdk_app: kbasematrices_indexer # required
     sdk_func: run_kbasematrices_indexer # required
     sub_obj_index: attribute_mapping # required for indexers that have subobjects
 ```
+NOTE: `attribute_mapping` is the string name of the sub_obj_index for `KBaseMatrices.MetaboliteMatrix`.
+
+You may also specify `sdk_version`, which corresponds to the version of the sdk application you would like to use.
 A Elasticsearch type mapping is also required. This can be added to the `mappings` field. Several examples are available in the `config.yaml` file.
