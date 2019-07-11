@@ -22,6 +22,7 @@ _TEST_EVENT = {
 }
 
 
+@unittest.skip('skap')
 class TestIntegration(unittest.TestCase):
     """
     Integration test to confirm that the pieces of the system are successfully interconnected.
