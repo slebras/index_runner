@@ -6,8 +6,8 @@ import zmq
 import json
 from confluent_kafka import Producer
 from index_runner.index_runner import IndexRunner
-from index_runner.utils.worker_group import WorkerGroup
-from index_runner.utils.config import get_config
+from utils.worker_group import WorkerGroup
+from utils.config import get_config
 
 _CONFIG = get_config()
 

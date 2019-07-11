@@ -4,8 +4,8 @@ import json
 import shutil
 import docker
 import requests
-from ..utils.config import get_config
-from ..utils import ws_utils
+from utils.config import get_config
+from utils import ws_utils
 from configparser import ConfigParser
 
 
