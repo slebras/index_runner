@@ -5,8 +5,8 @@ from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from . import indexer_utils
-from ..utils.config import get_config
-from ..utils import ws_utils
+from utils.config import get_config
+from utils import ws_utils
 from .narrative import index_narrative
 from .reads import index_reads
 from .genome import index_genome

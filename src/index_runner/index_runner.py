@@ -10,9 +10,9 @@ import hashlib
 import traceback
 from dataclasses import dataclass
 
-from .utils.kafka_consumer import kafka_consumer
-from .utils.config import get_config
-from .utils import es_utils
+from utils.kafka_consumer import kafka_consumer
+from utils.config import get_config
+from utils import es_utils
 from .indexers.main import index_obj
 from .indexers.indexer_utils import (
     check_object_deleted,
@@ -156,6 +156,7 @@ class IndexRunner:
         """
         exists = es_utils.does_doc_exist(msg['wsid'], msg['objid'])
         if not exists:
+            print('Doc does not exist..')
             self._run_indexer(msg)
 
     def _log_err_to_es(self, msg, err=None):

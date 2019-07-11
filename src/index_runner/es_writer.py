@@ -4,17 +4,15 @@ Elasticsearch data writer.
 Receives messages from index_runner.
 """
 import zmq
+import zmq.error
 import json
 import requests
 import time
 from dataclasses import dataclass, field
 from enum import Enum
 
-from .utils.config import get_config
-from .utils.ws_utils import get_obj_ids_from_ws, get_type_pieces
-
-# How many documents we accumulate before writing in bulk
-_BULK_MAX = 10000
+from utils.config import get_config
+from utils.ws_utils import get_obj_ids_from_ws, get_type_pieces
 
 # Initialize configuration data
 _CONFIG = get_config()
@@ -32,7 +30,6 @@ class ESWriter:
     sock_url: str  # address of socket to pull work from
     batch_writes: list = field(default_factory=list, init=False)  # accumulator of documents to write to ES
     batch_deletes: list = field(default_factory=list, init=False)  # accumulator of document IDs to delete from ES
-    bulk_max: int = field(default=10000, init=False)
 
     def __post_init__(self):
         """Initialize the socket, plus indices, aliases, and type mappings on ES."""
@@ -40,6 +37,7 @@ class ESWriter:
         context = zmq.Context.instance()
         self.sock = context.socket(zmq.PULL)  # Socket for sending replies to index_runner
         self.sock.connect(self.sock_url)
+        self.sock.RCVTIMEO = 5000  # timeout on receiving messages in 5s
         print("Initializing all ES indices and mappings from the global config:")
         for index, mapping in _MAPPINGS.items():
             global_mappings = {}  # type: dict
@@ -56,26 +54,21 @@ class ESWriter:
 
     def _run(self):
         """Run the event loop, receiving messages over self.sock."""
-        # We use a zmq poller so we can receive messages with a timeout
-        # If we time out, then we work off the batch_writes or batch_deletes lists.
-        # We also do some work if either list hits the bulk_max threshold.
-        poller = zmq.Poller()
-        poller.register(self.sock, zmq.POLLIN)
         # Main event loop
         while True:
-            polled = poller.poll(5000)  # timeout at 5 seconds
-            if self.sock in dict(polled):
+            try:
                 msg = self.sock.recv_json()
                 self._handle_message(msg)
-            else:
-                # We timed out waiting for a message.
-                # Make bulk updates and clear out the accumulators.
+            except zmq.error.Again:
+                # Timeout; no messages
+                print('No more messages, performing batch ops..')
                 self._perform_batch_ops()
+                time.sleep(5)
 
     def _handle_message(self, msg):
         """
         Receive a JSON message over self.sock.
-        Message "action" name should go in msg._action.
+        Message event/action name should go in msg._action.
         """
         if not msg.get('_action'):
             print(f"Message to elasticsearch writer missing `_action` field: {msg}")
@@ -91,10 +84,11 @@ class ESWriter:
             self._init_generic_index(msg)
         elif action == 'set_global_perm':
             self._set_global_perm(msg)
-        self._perform_batch_ops(min_length=self.bulk_max)
+        self._perform_batch_ops(min_length=10000)
 
     def _perform_batch_ops(self, min_length=1):
         """Perform all the batch writes and deletes and empty the lists."""
+        # Only perform batch ops at most once every `self.batch_interval` seconds
         write_len = len(self.batch_writes)
         delete_len = len(self.batch_deletes)
         if write_len >= min_length:
