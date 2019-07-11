@@ -9,6 +9,8 @@ def get_config():
     """Initialize configuration data from the environment."""
     if not os.environ.get('WORKSPACE_TOKEN'):
         raise RuntimeError('WORKSPACE_TOKEN env var is not set.')
+    if not os.environ.get('MOUNT_DIR'):
+        raise RuntimeError('MOUNT_DIR env var is not set')
     es_host = os.environ.get("ELASTICSEARCH_HOST", 'elasticsearch')
     es_port = os.environ.get("ELASTICSEARCH_PORT", 9200)
     kbase_endpoint = os.environ.get('KBASE_ENDPOINT', 'https://ci.kbase.us/services').strip('/')
@@ -16,7 +18,11 @@ def get_config():
         'KBASE_WORKSPACE_URL',
         kbase_endpoint + '/ws'
     )
-    config_url = os.environ.get('GLOBAL_CONFIG_URL', 'https://github.com/kbase/search_config/releases/download/0.0.1/config.yaml')  # noqa
+    catalog_url = os.environ.get(
+        'KBASE_CATALOG_URL',
+        kbase_endpoint + '/catalog'
+    )
+    config_url = os.environ.get('GLOBAL_CONFIG_URL', 'https://github.com/kbase/search_config/releases/download/0.0.2/config.yaml')  # noqa
     # Load the global configuration release (non-environment specific, public config)
     if not config_url.startswith('http'):
         raise RuntimeError(f"Invalid global config url: {config_url}")
@@ -33,7 +39,9 @@ def get_config():
         },
         'global': global_config,
         'ws_token': os.environ['WORKSPACE_TOKEN'],
+        'mount_dir': os.environ['MOUNT_DIR'],
         'kbase_endpoint': kbase_endpoint,
+        'catalog_url': catalog_url,
         'workspace_url': workspace_url,
         'elasticsearch_host': es_host,
         'elasticsearch_port': es_port,

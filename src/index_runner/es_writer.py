@@ -41,8 +41,9 @@ class ESWriter:
         print("Initializing all ES indices and mappings from the global config:")
         for index, mapping in _MAPPINGS.items():
             global_mappings = {}  # type: dict
-            for g_map in mapping['global_mappings']:
-                global_mappings.update(_GLOBAL_MAPPINGS[g_map])
+            if mapping.get('global_mappings'):
+                for g_map in mapping['global_mappings']:
+                    global_mappings.update(_GLOBAL_MAPPINGS[g_map])
             self._init_index({
                 'name': index,
                 'alias': _ALIASES.get(index),
