@@ -1,10 +1,11 @@
 {
   "methods": ["POST"],
   "path": "/",
-  "headers": {"Authorization": "valid_admin_token"},
+  "headers": {},
   "body": {
-    "version": "1.1",
     "method": "Catalog.get_module_version",
+    "version": "1.1",
+    "id": "id",
     "params": [{
       "module_name": "genomeset_indexer"
     }]

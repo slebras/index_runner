@@ -32,12 +32,13 @@ def _get_docker_image_name(sdk_app, module_version=None):
     }
     if module_version is not None:
         params['params'][0]['version'] = module_version
-
-    resp = requests.post(catalog_service_url, json.dumps(params))
+    resp = requests.post(url=catalog_service_url, data=json.dumps(params))
     try:
         json_resp = resp.json()
     except Exception:
         raise ValueError(resp.text)
+    if json_resp.get('error'):
+        raise RuntimeError(json_resp['error'])
     result = json_resp['result'][0]
     return result["docker_img_name"]
 
@@ -108,7 +109,7 @@ def _pull_docker_image(image):
             pulled = True
     if not pulled:
         print("Pulling %s" % image)
-        _DOCKER.images.pull(image).id
+        _DOCKER.images.pull(image)
 
 
 def _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_func):

@@ -14,6 +14,7 @@ services:
       - kafka
       - elasticsearch
       - workspace
+      - catalog
     ports:
       - 5000:5000
     volumes:
@@ -24,7 +25,7 @@ services:
       - DEVELOPMENT=1
       - PYTHONUNBUFFERED=true
       - KBASE_WORKSPACE_URL=http://workspace:5000
-      - KBASE_CATALOG_URL=http://catalog:5000 #got to figure ports out for this.
+      - KBASE_CATALOG_URL=http://catalog:5000
       - WORKSPACE_TOKEN=valid_admin_token
       - MOUNT_DIR=${PWD}
 
