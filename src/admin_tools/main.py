@@ -85,6 +85,7 @@ def _pad(left, right, amount=17):
     return f"{left} {pad} - {right}"
 
 
+# All valid commands below
 _CMD_HANDLERS = {
     'err_count': {'fn': _get_count, 'help': 'Get total count of indexing errors.'},
     'err_count_by_type': {'fn': _get_count_by_type, 'help': 'Get count of errors by evtype.'},

@@ -11,8 +11,8 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 
-from .utils.config import get_config
-from .utils.ws_utils import get_obj_ids_from_ws, get_type_pieces
+from utils.config import get_config
+from utils.ws_utils import get_obj_ids_from_ws, get_type_pieces
 
 # Initialize configuration data
 _CONFIG = get_config()
@@ -60,7 +60,9 @@ class ESWriter:
                 self._handle_message(msg)
             except zmq.error.Again:
                 # Timeout; no messages
+                print('No more messages, performing batch ops..')
                 self._perform_batch_ops()
+                time.sleep(5)
 
     def _handle_message(self, msg):
         """

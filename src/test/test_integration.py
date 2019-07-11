@@ -45,6 +45,9 @@ class TestIntegration(unittest.TestCase):
         """
         # Produce an event on Kafka
         _produce(_TEST_EVENT)
+        _produce(_TEST_EVENT)
+        _produce(_TEST_EVENT)
+        _produce(_TEST_EVENT)
         _id = f"WS::{_TEST_EVENT['wsid']}:{_TEST_EVENT['objid']}"
         # Fetch the doc from Elasticsearch
         doc = _get_doc_blocking(_id)
