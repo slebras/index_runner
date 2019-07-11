@@ -1,14 +1,12 @@
 """
 This is the entrypoint for running the app. A parent supervisor process that
-launches and monitors child processes and threads.
+launches and monitors child processes.
 
 Architecture:
     Nodes:
         - index_runner -- consumes workspace and admin indexing events from kafka, runs indexers.
         - es_writer -- receives updates from index_runner and bulk-updates elasticsearch.
-    The index_runner and es_writer run in separate threads with a thread queue between them.
-
-Everything in this app is IO bound, so we use threads everywhere, not processes.
+    The index_runner and es_writer run in separate workers with message queues in between.
 """
 import time
 import zmq
@@ -16,8 +14,8 @@ import zmq.devices
 
 from .index_runner import IndexRunner
 from .es_writer import ESWriter
-from .utils.config import get_config
-from .utils.worker_group import WorkerGroup
+from utils.config import get_config
+from utils.worker_group import WorkerGroup
 
 _CONFIG = get_config()
 
@@ -46,7 +44,7 @@ def main():
     # Signal that the app has started to any other processes
     open('/tmp/app_started', 'a').close()  # nosec
     while True:
-        # Monitor processes/threads and restart any that have crashed
+        # Monitor workers and restart any that have crashed
         indexers.health_check()
         writer.health_check()
         time.sleep(5)

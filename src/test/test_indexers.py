@@ -2,7 +2,7 @@ import os
 import json
 import unittest
 
-from index_runner.utils.config import get_config
+from utils.config import get_config
 from index_runner.indexers.reads import index_reads
 from index_runner.indexers.genome import index_genome
 from index_runner.indexers.assembly import index_assembly

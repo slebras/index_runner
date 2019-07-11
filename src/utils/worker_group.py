@@ -33,7 +33,7 @@ class WorkerGroup:
 # -- Utilities
 
 def _create_proc(func, args):
-    """Create and start a new thread from a function and arguments."""
+    """Create and start a new process from a function and arguments."""
     proc = Process(target=func, args=args, daemon=True)
     proc.start()
     return proc

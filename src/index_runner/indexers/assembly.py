@@ -1,4 +1,3 @@
-# from utils.get_path import get_path
 from .indexer_utils import mean
 
 _NAMESPACE = "WS"
