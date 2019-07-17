@@ -16,7 +16,7 @@ services:
       - workspace
       - catalog
     ports:
-      - 5000:5000
+      - "127.0.0.1:5000:5000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${PWD}/src:/app
@@ -32,7 +32,7 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     ports:
-      - 2181:2181
+      - "127.0.0.1:2181:2181"
     environment:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -45,7 +45,7 @@ services:
     image: confluentinc/cp-kafka:5.0.0
     hostname: kafka
     ports:
-      - 9092:9092
+      - "127.0.0.1:9092:9092"
     depends_on:
       - zookeeper
     environment:
@@ -75,5 +75,5 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
     ports:
-      - 9200:9200
-      - 9300:9300
+      - "127.0.0.1:9200:9200"
+      - "127.0.0.1:9300:9300"
