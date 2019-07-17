@@ -76,11 +76,11 @@ def index_obj(msg_data):
     # Dispatch to a specific type handler to produce the search document
     indexer = _find_indexer(type_module, type_name, type_version)
     # All indexers are generators that yield document data for ES.
+    defaults = indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
     for indexer_ret in indexer(obj_data, ws_info, obj_data_v1):
         if indexer_ret['_action'] == 'index':
             if '_no_defaults' not in indexer_ret:
                 # Inject all default fields into the index document.
-                defaults = indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
                 indexer_ret['doc'].update(defaults)
         yield indexer_ret
 
