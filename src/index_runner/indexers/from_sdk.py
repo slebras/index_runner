@@ -77,21 +77,16 @@ def _verify_and_format_output(data_path, job_dir, workspace_id, object_id, index
         else:
             index_name = index_name_ver
             es_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
+        ret = {
+            "_action": "index",
+            "index": index_name,
+            "id": es_id,
+            "doc": d['doc']
+        }
         if d.get('_no_defaults'):
-            return {
-                "_action": "index",
-                "index": index_name,
-                "id": es_id,
-                "doc": d['doc'],
-                "_no_defaults": True
-            }
-        else:
-            return {
-                "_action": "index",
-                "index": index_name,
-                "id": es_id,
-                "doc": d['doc']
-            }
+            ret["_no_defaults"]= True
+        return ret
+
     if os.path.exists(data_path):
         with open(data_path, 'r') as fd:
             for line in fd.readlines():
