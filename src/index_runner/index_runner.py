@@ -4,7 +4,7 @@ Consume workspace update events from kafka and generate new index updates for es
 This sends json messages to es_writer over a thread socket with a special key:
     _action - string - action name (eg. 'index', 'delete', etc)
 """
-import sys
+import time
 import zmq
 import json
 import hashlib
@@ -91,16 +91,15 @@ class IndexRunner:
         This will be threaded and backgrounded.
         """
         # index_obj returns a generator
-        print('Iterating over indexing results...')
+        start = time.time()
         for result in index_obj(msg):
-            sys.stdout.write('.')
             if not result:
                 print('Empty result..')
                 self._log_err_to_es(msg)
                 continue
             # Push to the elasticsearch write queue
             self.sock.send_json(result)
-        print('\n..Done iterating.')
+        print(f'_run_indexer finished in {time.time() - start}s')
 
     def _run_obj_deleter(self, msg):
         """
