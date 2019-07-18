@@ -84,7 +84,7 @@ def _verify_and_format_output(data_path, job_dir, workspace_id, object_id, index
             "doc": d['doc']
         }
         if d.get('_no_defaults'):
-            ret["_no_defaults"]= True
+            ret["_no_defaults"] = True
         return ret
 
     if os.path.exists(data_path):
