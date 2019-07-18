@@ -10,10 +10,11 @@ import json
 import hashlib
 import traceback
 from dataclasses import dataclass
+from confluent_kafka import Producer
 
 from utils.kafka_consumer import kafka_consumer
 from utils.config import get_config
-from utils import es_utils
+from utils import es_utils, ws_utils
 from .indexers.main import index_obj
 from .indexers.indexer_utils import (
     check_object_deleted,
@@ -63,6 +64,10 @@ class IndexRunner:
                 print('Running indexer..')
                 self._run_indexer(msg)
                 print('Done running indexer..')
+            elif event_type == 'REINDEX_WS':
+                self._index_ws(msg)
+            elif event_type == 'INDEX_NONEXISTENT_WS':
+                self._index_nonexistent_ws(msg)
             elif event_type == 'INDEX_NONEXISTENT':
                 self._index_nonexistent(msg)
             elif event_type == 'OBJECT_DELETE_STATE_CHANGE':
@@ -100,6 +105,16 @@ class IndexRunner:
             # Push to the elasticsearch write queue
             self.sock.send_json(result)
         print(f'_run_indexer finished in {time.time() - start}s')
+
+    def _index_ws(self, msg):
+        """Index all objects in a workspace."""
+        for objid in ws_utils.get_obj_ids_from_ws(msg['wsid']):
+            _produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid})
+
+    def _index_nonexistent_ws(self, msg):
+        """Index all objects in a workspace that haven't already been indexed."""
+        for objid in ws_utils.get_obj_ids_from_ws(msg['wsid']):
+            _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid})
 
     def _run_obj_deleter(self, msg):
         """
@@ -176,3 +191,16 @@ class IndexRunner:
             'id': _id,
             'doc': {'error': str(err), **msg}
         })
+
+
+def _produce(data, topic=_CONFIG['topics']['indexer_admin_events']):
+    producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
+    producer.produce(topic, json.dumps(data), callback=_delivery_report)
+    producer.poll(60)
+
+
+def _delivery_report(err, msg):
+    if err is not None:
+        print('Message delivery failed:', err)
+    else:
+        print('Message delivered to', msg.topic())

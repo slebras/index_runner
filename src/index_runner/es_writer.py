@@ -61,7 +61,6 @@ class ESWriter:
                 self._handle_message(msg)
             except zmq.error.Again:
                 # Timeout; no messages
-                print('No more messages, performing batch ops..')
                 self._perform_batch_ops()
                 time.sleep(5)
 
@@ -242,6 +241,7 @@ def _write_to_elastic(data):
         index - index name
         delete - bool (for delete events)
     """
+    start = time.time()
     es_type = _CONFIG['global']['es_type_global_name']
     # Construct the post body for the bulk index
     json_body = ''
@@ -262,6 +262,7 @@ def _write_to_elastic(data):
     if not resp.ok:
         # Unsuccesful save to elasticsearch.
         raise RuntimeError(f"Error saving to elasticsearch:\n{resp.text}")
+    print(f'write_to_elastic took {time.time() - start}s')
 
 
 def _update_by_query(query, script, config):

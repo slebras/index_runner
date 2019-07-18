@@ -1,0 +1,4 @@
+#!/bin/sh
+
+PYTHONPATH=/app
+python -m admin_tools.main "$@"

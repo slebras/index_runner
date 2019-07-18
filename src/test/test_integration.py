@@ -22,7 +22,6 @@ _TEST_EVENT = {
 }
 
 
-@unittest.skip('skap')
 class TestIntegration(unittest.TestCase):
     """
     Integration test to confirm that the pieces of the system are successfully interconnected.
@@ -50,7 +49,6 @@ class TestIntegration(unittest.TestCase):
         # Fetch the doc from Elasticsearch
         doc = _get_doc_blocking(_id)
         self.assertEqual(doc['_id'], _id)
-
 
 # -- Test utils
 
