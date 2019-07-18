@@ -32,5 +32,8 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
       us.kbase.vcs-branch=$BRANCH \
       maintainer="KBase Team"
 
+# Make the admin tools executable
+RUN ln -s /app/admin_tools/indexer_admin /usr/local/bin/indexer_admin
+
 ENTRYPOINT ["/usr/local/bin/dockerize"]
 CMD ["python", "-m", "index_runner.main"]
