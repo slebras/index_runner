@@ -18,9 +18,66 @@ make test
 
 ## Admininstration
 
-Some CLI admin tools are provided in `src/admin_tools/main.py`.
+Some CLI admin tools are provided in the `indexer_admin` script. For a running container:
 
-Running `python main.py` will give you a list of available commands.
+```sh
+docker exec container_name indexer_admin
+```
+
+Examples:
+
+Show command help: `indexer_admin -h`
+
+_Reindex a specific object_ 
+
+```sh
+# Reindex only if the doc does not exist
+indexer_admin reindex --ref 11/22
+
+# Reindex and overwrite any existing doc
+indexer_admin reindex --ref 11/22 --overwrite
+```
+
+_Reindex a workspace_
+
+```sh
+# Reindex only objects that do not exist
+indexer_admin reindex --ref 11
+
+# Reindex and overwrite any existing docs
+indexer_admin reindex --ref 11 --overwrite
+```
+
+_Reindex a range of workspaces_
+
+```sh
+# Index workspaces 1 through 10
+indexer_admin reindex_range --min 1 --max 10
+
+# Index workspaces 1 through 10, overwriting existing docs
+indexer_admin reindex_range --min 1 --max 10 --overwrite
+
+# Index from workspace 1 through 1000
+indexer_admin reindex_range  --max 1000
+```
+
+_Get a count of indexing errors_
+
+```sh
+# Total error count
+indexer_admin err_count
+
+# Error count by type
+indexer_admin err_count --by-type
+```
+
+_Get all the upas that had an error_
+
+Note: this outputs ALL upas to stdout. You might want to pipe this into a file.
+
+```sh
+indexer_admin err_upas
+```
 
 ### Deployment
 
