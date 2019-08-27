@@ -2,14 +2,14 @@ import os
 import json
 import unittest
 
-from utils.config import get_config
-from index_runner.indexers.reads import index_reads
-from index_runner.indexers.genome import index_genome
-from index_runner.indexers.assembly import index_assembly
-from index_runner.indexers.pangenome import index_pangenome
-from index_runner.indexers.taxon import index_taxon
-from index_runner.indexers.tree import index_tree
-from index_runner.indexers.from_sdk import index_from_sdk
+from src.utils.config import get_config
+from src.index_runner.indexers.reads import index_reads
+from src.index_runner.indexers.genome import index_genome
+from src.index_runner.indexers.assembly import index_assembly
+from src.index_runner.indexers.pangenome import index_pangenome
+from src.index_runner.indexers.taxon import index_taxon
+from src.index_runner.indexers.tree import index_tree
+from src.index_runner.indexers.from_sdk import index_from_sdk
 
 _CONFIG = get_config()
 

@@ -1,4 +1,4 @@
-from utils.get_path import get_path
+from src.utils.get_path import get_path
 
 _NAMESPACE = "WS"
 _READS_INDEX_VERSION = 1

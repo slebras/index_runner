@@ -1,5 +1,5 @@
 # genome indexer
-from .indexer_utils import mean
+from src.index_runner.indexers.indexer_utils import mean
 
 _NAMESPACE = "WS"
 _GENOME_INDEX_VERSION = 1

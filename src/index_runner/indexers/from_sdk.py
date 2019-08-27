@@ -4,9 +4,10 @@ import json
 import shutil
 import docker
 import requests
-from utils.config import get_config
-from utils import ws_utils
 from configparser import ConfigParser
+
+from src.utils.config import get_config
+from src.utils import ws_utils
 
 
 _CONFIG = get_config()
@@ -31,7 +32,7 @@ def _get_docker_image_name(sdk_app, module_version=None):
         }]
     }
     if module_version is not None:
-        params['params'][0]['version'] = module_version
+        params['params'][0]['version'] = module_version  # type: ignore
     resp = requests.post(url=catalog_service_url, data=json.dumps(params))
     try:
         json_resp = resp.json()

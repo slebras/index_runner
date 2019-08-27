@@ -11,8 +11,8 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 
-from utils.config import get_config
-from utils.ws_utils import get_obj_ids_from_ws, get_type_pieces
+from src.utils.config import get_config
+from src.utils.ws_utils import get_obj_ids_from_ws, get_type_pieces
 
 # Initialize configuration data
 _CONFIG = get_config()

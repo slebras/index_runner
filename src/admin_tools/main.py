@@ -3,7 +3,8 @@ import sys
 import json
 import argparse
 from confluent_kafka import Producer
-from utils.config import get_config
+
+from src.utils.config import get_config
 
 _CONFIG = get_config()
 

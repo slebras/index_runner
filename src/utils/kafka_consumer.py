@@ -5,7 +5,7 @@ topic/client group.
 import json
 from confluent_kafka import Consumer, KafkaError
 
-from .config import get_config
+from src.utils.config import get_config
 
 
 def kafka_consumer(topics):

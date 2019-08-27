@@ -12,11 +12,11 @@ import traceback
 from dataclasses import dataclass
 from confluent_kafka import Producer
 
-from utils.kafka_consumer import kafka_consumer
-from utils.config import get_config
-from utils import es_utils, ws_utils
-from .indexers.main import index_obj
-from .indexers.indexer_utils import (
+from src.utils.kafka_consumer import kafka_consumer
+from src.utils.config import get_config
+from src.utils import es_utils, ws_utils
+from src.index_runner.indexers.main import index_obj
+from src.index_runner.indexers.indexer_utils import (
     check_object_deleted,
     check_workspace_deleted,
     fetch_objects_in_workspace,

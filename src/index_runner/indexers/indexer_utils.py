@@ -1,8 +1,8 @@
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
-from utils.config import get_config
-from utils.ws_utils import get_type_pieces
+from src.utils.config import get_config
+from src.utils.ws_utils import get_type_pieces
 
 _REF_DATA_WORKSPACES = []  # type: list
 _CONFIG = get_config()

@@ -19,21 +19,18 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r /tmp/requirements.txt && \
     if [ "$DEVELOPMENT" ]; then pip install --no-cache-dir -r /tmp/dev-requirements.txt; fi
 
-COPY src /app
-COPY src/scripts /app/scripts
+COPY . /app
 
 WORKDIR /app
-ENV KB_DEPLOYMENT_CONFIG=/app/deploy.cfg
-
 LABEL org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.vcs-url="https://github.com/kbase/relation_engine_api" \
+      org.label-schema.vcs-url="https://github.com/kbase/index_runner_deluxe" \
       org.label-schema.vcs-ref=$VCS_REF \
       org.label-schema.schema-version="1.0.0-rc1" \
       us.kbase.vcs-branch=$BRANCH \
       maintainer="KBase Team"
 
 # Make the admin tools executable
-RUN ln -s /app/admin_tools/indexer_admin /usr/local/bin/indexer_admin
+RUN ln -s /app/src/admin_tools/indexer_admin /usr/local/bin/indexer_admin
 
 ENTRYPOINT ["/usr/local/bin/dockerize"]
-CMD ["python", "-m", "index_runner.main"]
+CMD ["python", "-m", "src.index_runner.main"]

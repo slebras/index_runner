@@ -4,17 +4,17 @@ Indexer logic based on type
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
-from . import indexer_utils
-from utils.config import get_config
-from utils import ws_utils
-from .narrative import index_narrative
-from .reads import index_reads
-from .genome import index_genome
-from .assembly import index_assembly
-from .tree import index_tree
-from .taxon import index_taxon
-from .pangenome import index_pangenome
-from .from_sdk import index_from_sdk
+from src.utils.config import get_config
+from src.utils import ws_utils
+from src.index_runner.indexers import indexer_utils
+from src.index_runner.indexers.narrative import index_narrative
+from src.index_runner.indexers.reads import index_reads
+from src.index_runner.indexers.genome import index_genome
+from src.index_runner.indexers.assembly import index_assembly
+from src.index_runner.indexers.tree import index_tree
+from src.index_runner.indexers.taxon import index_taxon
+from src.index_runner.indexers.pangenome import index_pangenome
+from src.index_runner.indexers.from_sdk import index_from_sdk
 
 _CONFIG = get_config()
 

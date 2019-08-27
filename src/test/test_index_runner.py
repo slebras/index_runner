@@ -5,9 +5,9 @@ import unittest
 import zmq
 import json
 from confluent_kafka import Producer
-from index_runner.index_runner import IndexRunner
-from utils.worker_group import WorkerGroup
-from utils.config import get_config
+from src.index_runner.index_runner import IndexRunner
+from src.utils.worker_group import WorkerGroup
+from src.utils.config import get_config
 
 _CONFIG = get_config()
 

@@ -4,8 +4,8 @@ import time
 import requests
 from multiprocessing import Process
 from confluent_kafka import Producer
-from utils.config import get_config
-from index_runner.main import main
+from src.utils.config import get_config
+from src.index_runner.main import main
 
 _CONFIG = get_config()
 

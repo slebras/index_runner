@@ -12,10 +12,10 @@ import time
 import zmq
 import zmq.devices
 
-from .index_runner import IndexRunner
-from .es_writer import ESWriter
-from utils.config import get_config
-from utils.worker_group import WorkerGroup
+from src.index_runner.index_runner import IndexRunner
+from src.index_runner.es_writer import ESWriter
+from src.utils.config import get_config
+from src.utils.worker_group import WorkerGroup
 
 _CONFIG = get_config()
 

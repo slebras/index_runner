@@ -2,7 +2,7 @@
 import json
 import requests
 
-from .config import get_config
+from src.utils.config import get_config
 
 # Initialize configuration data
 _CONFIG = get_config()
