@@ -1,18 +1,16 @@
 """
-Consume workspace update events from kafka and generate new index updates for es_writer.
-
-This sends json messages to es_writer over a thread socket with a special key:
-    _action - string - action name (eg. 'index', 'delete', etc)
+Takes workspace kafka event data and generates new Elasticsearch index upates
+(creations, updates, deletes, etc)
+Pushes work to es_writer.
 """
 import time
-import zmq
 import json
 import hashlib
 import traceback
-from dataclasses import dataclass
 from confluent_kafka import Producer
 
-from src.utils.kafka_consumer import kafka_consumer
+from src.utils.worker_group import WorkerGroup
+from src.index_runner.es_writer import ESWriter
 from src.utils.config import get_config
 from src.utils import es_utils, ws_utils
 from src.index_runner.indexers.main import index_obj
@@ -26,30 +24,19 @@ from src.index_runner.indexers.indexer_utils import (
 _CONFIG = get_config()
 
 
-@dataclass
-class IndexRunner:
-    sock_url: str  # address of socket to push work to
+class ESIndexer:
 
-    def __post_init__(self):
-        context = zmq.Context.instance()
-        self.sock = context.socket(zmq.PUSH)  # send work to the es_writer
-        self.sock.connect(self.sock_url)
-        # Start the main event loop
-        self._run()
+    @classmethod
+    def init_children(cls):
+        """Initialize a worker group of ESWriters, which we push work into."""
+        es_writers = WorkerGroup(ESWriter, (), count=_CONFIG['zmq']['num_es_writers'])
+        return {'es_writers': es_writers}
 
-    def _run(self):
-        """Run the main event loop, ie. the Kafka Consumer, dispatching to self._handle_message."""
-        topics = [
-            _CONFIG['topics']['workspace_events'],
-            _CONFIG['topics']['indexer_admin_events']
-        ]
-        print("index_runner started.")
-        for msg in kafka_consumer(topics):
-            self._handle_message(msg)
-            print("Finished receiving.")
-
-    def _handle_message(self, msg):
-        """Receive a kafka message."""
+    def ws_event(self, msg):
+        """
+        Receive a workspace event from the kafka consumer.
+        msg will have fields described here: https://kbase.us/services/ws/docs/events.html
+        """
         event_type = msg.get('evtype')
         ws_id = msg.get('wsid')
         if not ws_id:
@@ -58,7 +45,7 @@ class IndexRunner:
         if not event_type:
             print(f"Missing 'evtype' in event: {msg}")
             return
-        print(f'index_runner received {msg["evtype"]} for {ws_id}/{msg.get("objid", "?")}')
+        print(f'es_writer received {msg["evtype"]} for {ws_id}/{msg.get("objid", "?")}')
         try:
             if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
                 print('Running indexer..')
@@ -88,7 +75,7 @@ class IndexRunner:
             print(err)
             traceback.print_exc()
             print('=' * 80)
-            self._log_err_to_es(msg, err)
+            _log_err_to_es(self.children['es_writers'], msg, err)
 
     def _run_indexer(self, msg):
         """
@@ -99,11 +86,10 @@ class IndexRunner:
         start = time.time()
         for result in index_obj(msg):
             if not result:
-                print('Empty result..')
-                self._log_err_to_es(msg)
+                _log_err_to_es(self.children['es_writers'], result)
                 continue
             # Push to the elasticsearch write queue
-            self.sock.send_json(result)
+            self.children['es_writers'].put((result['_action'], result))
         print(f'_run_indexer finished in {time.time() - start}s')
 
     def _index_ws(self, msg):
@@ -127,7 +113,7 @@ class IndexRunner:
             # Object is not deleted
             print(f'object {objid} in workspace {wsid} not deleted')
             return
-        self.sock.send_json({'_action': 'delete', 'object_id': f"{wsid}:{objid}"})
+        self.children['es_writers'].put(('delete', {'object_id': f"{wsid}:{objid}"}))
 
     def _run_workspace_deleter(self, msg):
         """
@@ -139,7 +125,7 @@ class IndexRunner:
         if not check_workspace_deleted(wsid):
             print(f'Workspace {wsid} not deleted')
             return
-        self.sock.send_json({'_action': 'delete', 'workspace_id': str(wsid)})
+        self.children['es_writers'].put(('delete', {'workspace_id': str(wsid)}))
 
     def _clone_workspace(self, msg):
         """
@@ -163,11 +149,10 @@ class IndexRunner:
         workspace_id = msg['wsid']
         is_public = is_workspace_public(workspace_id)
         # Push the event to the elasticsearch writer queue
-        self.sock.send_json({
-            '_action': 'set_global_perm',
+        self.children['es_writers'].put(('set_global_perm', {
             'workspace_id': workspace_id,
             'is_public': is_public
-        })
+        }))
 
     def _index_nonexistent(self, msg):
         """
@@ -180,17 +165,17 @@ class IndexRunner:
             print('Doc does not exist..')
             self._run_indexer(msg)
 
-    def _log_err_to_es(self, msg, err=None):
-        """Log an indexing error in an elasticsearch index."""
-        # The key is a hash of the message data body
-        # The index document is the error string plus the message data itself
-        _id = hashlib.blake2b(json.dumps(msg).encode('utf-8')).hexdigest()
-        self.sock.send_json({
-            '_action': 'index',
-            'index': _CONFIG['error_index_name'],
-            'id': _id,
-            'doc': {'error': str(err), **msg}
-        })
+
+def _log_err_to_es(es_writers, msg, err=None):
+    """Log an indexing error in an elasticsearch index."""
+    # The key is a hash of the message data body
+    # The index document is the error string plus the message data itself
+    _id = hashlib.blake2b(json.dumps(msg).encode('utf-8')).hexdigest()
+    es_writers.put(('index', {
+        'index': _CONFIG['error_index_name'],
+        'id': _id,
+        'doc': {'error': str(err), **msg}
+    }))
 
 
 def _produce(data, topic=_CONFIG['topics']['indexer_admin_events']):
