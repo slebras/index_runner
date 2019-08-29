@@ -18,6 +18,7 @@ def get_config():
         'KBASE_WORKSPACE_URL',
         kbase_endpoint + '/ws'
     )
+    re_api_url = os.environ.get('RE_URL', 'http://re_api:5000').strip('/')
     catalog_url = os.environ.get(
         'KBASE_CATALOG_URL',
         kbase_endpoint + '/catalog'
@@ -34,6 +35,7 @@ def get_config():
             'num_consumers': int(os.environ.get('NUM_CONSUMERS', 4)),
             'num_es_indexers': int(os.environ.get('NUM_ES_INDEXERS', 4)),
             'num_es_writers': int(os.environ.get('NUM_ES_WRITERS', 1)),
+            'num_re_importers': int(os.environ.get('NUM_RE_IMPORTERS', 4)),
         },
         'global': global_config,
         'ws_token': os.environ['WORKSPACE_TOKEN'],
@@ -41,6 +43,7 @@ def get_config():
         'kbase_endpoint': kbase_endpoint,
         'catalog_url': catalog_url,
         'workspace_url': workspace_url,
+        're_api_url': re_api_url,
         'elasticsearch_host': es_host,
         'elasticsearch_port': es_port,
         'elasticsearch_url': f"http://{es_host}:{es_port}",

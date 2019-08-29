@@ -16,6 +16,7 @@ from confluent_kafka import Consumer, KafkaError
 from src.utils.config import get_config
 from src.utils.worker_group import WorkerGroup
 from src.index_runner.es_indexer import ESIndexer
+from src.index_runner.releng_importer import RelengImporter
 
 _CONFIG = get_config()
 
@@ -27,12 +28,14 @@ def main():
 
     Work is sent from the Kafka consumer to the es_writer or releng_importer via ZMQ sockets.
     """
-    # Wait for elasticsearch to be live
-    _wait_for_es()
+    # Wait for dependency services (ES and RE) to be live
+    _wait_for_dependencies()
     # Initialize worker group of ESIndexer
     es_indexers = WorkerGroup(ESIndexer, (), count=_CONFIG['zmq']['num_es_indexers'])
+    # Initialize a worker group of RelengImporter
+    releng_importers = WorkerGroup(RelengImporter, (), count=_CONFIG['zmq']['num_re_importers'])
     # All worker groups to send kafka messages to
-    receivers = [es_indexers]
+    receivers = [es_indexers, releng_importers]
 
     # Initialize and run the Kafka consumer
     consumer = Consumer({
@@ -69,18 +72,18 @@ def main():
             receiver.queue.put(('ws_event', data))
 
 
-def _wait_for_es():
+def _wait_for_dependencies():
     """Block and wait for elasticsearch."""
     timeout = 180  # in seconds
     start_time = int(time.time())
-    es_started = False
-    while not es_started:
+    while True:
         # Check for Elasticsearch
         try:
             requests.get(_CONFIG['elasticsearch_url']).raise_for_status()
-            es_started = True
+            requests.get(_CONFIG['re_api_url'] + '/').raise_for_status()
+            break
         except Exception:
-            print('Unable to connect to elasticsearch, waiting..')
+            print('Waiting for dependency services...')
             time.sleep(5)
             if (int(time.time()) - start_time) > timeout:
                 raise RuntimeError(f"Failed to connect to other services in {timeout}s")

@@ -6,15 +6,15 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from src.utils.config import get_config
 from src.utils import ws_utils
-from src.index_runner.indexers import indexer_utils
-from src.index_runner.indexers.narrative import index_narrative
-from src.index_runner.indexers.reads import index_reads
-from src.index_runner.indexers.genome import index_genome
-from src.index_runner.indexers.assembly import index_assembly
-from src.index_runner.indexers.tree import index_tree
-from src.index_runner.indexers.taxon import index_taxon
-from src.index_runner.indexers.pangenome import index_pangenome
-from src.index_runner.indexers.from_sdk import index_from_sdk
+from src.index_runner.es_indexers import indexer_utils
+from src.index_runner.es_indexers.narrative import index_narrative
+from src.index_runner.es_indexers.reads import index_reads
+from src.index_runner.es_indexers.genome import index_genome
+from src.index_runner.es_indexers.assembly import index_assembly
+from src.index_runner.es_indexers.tree import index_tree
+from src.index_runner.es_indexers.taxon import index_taxon
+from src.index_runner.es_indexers.pangenome import index_pangenome
+from src.index_runner.es_indexers.from_sdk import index_from_sdk
 
 _CONFIG = get_config()
 

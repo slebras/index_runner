@@ -7,7 +7,7 @@
     "method": "Workspace.administer",
     "params": [{
       "command": "getObjects",
-      "params": {"objects": [{"ref": "41347/5/1"}], "no_data": 1}
+      "params": {"objects": [{"ref": "41347/5/16"}], "no_data": 1}
     }]
   },
   "response": {
@@ -41,7 +41,7 @@
                       "ws_name": "username:narrative_1553621013004"
                   }
               ],
-              "path": [ "41347/5/1" ],
+              "path": [ "41347/5/16" ],
               "provenance": [{
                       "service": "narrative",
                       "service_ver": "3.10.0",

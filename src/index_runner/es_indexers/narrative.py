@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from markdown2 import Markdown
 
 from src.utils.get_path import get_path
-from src.index_runner.indexers import indexer_utils
+from src.index_runner.es_indexers import indexer_utils
 
 _NAMESPACE = "WS"
 _MARKDOWNER = Markdown()

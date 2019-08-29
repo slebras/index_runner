@@ -13,8 +13,8 @@ from src.utils.worker_group import WorkerGroup
 from src.index_runner.es_writer import ESWriter
 from src.utils.config import get_config
 from src.utils import es_utils, ws_utils
-from src.index_runner.indexers.main import index_obj
-from src.index_runner.indexers.indexer_utils import (
+from src.index_runner.es_indexers.main import index_obj
+from src.index_runner.es_indexers.indexer_utils import (
     check_object_deleted,
     check_workspace_deleted,
     fetch_objects_in_workspace,

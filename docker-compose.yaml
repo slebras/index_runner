@@ -15,6 +15,7 @@ services:
       - elasticsearch
       - workspace
       - catalog
+      - re_api
     ports:
       - "127.0.0.1:5000:5000"
     volumes:
@@ -55,11 +56,17 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_HEAP_OPTS: -Xmx512m -Xms512m
 
-  # Mock workspace server (see src/test/mock_workspace/endpoints.json)
+  # Mock workspace server (see src/test/mock_workspace/)
   workspace:
     image: mockservices/mock_json_service:1.1
     volumes:
       - ${PWD}/src/test/mock_workspace:/config
+
+  # A mock kbase auth server (see src/test/mock_auth/)
+  auth:
+    image: mockservices/mock_json_service
+    volumes:
+      - ${PWD}/src/test/mock_auth:/config
 
   # Mock catalog server (see src/test/mock_catalog)
   catalog:
@@ -77,3 +84,32 @@ services:
     ports:
       - "127.0.0.1:9200:9200"
       - "127.0.0.1:9300:9300"
+
+  # Relation Engine API
+  re_api:
+    image: kbase/relation_engine_api:develop
+    ports:
+      - "127.0.0.1:5000:5000"
+    depends_on:
+      - arangodb
+      - auth
+      - workspace
+    environment:
+      - WORKERS=2
+      - DEVELOPMENT=1
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - KBASE_AUTH_URL=http://auth:5000
+      - KBASE_WORKSPACE_URL=http://workspace:5000
+      - PYTHONUNBUFFERED=true
+      - SPEC_RELEASE_PATH=/app/src/test/spec_release/spec.tar.gz
+      - DB_URL=http://arangodb:8529
+      - DB_USER=root
+
+  # Arangodb server in cluster mode
+  arangodb:
+    image: arangodb:3.4
+    ports:
+      - "127.0.0.1:8529:8529"
+    command: sh -c "arangodb create jwt-secret --secret=jwtSecret &&
+                    arangodb --starter.local --auth.jwt-secret=./jwtSecret"

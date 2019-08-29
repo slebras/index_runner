@@ -1,4 +1,4 @@
-from src.index_runner.indexers.indexer_utils import mean
+from src.index_runner.es_indexers.indexer_utils import mean
 
 _NAMESPACE = "WS"
 _ASSEMBLY_INDEX_VERSION = 1
