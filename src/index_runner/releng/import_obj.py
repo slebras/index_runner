@@ -67,7 +67,7 @@ def _save_obj_version(key, wsid, objid, ver, info_tup):
     hsh = info_tup[8]
     size = info_tup[9]
     epoch = ts_to_epoch(info_tup[3])
-    print(f"Saving wsfull_object version with key {key}")
+    print(f"Saving wsfull_object_version with key {key}")
     save('wsfull_object_version', [{
         '_key': key,
         'workspace_id': wsid,

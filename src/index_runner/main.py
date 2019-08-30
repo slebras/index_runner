@@ -46,7 +46,7 @@ def main():
     })
     topics = [
         _CONFIG['topics']['workspace_events'],
-        _CONFIG['topics']['indexer_admin_events']
+        _CONFIG['topics']['admin_events']
     ]
     print(f"Subscribing to: {topics}")
     print(f"Client group: {_CONFIG['kafka_clientgroup']}")

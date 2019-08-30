@@ -45,7 +45,7 @@
               "provenance": [{
                       "service": "narrative",
                       "service_ver": "3.10.0",
-                      "input_ws_objects": [],
+                      "input_ws_objects": ["1/1/1", "2/2/2"],
                       "resolved_ws_objects": [],
                       "external_data": [],
                       "subactions": [],
@@ -56,7 +56,7 @@
               "orig_wsid": 41347,
               "created": "2019-04-04T20:16:38+0000",
               "epoch": 1554408998887,
-              "refs": [],
+              "refs": ["1/1/1", "2/2/2"],
               "copied": "1/2/3",
               "copy_source_inaccessible": 0,
               "extracted_ids": {}

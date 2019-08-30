@@ -28,6 +28,7 @@ services:
       - KBASE_WORKSPACE_URL=http://workspace:5000
       - KBASE_CATALOG_URL=http://catalog:5000
       - WORKSPACE_TOKEN=valid_admin_token
+      - RE_API_TOKEN=valid_admin_token
       - MOUNT_DIR=${PWD}
 
   zookeeper:

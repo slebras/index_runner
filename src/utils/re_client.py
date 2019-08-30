@@ -2,9 +2,7 @@
 Relation engine API client functions.
 """
 import json
-import os
 import requests
-from urllib.parse import urljoin
 
 from src.utils.config import get_config
 
@@ -20,7 +18,7 @@ def get_doc(coll, key):
             '@coll': coll,
             'key': key
         }),
-        headers={'Authorization': _CONFIG['re_token']}
+        headers={'Authorization': _CONFIG['re_api_token']}
     )
     if not resp.ok:
         raise RuntimeError(resp.text)
@@ -40,7 +38,7 @@ def check_doc_existence(_id):
             '@coll': coll,
             'key': key
         }),
-        headers={'Authorization': _CONFIG['re_token']}
+        headers={'Authorization': _CONFIG['re_api_token']}
     )
     if not resp.ok:
         raise RuntimeError(resp.text)
@@ -63,7 +61,7 @@ def get_edge(coll, from_key, to_key):
             'from': from_key,
             'to': to_key
         }),
-        headers={'Authorization': _CONFIG['re_token']}
+        headers={'Authorization': _CONFIG['re_api_token']}
     )
     if not resp.ok:
         raise RuntimeError(resp.text)
@@ -91,21 +89,3 @@ def save(coll_name, docs):
     if not resp.ok:
         raise RuntimeError(f'Error response from RE API: {resp.text}')
     return resp.json()
-
-
-def import_file(file_path, fd):
-    """
-    Import a file full of json documents, separated by linebreaks.
-    """
-    url = urljoin(_CONFIG['re_api_url'] + '/', 'api/v1/documents')
-    # convert the docs into a string, where each obj is separated by a linebreak
-    coll_name = os.path.basename(file_path).split('.')[0]
-    params = {'collection': coll_name, 'on_duplicate': 'update'}
-    resp = requests.put(
-        url,
-        data=fd,
-        params=params,
-        headers={'Authorization': _CONFIG['token']}
-    )
-    if not resp.ok:
-        raise RuntimeError(f'Error response from RE API: {resp.text}')

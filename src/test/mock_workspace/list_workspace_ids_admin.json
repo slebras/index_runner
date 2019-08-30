@@ -1,7 +1,7 @@
 {
   "methods": ["POST"],
   "path": "/",
-  "headers": {"Authorization": "admin_token"},
+  "headers": {"Authorization": "valid_admin_token"},
   "body": {
     "method": "Workspace.list_workspace_ids",
     "version": "1.1",

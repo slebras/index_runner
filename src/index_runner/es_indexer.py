@@ -178,7 +178,7 @@ def _log_err_to_es(es_writers, msg, err=None):
     }))
 
 
-def _produce(data, topic=_CONFIG['topics']['indexer_admin_events']):
+def _produce(data, topic=_CONFIG['topics']['admin_events']):
     producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
     producer.produce(topic, json.dumps(data), callback=_delivery_report)
     producer.poll(60)
