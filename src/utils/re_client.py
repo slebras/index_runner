@@ -9,6 +9,18 @@ from src.utils.config import get_config
 _CONFIG = get_config()
 
 
+def stored_query(name, params):
+    """Run a stored query."""
+    resp = requests.post(
+        _CONFIG['re_api_url'] + '/api/v1/query_results',
+        params={'stored_query': name},
+        data=json.dumps(params),
+    )
+    if not resp.ok:
+        raise RuntimeError(resp.text)
+    return resp.json()
+
+
 def get_doc(coll, key):
     """Fetch a doc in a collection by key."""
     resp = requests.post(

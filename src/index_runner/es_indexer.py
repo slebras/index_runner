@@ -8,6 +8,7 @@ import json
 import hashlib
 import traceback
 from confluent_kafka import Producer
+from kbase_workspace_client import WorkspaceClient
 
 from src.utils.worker_group import WorkerGroup
 from src.index_runner.es_writer import ESWriter
@@ -94,7 +95,8 @@ class ESIndexer:
 
     def _index_ws(self, msg):
         """Index all objects in a workspace."""
-        for objid in ws_utils.get_obj_ids_from_ws(msg['wsid']):
+        ws_client = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
+        for (objid, ver) in ws_client.generate_all_ids_for_workspace(msg['wsid']):
             _produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid})
 
     def _index_nonexistent_ws(self, msg):
