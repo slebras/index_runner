@@ -4,7 +4,7 @@ import os
 import functools
 
 
-@functools.lru_cache(maxsize=2)
+@functools.lru_cache(maxsize=1)
 def get_config():
     """Initialize configuration data from the environment."""
     reqs = ['WORKSPACE_TOKEN', 'RE_API_TOKEN', 'MOUNT_DIR']
