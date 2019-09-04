@@ -195,7 +195,7 @@ class TestIndexers(unittest.TestCase):
         with open(os.path.join(_DIR, 'test_data', json_data_path)) as fd:
             test_data = json.load(fd)
 
-        features_test_file = os.path.join(_DIR, "test_data", "short_features.json.gz")
+        features_test_file = os.path.join(_DIR, "test_data", "features.json.gz")
 
         info = test_data['obj']['info']
         workspace_id = info[6]

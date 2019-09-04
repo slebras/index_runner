@@ -117,6 +117,7 @@ def index_annotated_metagenome_assembly(obj_data, ws_info, obj_data_v1):
     features_file_gz_path = _DIR + "/features.json.gz"
     handle_id_to_file(features_handle_ref, features_file_gz_path)
 
-    yield _index_ama(features_file_gz_path, data, ama_id)
+    for doc in _index_ama(features_file_gz_path, data, ama_id):
+        yield doc
     # remove zipped file
     os.remove(features_file_gz_path)
