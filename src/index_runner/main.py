@@ -9,46 +9,102 @@ Architecture:
     The index_runner and es_writer run in separate workers with message queues in between.
 """
 import time
-import zmq
-import zmq.devices
+import requests
+import json
+from confluent_kafka import Consumer, KafkaError
 
-from .index_runner import IndexRunner
-from .es_writer import ESWriter
-from utils.config import get_config
-from utils.worker_group import WorkerGroup
+from src.utils.config import get_config
+from src.utils.worker_group import WorkerGroup
+from src.index_runner.es_indexer import ESIndexer
+from src.index_runner.releng_importer import RelengImporter
 
 _CONFIG = get_config()
+_RESET_CONFIG_ITERS = 100
 
 
 def main():
     """
-    The zmq layout is:
-        index_runner--┬--PULL-->Streamer--PUSH-->es_writer
-        index_runner--┤
-        index_runner--┤
-        index_runner--╯
+    - Multiple processes run Kafka consumers under the same topic and client group
+    - Each Kafka consumer pushes work to one or more es_indexers or releng_importers
+
+    Work is sent from the Kafka consumer to the es_writer or releng_importer via ZMQ sockets.
     """
-    frontend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_front'
-    backend_url = f'ipc:///tmp/{_CONFIG["zmq"]["socket_name"]}_back'
-    streamer = zmq.devices.ProcessDevice(zmq.STREAMER, zmq.PULL, zmq.PUSH)
-    streamer.bind_in(frontend_url)
-    streamer.bind_out(backend_url)
-    # The 'high water mark' options sets a maximum queue size for both the frontend and backend sockets.
-    streamer.setsockopt_in(zmq.RCVHWM, _CONFIG['zmq']['queue_max'])
-    streamer.setsockopt_out(zmq.SNDHWM, _CONFIG['zmq']['queue_max'])
-    streamer.start()
-    # Start the index_runner and es_writer
-    # For some reason, mypy does not figure out these types correctly
-    indexers = WorkerGroup(IndexRunner, (frontend_url,), count=_CONFIG['zmq']['num_indexers'])  # type: ignore
-    writer = WorkerGroup(ESWriter, (backend_url,), count=_CONFIG['zmq']['num_es_writers'])  # type: ignore
-    # Signal that the app has started to any other processes
-    open('/tmp/app_started', 'a').close()  # nosec
+    # Wait for dependency services (ES and RE) to be live
+    _wait_for_dependencies()
+    # Initialize worker group of ESIndexer
+    es_indexers = WorkerGroup(ESIndexer, (), count=_CONFIG['zmq']['num_es_indexers'])
+    # Initialize a worker group of RelengImporter
+    releng_importers = WorkerGroup(RelengImporter, (), count=_CONFIG['zmq']['num_re_importers'])
+    # All worker groups to send kafka messages to
+    receivers = [es_indexers, releng_importers]
+
+    # Initialize and run the Kafka consumer
+    consumer = _set_consumer(_CONFIG)
+
+    iters = 0
     while True:
-        # Monitor workers and restart any that have crashed
-        indexers.health_check()
-        writer.health_check()
-        time.sleep(5)
+        msg = consumer.poll(timeout=0.5)
+        if msg is None:
+            continue
+        if msg.error():
+            if msg.error().code() == KafkaError._PARTITION_EOF:
+                print('End of stream.')
+            else:
+                print(f"Kafka message error: {msg.error()}")
+            continue
+        val = msg.value().decode('utf-8')
+        try:
+            data = json.loads(val)
+        except ValueError as err:
+            print(f'JSON parsing error: {err}')
+            print(f'Message content: {val}')
+        for receiver in receivers:
+            receiver.queue.put(('ws_event', data))
+        # reload config every few iterations?
+        if iters % _RESET_CONFIG_ITERS == int(_RESET_CONFIG_ITERS - 1):
+            consumer = _set_consumer(get_config())
+            # avoid integer overflows
+            iters = 0
+        iters += 1
+
+
+def _set_consumer(conf):
+    """"""
+    consumer = Consumer({
+        'bootstrap.servers': conf['kafka_server'],
+        'group.id': conf['kafka_clientgroup'],
+        'auto.offset.reset': 'earliest',
+        'enable.auto.commit': True
+    })
+    topics = [
+        conf['topics']['workspace_events'],
+        conf['topics']['admin_events']
+    ]
+    print(f"Subscribing to: {topics}")
+    print(f"Client group: {conf['kafka_clientgroup']}")
+    print(f"Kafka server: {conf['kafka_server']}")
+    consumer.subscribe(topics)
+    return consumer
+
+
+def _wait_for_dependencies():
+    """Block and wait for elasticsearch."""
+    timeout = 180  # in seconds
+    start_time = int(time.time())
+    while True:
+        # Check for Elasticsearch
+        try:
+            requests.get(_CONFIG['elasticsearch_url']).raise_for_status()
+            requests.get(_CONFIG['re_api_url'] + '/').raise_for_status()
+            break
+        except Exception:
+            print('Waiting for dependency services...')
+            time.sleep(5)
+            if (int(time.time()) - start_time) > timeout:
+                raise RuntimeError(f"Failed to connect to other services in {timeout}s")
+    print('Services started! Now starting the app..')
 
 
 if __name__ == '__main__':
+    print('before main..')
     main()

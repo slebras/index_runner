@@ -1,6 +1,6 @@
-from .config import get_config
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
+from src.utils.config import get_config
 
 _CONFIG = get_config()
 _WS_CLIENT = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
