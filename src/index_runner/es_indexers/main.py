@@ -15,6 +15,7 @@ from src.index_runner.es_indexers.tree import index_tree
 from src.index_runner.es_indexers.taxon import index_taxon
 from src.index_runner.es_indexers.pangenome import index_pangenome
 from src.index_runner.es_indexers.from_sdk import index_from_sdk
+from src.index_runner.es_indexers.annotated_metagenome_assembly import index_annotated_metagenome_assembly
 
 _CONFIG = get_config()
 
@@ -135,7 +136,12 @@ _INDEXER_DIRECTORY = [
     {'module': 'KBaseGenomes', 'type': 'Genome', 'indexer': index_genome},
     {'module': 'KBaseTrees', 'type': 'Tree', 'indexer': index_tree},
     {'module': 'KBaseGenomeAnnotations', 'type': 'Taxon', 'indexer': index_taxon},
-    {'module': 'KBaseGenomes', 'type': 'Pangenome', 'indexer': index_pangenome}
+    {'module': 'KBaseGenomes', 'type': 'Pangenome', 'indexer': index_pangenome},
+    {
+        'module': 'KBaseMetagenomes',
+        'type': 'AnnotatedMetagenomeAssembly',
+        'indexer': index_annotated_metagenome_assembly
+    }
 ]
 
 # All types we don't want to index

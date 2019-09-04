@@ -19,6 +19,7 @@ from src.index_runner.es_indexer import ESIndexer
 from src.index_runner.releng_importer import RelengImporter
 
 _CONFIG = get_config()
+_RESET_CONFIG_ITERS = 100
 
 
 def main():
@@ -38,20 +39,9 @@ def main():
     receivers = [es_indexers, releng_importers]
 
     # Initialize and run the Kafka consumer
-    consumer = Consumer({
-        'bootstrap.servers': _CONFIG['kafka_server'],
-        'group.id': _CONFIG['kafka_clientgroup'],
-        'auto.offset.reset': 'earliest',
-        'enable.auto.commit': True
-    })
-    topics = [
-        _CONFIG['topics']['workspace_events'],
-        _CONFIG['topics']['admin_events']
-    ]
-    print(f"Subscribing to: {topics}")
-    print(f"Client group: {_CONFIG['kafka_clientgroup']}")
-    print(f"Kafka server: {_CONFIG['kafka_server']}")
-    consumer.subscribe(topics)
+    consumer = _set_consumer(_CONFIG)
+
+    iters = 0
     while True:
         msg = consumer.poll(timeout=0.5)
         if msg is None:
@@ -70,6 +60,31 @@ def main():
             print(f'Message content: {val}')
         for receiver in receivers:
             receiver.queue.put(('ws_event', data))
+        # reload config every few iterations?
+        if iters % _RESET_CONFIG_ITERS == int(_RESET_CONFIG_ITERS - 1):
+            consumer = _set_consumer(get_config())
+            # avoid integer overflows
+            iters = 0
+        iters += 1
+
+
+def _set_consumer(conf):
+    """"""
+    consumer = Consumer({
+        'bootstrap.servers': conf['kafka_server'],
+        'group.id': conf['kafka_clientgroup'],
+        'auto.offset.reset': 'earliest',
+        'enable.auto.commit': True
+    })
+    topics = [
+        conf['topics']['workspace_events'],
+        conf['topics']['admin_events']
+    ]
+    print(f"Subscribing to: {topics}")
+    print(f"Client group: {conf['kafka_clientgroup']}")
+    print(f"Kafka server: {conf['kafka_server']}")
+    consumer.subscribe(topics)
+    return consumer
 
 
 def _wait_for_dependencies():

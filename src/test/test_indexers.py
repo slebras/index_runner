@@ -9,6 +9,7 @@ from src.index_runner.es_indexers.assembly import index_assembly
 from src.index_runner.es_indexers.pangenome import index_pangenome
 from src.index_runner.es_indexers.taxon import index_taxon
 from src.index_runner.es_indexers.tree import index_tree
+from src.index_runner.es_indexers.annotated_metagenome_assembly import _index_ama
 from src.index_runner.es_indexers.from_sdk import index_from_sdk
 
 _CONFIG = get_config()
@@ -88,6 +89,17 @@ _TEST_EVENTS = {
         'objid': 82,
         'time': 1554408311320,
         'objtype': "KBaseSets.GenomeSet-2.1",
+        'permusers': [],
+        'user': "username"
+    },
+    'annotated_metagenome_assembly_save': {
+        'wsid': 39794,
+        'ver': 1,
+        'perm': None,
+        'evtype': "NEW_VERSION",
+        'objid': 22,
+        'time': 1554408311320,
+        'objtype': "KBaseMetagenomes.AnnotatedMetagenomeAssembly-1.0",
         'permusers': [],
         'user': "username"
     }
@@ -170,6 +182,28 @@ class TestIndexers(unittest.TestCase):
             }
         }]
         self._default_obj_test('assembly_save', index_assembly, check_against)
+
+    # @unittest.skip('x')
+    def test_annotated_metagenome_assembly_indexer(self):
+        # the annotated_meganome_assembly 'check_against' data is really big, so we keep it in an external file
+        event_data_str = "annotated_metagenome_assembly_save"
+        with open(os.path.join(_DIR, 'test_data/annotated_metagenome_assembly_check_against.json')) as fd:
+            check_against = json.load(fd)
+        print(f'Testing {event_data_str} indexer...')
+        event_data = _TEST_EVENTS[event_data_str]
+        json_data_path = f"{event_data_str}_{event_data['wsid']}_{event_data['objid']}.json"
+        with open(os.path.join(_DIR, 'test_data', json_data_path)) as fd:
+            test_data = json.load(fd)
+
+        features_test_file = os.path.join(_DIR, "test_data", "short_features.json.gz")
+
+        info = test_data['obj']['info']
+        workspace_id = info[6]
+        object_id = info[0]
+        ama_index = f"WS::{workspace_id}:{object_id}"
+
+        for (idx, msg_data) in enumerate(_index_ama(features_test_file, test_data['obj']['data'], ama_index)):
+            self.assertEqual(msg_data, check_against[idx])
 
     # @unittest.skip('x')
     def test_genome_indexer(self):

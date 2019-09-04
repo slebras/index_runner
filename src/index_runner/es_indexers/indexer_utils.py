@@ -158,6 +158,14 @@ def default_fields(obj_data, ws_info, obj_data_v1):
     }
 
 
+def handle_id_to_file(handle_id, dest_path):
+    """given handle id, download associated file from shock."""
+    ws_url = _CONFIG['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
+    shock_id = ws_client.handle_to_shock(handle_id)
+    ws_client.download_from_shock(shock_id)
+
+
 def get_upa_from_msg_data(msg_data):
     """Get the UPA workspace reference from a Kafka workspace event payload."""
     ws_id = msg_data.get('wsid')
