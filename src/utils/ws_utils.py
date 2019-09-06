@@ -1,9 +1,8 @@
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
-from src.utils.config import get_config
+from src.utils.config import config
 
-_CONFIG = get_config()
-_WS_CLIENT = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
+_WS_CLIENT = WorkspaceClient(url=config()['workspace_url'], token=config()['ws_token'])
 
 
 def get_obj_ids_from_ws(wsid):

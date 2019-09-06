@@ -1,13 +1,10 @@
 # KBaseMetagenomes.AnnotatedMetagenomeAssembly indexer
 from src.index_runner.es_indexers.indexer_utils import mean, handle_id_to_file
-from src.utils.config import get_config
 
 import json
 import gzip
 import shutil
 import os
-
-_CONFIG = get_config()
 
 _NAMESPACE = "WS"
 _AMA_INDEX_VERSION = 1
@@ -65,12 +62,23 @@ def _index_ama(features_file_gz_path, data, ama_id):
         if feat.get('dna_sequence'):
             dna_seq = feat.get('dna_sequence')
             feat_gc_content = ((float(dna_seq.lower().count('c')) + float(dna_seq.lower().count('g'))) / len(dna_seq))
+
+        if feat.get('location'):
+            contig_ids, starts, strands, stops = zip(*feat.get('location'))
+            contig_ids, starts, strands, stops = list(contig_ids), list(starts), list(strands), list(stops)
+        else:
+            contig_ids, starts, strands, stops = None, None, None, None
+
         feat_index = {
             '_action': 'index',
             'doc': {
                 'id': id_,
                 'type': feat.get('type'),
                 'size': feat.get('dna_sequence_length'),
+                'starts': starts,
+                'strands': strands,
+                'stops': stops,
+                'contig_ids': contig_ids,
                 'functions': feat.get('functions'),
                 'functional_descriptions': feat.get('functional_descriptions'),
                 'warnings': feat.get('warnings'),

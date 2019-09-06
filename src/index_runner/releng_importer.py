@@ -3,13 +3,11 @@ Relation Engine (ArangoDB) data importer.
 
 Writes data to arangodb from workspace update events.
 """
-from src.utils.config import get_config
 from src.utils.workspace_client import download_info
 from src.index_runner.releng.import_obj import import_object
 from src.utils.re_client import check_doc_existence
 
 # Initialize configuration data
-_CONFIG = get_config()
 
 
 class RelengImporter:

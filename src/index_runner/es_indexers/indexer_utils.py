@@ -1,11 +1,10 @@
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
-from src.utils.config import get_config
+from src.utils.config import config
 from src.utils.ws_utils import get_type_pieces
 
 _REF_DATA_WORKSPACES = []  # type: list
-_CONFIG = get_config()
 
 
 def check_object_deleted(ws_id, obj_id):
@@ -16,8 +15,8 @@ def check_object_deleted(ws_id, obj_id):
     We want to do this because the DELETE event can correspond to more than
     just an object deletion, so we want to make sure the object is deleted
     """
-    ws_url = _CONFIG['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
+    ws_url = config()['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=config()['ws_token'])
     try:
         narr_data_obj_info = ws_client.admin_req("listObjects", {
             'ids': [ws_id]
@@ -37,8 +36,8 @@ def is_workspace_public(ws_id):
     """
     Check if a workspace is public, returning bool.
     """
-    ws_url = _CONFIG['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
+    ws_url = config()['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=config()['ws_token'])
     ws_info = ws_client.admin_req('getWorkspaceInfo', {'id': ws_id})
     global_read = ws_info[6]
     return global_read != 'n'
@@ -50,8 +49,8 @@ def check_workspace_deleted(ws_id):
     we make sure that the workspace is deleted. This is done by making sure we get an excpetion
     with the word 'delete' in the error body.
     """
-    ws_url = _CONFIG['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
+    ws_url = config()['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=config()['ws_token'])
     try:
         ws_client.admin_req("getWorkspaceInfo", {
             'id': ws_id
@@ -68,8 +67,8 @@ def get_shared_users(ws_id):
     Args:
         ws_id - workspace id of requested workspace object
     """
-    ws_url = _CONFIG['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
+    ws_url = config()['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=config()['ws_token'])
     try:
         obj_perm = ws_client.admin_req("getPermissionsMass", {
             'workspaces': [{'id': ws_id}]
@@ -91,8 +90,8 @@ def fetch_objects_in_workspace(ws_id, include_narrative=False):
     Args:
         ws_id - a workspace id
     """
-    ws_url = _CONFIG['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
+    ws_url = config()['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=config()['ws_token'])
     try:
         narr_data_obj_info = ws_client.admin_req("listObjects", {
             "ids": [ws_id]
@@ -160,8 +159,8 @@ def default_fields(obj_data, ws_info, obj_data_v1):
 
 def handle_id_to_file(handle_id, dest_path):
     """given handle id, download associated file from shock."""
-    ws_url = _CONFIG['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
+    ws_url = config()['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=config()['ws_token'])
     shock_id = ws_client.handle_to_shock(handle_id)
     ws_client.download_from_shock(shock_id)
 

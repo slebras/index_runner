@@ -2,7 +2,6 @@ import os
 import json
 import unittest
 
-from src.utils.config import get_config
 from src.index_runner.es_indexers.reads import index_reads
 from src.index_runner.es_indexers.genome import index_genome
 from src.index_runner.es_indexers.assembly import index_assembly
@@ -11,8 +10,6 @@ from src.index_runner.es_indexers.taxon import index_taxon
 from src.index_runner.es_indexers.tree import index_tree
 from src.index_runner.es_indexers.annotated_metagenome_assembly import _index_ama
 from src.index_runner.es_indexers.from_sdk import index_from_sdk
-
-_CONFIG = get_config()
 
 _TEST_EVENTS = {
     'reads_save': {

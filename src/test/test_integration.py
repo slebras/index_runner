@@ -5,11 +5,9 @@ import requests
 from multiprocessing import Process
 from confluent_kafka import Producer
 
-from src.utils.config import get_config
+from src.utils.config import config
 from src.index_runner.main import main
 from src.utils.re_client import get_doc, get_edge
-
-_CONFIG = get_config()
 
 _TEST_EVENT = {
    "wsid": 41347,
@@ -150,7 +148,7 @@ class TestIntegration(unittest.TestCase):
     def test_import_nonexistent_existing(self):
         """Test an IMPORT_NONEXISTENT event."""
         _produce({'evtype': 'IMPORT_NONEXISTENT', 'wsid': 41347, 'objid': 6, 'ver': 1})
-        admin_topic = _CONFIG['topics']['admin_events']
+        admin_topic = config()['topics']['admin_events']
         obj_doc1 = _wait_for_re_doc('wsfull_object', '41347:6')
         self.assertEqual(obj_doc1['object_id'], 6)
         _produce({'evtype': 'IMPORT_NONEXISTENT', 'wsid': 41347, 'objid': 5, 'ver': 1}, admin_topic)
@@ -167,8 +165,8 @@ def _delivery_report(err, msg):
         print('Message delivered to', msg.topic())
 
 
-def _produce(data, topic=_CONFIG['topics']['workspace_events']):
-    producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
+def _produce(data, topic=config()['topics']['workspace_events']):
+    producer = Producer({'bootstrap.servers': config()['kafka_server']})
     producer.produce(topic, json.dumps(data), callback=_delivery_report)
     producer.poll(60)
 
@@ -187,8 +185,8 @@ def _get_es_doc_blocking(_id, timeout=60):
 
 def _get_es_doc(_id):
     """Fetch a document from elastic based on ID."""
-    prefix = _CONFIG['elasticsearch_index_prefix']
-    url = f"{_CONFIG['elasticsearch_url']}/{prefix}.*/_search?size=1"
+    prefix = config()['elasticsearch_index_prefix']
+    url = f"{config()['elasticsearch_url']}/{prefix}.*/_search?size=1"
     resp = requests.post(
         url,
         data=json.dumps({
@@ -281,12 +279,12 @@ def _wait_for_re_doc(coll, key):
 #         """
 #         Test a NEW_VERSION event plus an OBJECT_DELETE_STATE_CHANGE.
 #         """
-#         print(f"Producing NEW_VERSION event to {_CONFIG['topics']['workspace_events']}")
+#         print(f"Producing NEW_VERSION event to {config()['topics']['workspace_events']}")
 #         _produce(_TEST_EVENTS['narrative_save_nonexistent'])
 #         # _id = 'WS::41347:5'
 #         # doc = _get_doc(_id)
 #         # self.assertEqual(doc['_id'], _id)
-#         print(f"Producing OBJECT_DELETE_STATE_CHANGE event to {_CONFIG['topics']['workspace_events']}")
+#         print(f"Producing OBJECT_DELETE_STATE_CHANGE event to {config()['topics']['workspace_events']}")
 #         _produce(_TEST_EVENTS['deleted_object'])
 #         # time.sleep(30)
 #         # with self.assertRaises(RuntimeError):
@@ -324,7 +322,7 @@ def _wait_for_re_doc(coll, key):
 # def _consume_last(topic, key, timeout=120):
 #     """Consume the most recent message from the topic stream."""
 #     consumer = Consumer({
-#         'bootstrap.servers': _CONFIG['kafka_server'],
+#         'bootstrap.servers': config()['kafka_server'],
 #         'group.id': 'test_only',
 #         'auto.offset.reset': 'earliest'
 #     })

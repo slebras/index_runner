@@ -4,7 +4,7 @@ Indexer logic based on type
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
-from src.utils.config import get_config
+from src.utils.config import config
 from src.utils import ws_utils
 from src.index_runner.es_indexers import indexer_utils
 from src.index_runner.es_indexers.narrative import index_narrative
@@ -17,8 +17,6 @@ from src.index_runner.es_indexers.pangenome import index_pangenome
 from src.index_runner.es_indexers.from_sdk import index_from_sdk
 from src.index_runner.es_indexers.annotated_metagenome_assembly import index_annotated_metagenome_assembly
 
-_CONFIG = get_config()
-
 
 def index_obj(msg_data):
     """
@@ -29,9 +27,9 @@ def index_obj(msg_data):
         stream. Must have keys for `wsid` and `objid`
     """
     upa = indexer_utils.get_upa_from_msg_data(msg_data)
-    ws_url = _CONFIG['workspace_url']
+    ws_url = config()['workspace_url']
     # Fetch the object data from the workspace API
-    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
+    ws_client = WorkspaceClient(url=ws_url, token=config()['ws_token'])
     try:
         obj_data = ws_client.admin_req('getObjects', {
             'objects': [{'ref': upa}]
@@ -98,7 +96,7 @@ def _find_indexer(type_module, type_name, type_version):
         if module_match and name_match and ver_match:
             return entry.get('indexer', generic_indexer())
     # No indexer found for this type, check if there is a sdk indexer app
-    if type_module + '.' + type_name in _CONFIG['global']['sdk_indexer_apps']:
+    if type_module + '.' + type_name in config()['global']['sdk_indexer_apps']:
         return index_from_sdk
     return generic_indexer()
 

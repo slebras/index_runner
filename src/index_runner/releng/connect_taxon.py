@@ -6,10 +6,9 @@ If a workspace object, such as a genome, has taxonomy info in it, then:
 from kbase_workspace_client import WorkspaceClient
 
 from src.utils.re_client import stored_query
-from src.utils.config import get_config
+from src.utils.config import config
 from src.utils.re_client import save
 
-_CONFIG = get_config()
 _OBJ_VER_COLL = "ws_object_version"
 _TAX_VER_COLL = "ncbi_taxon"
 _TAX_EDGE_COLL = "ws_object_version_has_taxon"
@@ -32,7 +31,7 @@ def create_taxon_edge(obj_ver_key, obj_info_tup):
         # No-op
         return
     # TODO Get the scientific name of the object
-    ws_client = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
+    ws_client = WorkspaceClient(url=config()['workspace_url'], token=config()['ws_token'])
     resp = ws_client.admin_req('getObjects', {
         'objects': [{
             'ref': obj_ver_key.replace(':', '/'),

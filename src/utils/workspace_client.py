@@ -4,9 +4,7 @@ Make API requests to the kbase workspace JSON RPC server.
 import json
 import requests
 
-from src.utils.config import get_config
-
-_CONFIG = get_config()
+from src.utils.config import config
 
 
 def download_info(wsid, objid, ver=None):
@@ -45,8 +43,8 @@ def admin_req(method, params):
 
 def _post_req(payload):
     """Make a post request to the workspace server and process the response."""
-    headers = {'Authorization': _CONFIG['ws_token']}
-    resp = requests.post(_CONFIG['workspace_url'], data=json.dumps(payload), headers=headers)
+    headers = {'Authorization': config()['ws_token']}
+    resp = requests.post(config()['workspace_url'], data=json.dumps(payload), headers=headers)
     if not resp.ok:
         raise RuntimeError('Error response from workspace:\n%s' % resp.text)
     resp_json = resp.json()

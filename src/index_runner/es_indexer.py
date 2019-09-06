@@ -12,7 +12,7 @@ from kbase_workspace_client import WorkspaceClient
 
 from src.utils.worker_group import WorkerGroup
 from src.index_runner.es_writer import ESWriter
-from src.utils.config import get_config
+from src.utils.config import config
 from src.utils import es_utils, ws_utils
 from src.index_runner.es_indexers.main import index_obj
 from src.index_runner.es_indexers.indexer_utils import (
@@ -22,15 +22,13 @@ from src.index_runner.es_indexers.indexer_utils import (
     is_workspace_public
 )
 
-_CONFIG = get_config()
-
 
 class ESIndexer:
 
     @classmethod
     def init_children(cls):
         """Initialize a worker group of ESWriters, which we push work into."""
-        es_writers = WorkerGroup(ESWriter, (), count=_CONFIG['zmq']['num_es_writers'])
+        es_writers = WorkerGroup(ESWriter, (), count=config()['zmq']['num_es_writers'])
         return {'es_writers': es_writers}
 
     def ws_event(self, msg):
@@ -95,7 +93,7 @@ class ESIndexer:
 
     def _index_ws(self, msg):
         """Index all objects in a workspace."""
-        ws_client = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
+        ws_client = WorkspaceClient(url=config()['workspace_url'], token=config()['ws_token'])
         for (objid, ver) in ws_client.generate_all_ids_for_workspace(msg['wsid']):
             _produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid})
 
@@ -174,14 +172,14 @@ def _log_err_to_es(es_writers, msg, err=None):
     # The index document is the error string plus the message data itself
     _id = hashlib.blake2b(json.dumps(msg).encode('utf-8')).hexdigest()
     es_writers.put(('index', {
-        'index': _CONFIG['error_index_name'],
+        'index': config()['error_index_name'],
         'id': _id,
         'doc': {'error': str(err), **msg}
     }))
 
 
-def _produce(data, topic=_CONFIG['topics']['admin_events']):
-    producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
+def _produce(data, topic=config()['topics']['admin_events']):
+    producer = Producer({'bootstrap.servers': config()['kafka_server']})
     producer.produce(topic, json.dumps(data), callback=_delivery_report)
     producer.poll(60)
 
