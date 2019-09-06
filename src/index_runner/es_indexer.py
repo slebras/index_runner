@@ -13,7 +13,7 @@ from kbase_workspace_client import WorkspaceClient
 from src.utils.worker_group import WorkerGroup
 from src.index_runner.es_writer import ESWriter
 from src.utils.config import config
-from src.utils import es_utils, ws_utils
+from src.utils import es_utils
 from src.index_runner.es_indexers.main import index_obj
 from src.index_runner.es_indexers.indexer_utils import (
     check_object_deleted,

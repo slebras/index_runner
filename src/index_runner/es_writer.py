@@ -10,7 +10,7 @@ from enum import Enum
 from kbase_workspace_client import WorkspaceClient
 
 from src.utils.config import config
-from src.utils.ws_utils import get_obj_ids_from_ws, get_type_pieces
+from src.utils.ws_utils import get_type_pieces
 
 # Initialize configuration data
 _ES_URL = config()['elasticsearch_url']
