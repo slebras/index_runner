@@ -1,17 +1,8 @@
 from kbase_workspace_client import WorkspaceClient
-from kbase_workspace_client.exceptions import WorkspaceResponseError
 from src.utils.config import get_config
 
 _CONFIG = get_config()
 _WS_CLIENT = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
-
-
-def get_obj_ids_from_ws(wsid):
-    try:
-        results = _WS_CLIENT.admin_req("listObjects", {"ids": [wsid]})
-    except WorkspaceResponseError:
-        return []
-    return [obj[0] for obj in results]
 
 
 def get_type_pieces(type_str):

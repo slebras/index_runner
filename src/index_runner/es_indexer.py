@@ -13,7 +13,7 @@ from kbase_workspace_client import WorkspaceClient
 from src.utils.worker_group import WorkerGroup
 from src.index_runner.es_writer import ESWriter
 from src.utils.config import get_config
-from src.utils import es_utils, ws_utils
+from src.utils import es_utils
 from src.index_runner.es_indexers.main import index_obj
 from src.index_runner.es_indexers.indexer_utils import (
     check_object_deleted,
@@ -23,6 +23,7 @@ from src.index_runner.es_indexers.indexer_utils import (
 )
 
 _CONFIG = get_config()
+_WS_CLIENT = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
 
 
 class ESIndexer:
@@ -95,13 +96,12 @@ class ESIndexer:
 
     def _index_ws(self, msg):
         """Index all objects in a workspace."""
-        ws_client = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
-        for (objid, ver) in ws_client.generate_all_ids_for_workspace(msg['wsid']):
+        for (objid, ver) in _WS_CLIENT.generate_all_ids_for_workspace(msg['wsid']):
             _produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid})
 
     def _index_nonexistent_ws(self, msg):
         """Index all objects in a workspace that haven't already been indexed."""
-        for objid in ws_utils.get_obj_ids_from_ws(msg['wsid']):
+        for objid in _WS_CLIENT.generate_all_ids_for_workspace(msg['wsid']):
             _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid})
 
     def _run_obj_deleter(self, msg):

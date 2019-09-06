@@ -7,12 +7,14 @@ import json
 import requests
 import time
 from enum import Enum
+from kbase_workspace_client import WorkspaceClient
 
 from src.utils.config import get_config
-from src.utils.ws_utils import get_obj_ids_from_ws, get_type_pieces
+from src.utils.ws_utils import get_type_pieces
 
 # Initialize configuration data
 _CONFIG = get_config()
+_WS_CLIENT = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
 _ES_URL = _CONFIG['elasticsearch_url']
 _PREFIX = _CONFIG['elasticsearch_index_prefix']
 _IDX = _PREFIX + ".*"
@@ -203,7 +205,7 @@ def _delete_from_elastic(batch_deletes):
         msg = batch_deletes.pop()
         if msg.get('workspace_id'):
             wsid = msg['workspace_id']
-            for obj_id in get_obj_ids_from_ws(wsid):
+            for obj_id in _WS_CLIENT.generate_all_ids_for_workspace(wsid):
                 id_set.add(f"WS::{wsid}:{obj_id}")
         else:
             id_set.add(f"WS::{msg['object_id']}")
