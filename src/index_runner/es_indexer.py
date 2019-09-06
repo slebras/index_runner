@@ -99,7 +99,8 @@ class ESIndexer:
 
     def _index_nonexistent_ws(self, msg):
         """Index all objects in a workspace that haven't already been indexed."""
-        for objid in ws_utils.get_obj_ids_from_ws(msg['wsid']):
+        ws_client = WorkspaceClient(url=config()['workspace_url'], token=config()['ws_token'])
+        for objid in ws_client.generate_all_ids_for_workspace(msg['wsid']):
             _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid})
 
     def _run_obj_deleter(self, msg):
