@@ -59,9 +59,10 @@ def _index_ama(features_file_gz_path, data, ama_id):
     for feat in features:
         id_ = feat.get('id')
         feat_id = ama_id + f"::ama_ft::{id_}"
-        if feat.get('dna_sequence'):
-            dna_seq = feat.get('dna_sequence')
-            feat_gc_content = ((float(dna_seq.lower().count('c')) + float(dna_seq.lower().count('g'))) / len(dna_seq))
+        # calculate gc content for each feature.
+        # if feat.get('dna_sequence'):
+        #     dna_seq = feat.get('dna_sequence')
+        #     feat_gc_content = ((float(dna_seq.lower().count('c')) + float(dna_seq.lower().count('g'))) / len(dna_seq))
 
         if feat.get('location'):
             contig_ids, starts, strands, stops = zip(*feat.get('location'))
@@ -85,7 +86,7 @@ def _index_ama(features_file_gz_path, data, ama_id):
                 'parent_gene': feat.get('parent_gene'),
                 'inference_data': feat.get('inference_data'),
                 'dna_sequence': feat.get('dna_sequence'),
-                'gc_content': feat_gc_content,
+                # 'gc_content': feat_gc_content,
                 # Parent ids below
                 'parent_id': ama_id,
                 'annotated_metagenome_assembly_size': data.get('dna_size'),
