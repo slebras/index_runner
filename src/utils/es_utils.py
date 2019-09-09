@@ -2,12 +2,11 @@
 import json
 import requests
 
-from src.utils.config import get_config
+from src.utils.config import config
 
 # Initialize configuration data
-_CONFIG = get_config()
-_PREFIX = _CONFIG['elasticsearch_index_prefix']
-_ES_URL = "http://" + _CONFIG['elasticsearch_host'] + ":" + str(_CONFIG['elasticsearch_port'])
+_PREFIX = config()['elasticsearch_index_prefix']
+_ES_URL = "http://" + config()['elasticsearch_host'] + ":" + str(config()['elasticsearch_port'])
 
 
 def does_doc_exist(wsid, objid):

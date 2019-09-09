@@ -1,7 +1,17 @@
 import urllib.request
 import yaml
 import os
+import time
 import functools
+
+
+def config():
+    """wrapper for get config that reloads config every 'config_timeout' seconds"""
+    config = get_config()
+    if (time.time() - config['last_config_reload']) > config['config_timeout']:
+        get_config.cache_clear()
+        config = get_config()
+    return config
 
 
 @functools.lru_cache(maxsize=1)
@@ -23,7 +33,7 @@ def get_config():
         'KBASE_CATALOG_URL',
         kbase_endpoint + '/catalog'
     )
-    config_url = os.environ.get('GLOBAL_CONFIG_URL', 'https://github.com/kbase/search_config/releases/download/0.0.2/config.yaml')  # noqa
+    config_url = os.environ.get('GLOBAL_CONFIG_URL', 'https://github.com/kbase/search_config/releases/latest/download/config.yaml')  # noqa
     # Load the global configuration release (non-environment specific, public config)
     if not config_url.startswith('http'):
         raise RuntimeError(f"Invalid global config url: {config_url}")
@@ -56,5 +66,7 @@ def get_config():
             'workspace_events': os.environ.get('KAFKA_WORKSPACE_TOPIC', 'workspaceevents'),
             'admin_events': os.environ.get('KAFKA_ADMIN_TOPIC', 'indexeradminevents'),
             'elasticsearch_updates': os.environ.get('KAFKA_ES_UPDATE_TOPIC', 'elasticsearch_updates')
-        }
+        },
+        'config_timeout': 600,  # 10 minutes in seconds.
+        'last_config_reload': time.time(),
     }

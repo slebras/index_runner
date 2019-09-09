@@ -1,8 +1,7 @@
 from kbase_workspace_client import WorkspaceClient
-from src.utils.config import get_config
+from src.utils.config import config
 
-_CONFIG = get_config()
-_WS_CLIENT = WorkspaceClient(url=_CONFIG['workspace_url'], token=_CONFIG['ws_token'])
+_WS_CLIENT = WorkspaceClient(url=config()['workspace_url'], token=config()['ws_token'])
 
 
 def get_type_pieces(type_str):

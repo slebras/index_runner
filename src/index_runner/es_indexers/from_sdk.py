@@ -6,23 +6,22 @@ import docker
 import requests
 from configparser import ConfigParser
 
-from src.utils.config import get_config
+from src.utils.config import config
 from src.utils import ws_utils
 
 
-_CONFIG = get_config()
 _DOCKER = docker.from_env()
 _SCRATCH = "/scratch"
 _NAMESPACE = "WS"
 # the mount needs to be the absolute path on the machine that started the index_runner
-_MOUNT_DIR = _CONFIG["mount_dir"]
-_TOKEN = _CONFIG['ws_token']
+_MOUNT_DIR = config()["mount_dir"]
+_TOKEN = config()['ws_token']
 _IN_APP_JOB_DIR = "/kb/module/work"
 
 
 def _get_docker_image_name(sdk_app, module_version=None):
     """Query the Catalog to get the docker image name for the indexer application"""
-    catalog_service_url = _CONFIG['catalog_url']
+    catalog_service_url = config()['catalog_url']
     params = {
         "method": "Catalog.get_module_version",
         "version": "1.1",
@@ -157,14 +156,14 @@ def _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_f
         f.write(json.dumps(input_))
 
     # write config for sdk application
-    config = ConfigParser()
-    config['global'] = {
-        'kbase_endpoint': _CONFIG['kbase_endpoint'],
-        'workspace_url': _CONFIG['workspace_url'],
+    sdk_config = ConfigParser()
+    sdk_config['global'] = {
+        'kbase_endpoint': config()['kbase_endpoint'],
+        'workspace_url': config()['workspace_url'],
         'scratch': "/kb/module/work/tmp"
     }
     with open(job_dir + '/config.properties', 'w') as configfile:
-        config.write(configfile)
+        sdk_config.write(configfile)
 
     # set up token.
     with open(job_dir + '/token', 'w') as fd:
@@ -173,12 +172,12 @@ def _setup_docker_inputs(job_dir, obj_data, ws_info, obj_data_v1, sdk_app, sdk_f
 
 def _get_index_name(type_module, type_name, type_version):
     """Get the name of the index we write to, defined in the global config."""
-    if _CONFIG['global']['ws_type_to_indexes'].get(type_module + "." + type_name):
-        index_name = _CONFIG['global']['ws_type_to_indexes'][type_module + "." + type_name]
+    if config()['global']['ws_type_to_indexes'].get(type_module + "." + type_name):
+        index_name = config()['global']['ws_type_to_indexes'][type_module + "." + type_name]
     else:
         raise ValueError(f"global config does not have 'ws_type_to_indexes' field for {type_module}.{type_name}")
-    if _CONFIG['global']['latest_versions'].get(index_name):
-        index_name_ver = _CONFIG['global']['latest_versions'][index_name]
+    if config()['global']['latest_versions'].get(index_name):
+        index_name_ver = config()['global']['latest_versions'][index_name]
     else:
         raise ValueError(f"global config does not have 'latest_versions' field for {index_name} \
                 index with workspace object type {type_module}.{type_name}:{type_version}")
@@ -188,8 +187,8 @@ def _get_index_name(type_module, type_name, type_version):
 def _get_sub_obj_index(indexer_app_vars):
     """Get the name of the sub object index, if applicable, return None otherwise."""
     sub_obj_index = indexer_app_vars.get('sub_obj_index', None)
-    if _CONFIG['global']['latest_versions'].get(sub_obj_index):
-        sub_obj_index = _CONFIG['global']['latest_versions'][sub_obj_index]
+    if config()['global']['latest_versions'].get(sub_obj_index):
+        sub_obj_index = config()['global']['latest_versions'][sub_obj_index]
     elif sub_obj_index is None:
         # here we expect no sub_obj_index, so we move on
         pass
@@ -202,7 +201,7 @@ def index_from_sdk(obj_data, ws_info, obj_data_v1):
     """Index from an sdk application"""
     type_module, type_name, type_version = ws_utils.get_type_pieces(obj_data['info'][2])
 
-    indexer_app_vars = _CONFIG['global']['sdk_indexer_apps'][type_module + '.' + type_name]
+    indexer_app_vars = config()['global']['sdk_indexer_apps'][type_module + '.' + type_name]
     sdk_app = indexer_app_vars['sdk_app']
     sdk_func = indexer_app_vars['sdk_func']
     sdk_version = indexer_app_vars.get('sdk_version', None)
@@ -225,7 +224,7 @@ def index_from_sdk(obj_data, ws_info, obj_data_v1):
     }
     env = {
         'SDK_CALLBACK_URL': 'not_supported_yet',
-        'KBASE_ENDPOINT': _CONFIG['kbase_endpoint']
+        'KBASE_ENDPOINT': config()['kbase_endpoint']
     }
 
     # Run docker container.

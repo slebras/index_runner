@@ -13,12 +13,10 @@ import requests
 import json
 from confluent_kafka import Consumer, KafkaError
 
-from src.utils.config import get_config
+from src.utils.config import config
 from src.utils.worker_group import WorkerGroup
 from src.index_runner.es_indexer import ESIndexer
 from src.index_runner.releng_importer import RelengImporter
-
-_CONFIG = get_config()
 
 
 def main():
@@ -31,27 +29,15 @@ def main():
     # Wait for dependency services (ES and RE) to be live
     _wait_for_dependencies()
     # Initialize worker group of ESIndexer
-    es_indexers = WorkerGroup(ESIndexer, (), count=_CONFIG['zmq']['num_es_indexers'])
+    es_indexers = WorkerGroup(ESIndexer, (), count=config()['zmq']['num_es_indexers'])
     # Initialize a worker group of RelengImporter
-    releng_importers = WorkerGroup(RelengImporter, (), count=_CONFIG['zmq']['num_re_importers'])
+    releng_importers = WorkerGroup(RelengImporter, (), count=config()['zmq']['num_re_importers'])
     # All worker groups to send kafka messages to
     receivers = [es_indexers, releng_importers]
 
     # Initialize and run the Kafka consumer
-    consumer = Consumer({
-        'bootstrap.servers': _CONFIG['kafka_server'],
-        'group.id': _CONFIG['kafka_clientgroup'],
-        'auto.offset.reset': 'earliest',
-        'enable.auto.commit': True
-    })
-    topics = [
-        _CONFIG['topics']['workspace_events'],
-        _CONFIG['topics']['admin_events']
-    ]
-    print(f"Subscribing to: {topics}")
-    print(f"Client group: {_CONFIG['kafka_clientgroup']}")
-    print(f"Kafka server: {_CONFIG['kafka_server']}")
-    consumer.subscribe(topics)
+    consumer = _set_consumer()
+
     while True:
         msg = consumer.poll(timeout=0.5)
         if msg is None:
@@ -72,6 +58,25 @@ def main():
             receiver.queue.put(('ws_event', data))
 
 
+def _set_consumer():
+    """"""
+    consumer = Consumer({
+        'bootstrap.servers': config()['kafka_server'],
+        'group.id': config()['kafka_clientgroup'],
+        'auto.offset.reset': 'earliest',
+        'enable.auto.commit': True
+    })
+    topics = [
+        config()['topics']['workspace_events'],
+        config()['topics']['admin_events']
+    ]
+    print(f"Subscribing to: {topics}")
+    print(f"Client group: {config()['kafka_clientgroup']}")
+    print(f"Kafka server: {config()['kafka_server']}")
+    consumer.subscribe(topics)
+    return consumer
+
+
 def _wait_for_dependencies():
     """Block and wait for elasticsearch."""
     timeout = 180  # in seconds
@@ -79,8 +84,8 @@ def _wait_for_dependencies():
     while True:
         # Check for Elasticsearch
         try:
-            requests.get(_CONFIG['elasticsearch_url']).raise_for_status()
-            requests.get(_CONFIG['re_api_url'] + '/').raise_for_status()
+            requests.get(config()['elasticsearch_url']).raise_for_status()
+            requests.get(config()['re_api_url'] + '/').raise_for_status()
             break
         except Exception:
             print('Waiting for dependency services...')

@@ -4,12 +4,10 @@ import json
 import argparse
 from confluent_kafka import Producer
 
-from src.utils.config import get_config
+from src.utils.config import config
 
-_CONFIG = get_config()
-
-_ES_URL = _CONFIG['elasticsearch_url']
-_ERR_IDX_NAME = _CONFIG['elasticsearch_index_prefix'] + '.' + _CONFIG['error_index_name']
+_ES_URL = config()['elasticsearch_url']
+_ERR_IDX_NAME = config()['elasticsearch_index_prefix'] + '.' + config()['error_index_name']
 _ERR_SEARCH_URL = f'{_ES_URL}/{_ERR_IDX_NAME}/_search'
 
 
@@ -114,8 +112,8 @@ def _reindex_ws_range(args):
     print(f'Produced {count} total events.')
 
 
-def _produce(data, topic=_CONFIG['topics']['indexer_admin_events']):
-    producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
+def _produce(data, topic=config()['topics']['indexer_admin_events']):
+    producer = Producer({'bootstrap.servers': config()['kafka_server']})
     producer.produce(topic, json.dumps(data), callback=_delivery_report)
     producer.poll(60)
 
