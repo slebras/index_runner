@@ -25,7 +25,7 @@ def create_taxon_edge(obj_ver_key, obj_info_tup):
     obj_info_tup is the workspace object info tuple from get_objects2
     """
     # Check if the object is a compatible type
-    obj_type = obj_info_tup[2]
+    obj_type = obj_info_tup[2].split("-")[0]
     if obj_type not in _COMPAT_TYPES:
         print('Object type not compatible for taxon edge.')
         # No-op
