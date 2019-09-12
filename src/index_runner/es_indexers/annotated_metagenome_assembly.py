@@ -114,7 +114,8 @@ def _index_ama(features_file_gz_path, data, ama_id):
             'doc': {
                 'feature_ids': sorted(list(val[0])),
                 'num_features': len(val[0]),
-                'size': int(val[1])
+                'size': int(val[1]),
+                'parent_id': ama_id
             },
             'index': _AMA_CONTIGS_INDEX_NAME,
             'id': contig_id
