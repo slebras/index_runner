@@ -5,16 +5,13 @@ import json
 import gzip
 import shutil
 import os
-from collections import defaultdict
 
 
 _NAMESPACE = "WS"
 _AMA_INDEX_VERSION = 1
 _AMA_FEATURES_INDEX_VERSION = 1
-_AMA_CONTIGS_INDEX_VERSION = 1
 _AMA_INDEX_NAME = "annotated_metagenome_assembly:" + str(_AMA_INDEX_VERSION)
 _AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features:" + str(_AMA_FEATURES_INDEX_VERSION)
-_AMA_CONTIGS_INDEX_NAME = "annotated_metagenome_assembly_contigs:" + str(_AMA_CONTIGS_INDEX_VERSION)
 
 _DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -60,8 +57,6 @@ def _index_ama(features_file_gz_path, data, ama_id):
     with open(features_file_path) as f:
         features = json.load(f)
 
-    contigs = defaultdict(lambda: [set(), 0])  # feature ids and size of contig
-
     for feat in features:
         id_ = feat.get('id')
         feat_id = ama_id + f"::ama_ft::{id_}"
@@ -73,10 +68,6 @@ def _index_ama(features_file_gz_path, data, ama_id):
         if feat.get('location'):
             contig_ids, starts, strands, stops = zip(*feat.get('location'))
             contig_ids, starts, strands, stops = list(contig_ids), list(starts), list(strands), list(stops)
-            # map contigs to features and length of sequence.
-            for cid in contig_ids:
-                contigs[cid][0].add(id_)
-                contigs[cid][1] += feat.get('dna_sequence_length', 0)
         else:
             contig_ids, starts, strands, stops = None, None, None, None
 
@@ -108,21 +99,6 @@ def _index_ama(features_file_gz_path, data, ama_id):
             'id': feat_id
         }
         yield feat_index
-
-    for cid, val in contigs.items():
-        contig_id = ama_id + f"::ama_contig::{cid}"
-        contig_index = {
-            '_action': 'index',
-            'doc': {
-                'feature_ids': sorted(list(val[0])),
-                'num_features': len(val[0]),
-                'size': int(val[1]),
-                'parent_id': ama_id
-            },
-            'index': _AMA_CONTIGS_INDEX_NAME,
-            'id': contig_id
-        }
-        yield contig_index
 
     # remove unzipped file
     os.remove(features_file_path)
