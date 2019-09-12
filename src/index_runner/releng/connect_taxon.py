@@ -25,9 +25,10 @@ def create_taxon_edge(obj_ver_key, obj_info_tup):
     obj_info_tup is the workspace object info tuple from get_objects2
     """
     # Check if the object is a compatible type
-    obj_type = obj_info_tup[2]
+    obj_type = obj_info_tup[2].split("-")[0]
     if obj_type not in _COMPAT_TYPES:
         print('Object type not compatible for taxon edge.')
+        print(f'Object type is {obj_type}')
         # No-op
         return
     # TODO Get the scientific name of the object
@@ -38,19 +39,19 @@ def create_taxon_edge(obj_ver_key, obj_info_tup):
             'included': ["/taxonomy"]
         }]
     })
-    lineage = '; '.split(resp['data']['taxonomy'])
+    lineage = resp['data']['taxonomy'].split('; ')
     most_specific = lineage[-1]
     # Search on RE for the taxon ID vertex
     results = stored_query('ncbi_taxon_search_sci_name', {
         'search_text': most_specific,
         'offset': 0,
         'limit': 1,
-    })
-    if results['count'] == 0:
+    })['results'][0]
+    if results['total_count'] == 0:
         print('No matching taxon found for object.')
         # No matching taxon found; no-op
         return
-    match = results['result'][0]
+    match = results['results'][0]
     # Create an edge from the ws_object_ver to the taxon
     tax_id = match['_key']
     from_id = f"{_OBJ_VER_COLL}/{obj_ver_key}"

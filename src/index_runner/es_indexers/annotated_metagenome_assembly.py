@@ -7,6 +7,7 @@ import shutil
 import os
 from collections import defaultdict
 
+
 _NAMESPACE = "WS"
 _AMA_INDEX_VERSION = 1
 _AMA_FEATURES_INDEX_VERSION = 1
@@ -14,6 +15,7 @@ _AMA_CONTIGS_INDEX_VERSION = 1
 _AMA_INDEX_NAME = "annotated_metagenome_assembly:" + str(_AMA_INDEX_VERSION)
 _AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features:" + str(_AMA_FEATURES_INDEX_VERSION)
 _AMA_CONTIGS_INDEX_NAME = "annotated_metagenome_assembly_contigs:" + str(_AMA_CONTIGS_INDEX_VERSION)
+
 _DIR = os.path.dirname(os.path.realpath(__file__))
 
 
