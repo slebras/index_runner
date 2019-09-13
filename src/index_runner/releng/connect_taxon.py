@@ -32,7 +32,7 @@ def create_taxon_edge(obj_ver_key, obj_info_tup):
         # No-op
         return
     # TODO Get the scientific name of the object
-    ws_client = WorkspaceClient(url=config()['workspace_url'], token=config()['ws_token'])
+    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
     resp = ws_client.admin_req('getObjects', {
         'objects': [{
             'ref': obj_ver_key.replace(':', '/'),

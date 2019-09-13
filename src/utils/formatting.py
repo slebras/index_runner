@@ -33,7 +33,7 @@ def get_method_key_from_prov(prov):
           "custom": {},
           "description": "Saved by KBase Narrative Interface"
       }
-    Return a string for the wsfull_method_version _key field
+    Return a string for the ws_method_version _key field
     in the format:  "service_name:commit_hash:method_name"
     """
     serv = prov[0]['service']
@@ -44,7 +44,7 @@ def get_method_key_from_prov(prov):
 
 def get_module_key_from_prov(prov):
     """
-    From provenance data, return a string for the wsfull_module_Version _key field
+    From provenance data, return a string for the ws_module_Version _key field
     in the format: "module_name:commit_hash"
     """
     serv = prov[0]['service']

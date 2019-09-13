@@ -28,7 +28,7 @@ class ESIndexer:
     @classmethod
     def init_children(cls):
         """Initialize a worker group of ESWriters, which we push work into."""
-        es_writers = WorkerGroup(ESWriter, (), count=config()['zmq']['num_es_writers'])
+        es_writers = WorkerGroup(ESWriter, (), count=config()['workers']['num_es_writers'])
         return {'es_writers': es_writers}
 
     def ws_event(self, msg):
@@ -93,13 +93,13 @@ class ESIndexer:
 
     def _index_ws(self, msg):
         """Index all objects in a workspace."""
-        ws_client = WorkspaceClient(url=config()['workspace_url'], token=config()['ws_token'])
+        ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
         for (objid, ver) in ws_client.generate_all_ids_for_workspace(msg['wsid']):
             _produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid})
 
     def _index_nonexistent_ws(self, msg):
         """Index all objects in a workspace that haven't already been indexed."""
-        ws_client = WorkspaceClient(url=config()['workspace_url'], token=config()['ws_token'])
+        ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
         for objid in ws_client.generate_all_ids_for_workspace(msg['wsid']):
             _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid})
 

@@ -1,6 +1,6 @@
 {
   "methods": ["POST"],
-  "path": "/",
+  "path": "/catalog",
   "headers": {},
   "body": {
     "method": "Catalog.get_module_version",

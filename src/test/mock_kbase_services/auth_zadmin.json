@@ -2,9 +2,9 @@
   "methods": [
     "GET"
   ],
-  "path": "/api/V2/me",
+  "path": "/auth/api/V2/me",
   "headers": {
-    "Authorization": "non_admin_token"
+    "Authorization": "valid_admin_token"
   },
   "response": {
     "status": "200",
@@ -13,7 +13,9 @@
       "lastlogin": 1542068355002,
       "display": "Test User",
       "roles": [],
-      "customroles": [],
+      "customroles": [
+        "RE_ADMIN"
+      ],
       "policyids": [],
       "user": "username",
       "local": false,

@@ -29,9 +29,9 @@ def main():
     # Wait for dependency services (ES and RE) to be live
     _wait_for_dependencies()
     # Initialize worker group of ESIndexer
-    es_indexers = WorkerGroup(ESIndexer, (), count=config()['zmq']['num_es_indexers'])
+    es_indexers = WorkerGroup(ESIndexer, (), count=config()['workers']['num_es_indexers'])
     # Initialize a worker group of RelengImporter
-    releng_importers = WorkerGroup(RelengImporter, (), count=config()['zmq']['num_re_importers'])
+    releng_importers = WorkerGroup(RelengImporter, (), count=config()['workers']['num_re_importers'])
     # All worker groups to send kafka messages to
     receivers = [es_indexers, releng_importers]
 

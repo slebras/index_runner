@@ -15,7 +15,7 @@ from src.utils.ws_utils import get_type_pieces
 # Initialize configuration data
 _ES_URL = config()['elasticsearch_url']
 _PREFIX = config()['elasticsearch_index_prefix']
-_WS_CLIENT = WorkspaceClient(url=config()['workspace_url'], token=config()['ws_token'])
+_WS_CLIENT = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
 _IDX = _PREFIX + ".*"
 _HEADERS = {"Content-Type": "application/json"}
 _GLOBAL_MAPPINGS = config()['global']['global_mappings']

@@ -27,17 +27,18 @@ def index_obj(msg_data):
         stream. Must have keys for `wsid` and `objid`
     """
     upa = indexer_utils.get_upa_from_msg_data(msg_data)
-    ws_url = config()['workspace_url']
     # Fetch the object data from the workspace API
-    ws_client = WorkspaceClient(url=ws_url, token=config()['ws_token'])
+    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
     try:
         obj_data = ws_client.admin_req('getObjects', {
             'objects': [{'ref': upa}]
         })
     except WorkspaceResponseError as err:
         print('Workspace response error:', err.resp_data)
-        # Workspace has deleted; ignore the error
-        if err.resp_data and err.resp_data['error'] and err.resp_data['error']['code'] == -32500:
+        # Workspace is deleted; ignore the error
+        if (err.resp_data and isinstance(err.resp_data, dict)
+                and err.resp_data['error'] and isinstance(err.resp_data['error'], dict)
+                and err.resp_data['error'].get('code') == -32500):
             return
         else:
             raise err

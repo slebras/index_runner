@@ -2,7 +2,7 @@
   "methods": [
     "GET"
   ],
-  "path": "/api/V2/me",
+  "path": "/auth/api/V2/me",
   "headers": {
     "Authorization": "invalid_token"
   },

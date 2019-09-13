@@ -1,6 +1,6 @@
 {
   "methods": ["POST"],
-  "path": "/",
+  "path": "/ws",
   "headers": {"Authorization": "valid_admin_token"},
   "body": {
     "version": "1.1",

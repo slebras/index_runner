@@ -2,7 +2,8 @@
   "methods": [
     "GET"
   ],
-  "path": "/api/V2/me",
+  "path": "/auth/api/V2/me",
+  "absent_headers": [ "Authorization" ],
   "response": {
     "status": "400",
     "body": {

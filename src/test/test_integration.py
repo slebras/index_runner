@@ -50,17 +50,17 @@ class TestIntegration(unittest.TestCase):
         doc = _get_es_doc_blocking(_id)
         self.assertEqual(doc['_id'], _id)
         # Relation engine tests...
-        # Check for wsfull_object
-        obj_doc = _wait_for_re_doc('wsfull_object', '41347:5')
+        # Check for ws_object
+        obj_doc = _wait_for_re_doc('ws_object', '41347:5')
         self.assertEqual(obj_doc['workspace_id'], 41347)
         self.assertEqual(obj_doc['object_id'], 5)
         self.assertEqual(obj_doc['deleted'], False)
         hsh = "0e8d1a5090be7c4e9ccf6d37c09d0eab"
-        # Check for wsfull_object_hash
-        hash_doc = _wait_for_re_doc('wsfull_object_hash', hsh)
+        # Check for ws_object_hash
+        hash_doc = _wait_for_re_doc('ws_object_hash', hsh)
         self.assertEqual(hash_doc['type'], 'MD5')
-        # Check for wsfull_object_version
-        ver_doc = _wait_for_re_doc('wsfull_object_version', '41347:5:1')
+        # Check for ws_object_version
+        ver_doc = _wait_for_re_doc('ws_object_version', '41347:5:1')
         self.assertEqual(ver_doc['workspace_id'], 41347)
         self.assertEqual(ver_doc['object_id'], 5)
         self.assertEqual(ver_doc['version'], 1)
@@ -69,90 +69,90 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(ver_doc['size'], 26938)
         self.assertEqual(ver_doc['epoch'], 1554408999000)
         self.assertEqual(ver_doc['deleted'], False)
-        # Check for wsfull_copied_from
+        # Check for ws_copied_from
         copy_edge = _wait_for_re_edge(
-            'wsfull_copied_from',  # collection
-            'wsfull_object_version/41347:5:1',  # from
-            'wsfull_object_version/1:2:3'  # to
+            'ws_copied_from',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object_version/1:2:3'  # to
         )
         self.assertTrue(copy_edge)
-        # Check for wsfull_version_of
+        # Check for ws_version_of
         ver_edge = _wait_for_re_edge(
-            'wsfull_version_of',  # collection
-            'wsfull_object_version/41347:5:1',  # from
-            'wsfull_object/41347:5'  # to
+            'ws_version_of',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object/41347:5'  # to
         )
         self.assertTrue(ver_edge)
-        # Check for wsfull_ws_contains_obj
+        # Check for ws_workspace_contains_obj
         contains_edge = _wait_for_re_edge(
-            'wsfull_ws_contains_obj',  # collection
-            'wsfull_workspace/41347',  # from
-            'wsfull_object/41347:5'  # to
+            'ws_workspace_contains_obj',  # collection
+            'ws_workspace/41347',  # from
+            'ws_object/41347:5'  # to
         )
         self.assertTrue(contains_edge)
-        # Check for wsfull_obj_created_with_method edge
+        # Check for ws_obj_created_with_method edge
         created_with_edge = _wait_for_re_edge(
-            'wsfull_obj_created_with_method',  # collection
-            'wsfull_object_version/41347:5:1',  # from
-            'wsfull_method_version/narrative:3.10.0:UNKNOWN'  # to
+            'ws_obj_created_with_method',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_method_version/narrative:3.10.0:UNKNOWN'  # to
         )
         self.assertEqual(created_with_edge['method_params'], None)
-        # Check for wsfull_obj_created_with_module edge
+        # Check for ws_obj_created_with_module edge
         module_edge = _wait_for_re_edge(
-            'wsfull_obj_created_with_module',  # collection
-            'wsfull_object_version/41347:5:1',  # from
-            'wsfull_module_version/narrative:3.10.0'  # to
+            'ws_obj_created_with_module',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_module_version/narrative:3.10.0'  # to
         )
         self.assertTrue(module_edge)
-        # Check for wsfull_obj_instance_of_type
+        # Check for ws_obj_instance_of_type
         type_edge = _wait_for_re_edge(
-            'wsfull_obj_instance_of_type',  # collection
-            'wsfull_object_version/41347:5:1',  # from
-            'wsfull_type_version/KBaseNarrative.Narrative-4.0'  # to
+            'ws_obj_instance_of_type',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_type_version/KBaseNarrative.Narrative-4.0'  # to
         )
         self.assertTrue(type_edge)
-        # Check for the wsfull_owner_of edge
+        # Check for the ws_owner_of edge
         owner_edge = _wait_for_re_edge(
-            'wsfull_owner_of',  # collection
-            'wsfull_user/username',  # from
-            'wsfull_object_version/41347:5:1',  # to
+            'ws_owner_of',  # collection
+            'ws_user/username',  # from
+            'ws_object_version/41347:5:1',  # to
         )
         self.assertTrue(owner_edge)
-        # Check for the wsfull_refers_to edges
+        # Check for the ws_refers_to edges
         referral_edge1 = _wait_for_re_edge(
-            'wsfull_refers_to',  # collection
-            'wsfull_object_version/41347:5:1',  # from
-            'wsfull_object_version/1:1:1',  # to
+            'ws_refers_to',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object_version/1:1:1',  # to
         )
         self.assertTrue(referral_edge1)
         referral_edge2 = _wait_for_re_edge(
-            'wsfull_refers_to',  # collection
-            'wsfull_object_version/41347:5:1',  # from
-            'wsfull_object_version/2:2:2',  # to
+            'ws_refers_to',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object_version/2:2:2',  # to
         )
         self.assertTrue(referral_edge2)
-        # Check for the wsfull_prov_descendant_of edges
+        # Check for the ws_prov_descendant_of edges
         prov_edge1 = _wait_for_re_edge(
-            'wsfull_prov_descendant_of',  # collection
-            'wsfull_object_version/41347:5:1',  # from
-            'wsfull_object_version/1:1:1',  # to
+            'ws_prov_descendant_of',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object_version/1:1:1',  # to
         )
         self.assertTrue(prov_edge1)
         prov_edge2 = _wait_for_re_edge(
-            'wsfull_prov_descendant_of',  # collection
-            'wsfull_object_version/41347:5:1',  # from
-            'wsfull_object_version/2:2:2',  # to
+            'ws_prov_descendant_of',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object_version/2:2:2',  # to
         )
         self.assertTrue(prov_edge2)
 
     def test_import_nonexistent_existing(self):
         """Test an IMPORT_NONEXISTENT event."""
-        _produce({'evtype': 'IMPORT_NONEXISTENT', 'wsid': 41347, 'objid': 6, 'ver': 1})
+        _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': 41347, 'objid': 6, 'ver': 1})
         admin_topic = config()['topics']['admin_events']
-        obj_doc1 = _wait_for_re_doc('wsfull_object', '41347:6')
+        obj_doc1 = _wait_for_re_doc('ws_object', '41347:6')
         self.assertEqual(obj_doc1['object_id'], 6)
-        _produce({'evtype': 'IMPORT_NONEXISTENT', 'wsid': 41347, 'objid': 5, 'ver': 1}, admin_topic)
-        obj_doc2 = _wait_for_re_doc('wsfull_object', '41347:6')
+        _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': 41347, 'objid': 5, 'ver': 1}, admin_topic)
+        obj_doc2 = _wait_for_re_doc('ws_object', '41347:6')
         self.assertEqual(obj_doc1['_rev'], obj_doc2['_rev'])
 
 

@@ -94,7 +94,7 @@ def save(coll_name, docs):
         url,
         data=payload,
         params=params,
-        headers={'Authorization': config()['ws_token']}
+        headers={'Authorization': config()['re_api_token']}
     )
     if not resp.ok:
         raise RuntimeError(f'Error response from RE API: {resp.text}')
