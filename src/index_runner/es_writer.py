@@ -7,19 +7,20 @@ import json
 import requests
 import time
 from enum import Enum
+from kbase_workspace_client import WorkspaceClient
 
-from src.utils.config import get_config
-from src.utils.ws_utils import get_obj_ids_from_ws, get_type_pieces
+from src.utils.config import config
+from src.utils.ws_utils import get_type_pieces
 
 # Initialize configuration data
-_CONFIG = get_config()
-_ES_URL = _CONFIG['elasticsearch_url']
-_PREFIX = _CONFIG['elasticsearch_index_prefix']
+_ES_URL = config()['elasticsearch_url']
+_PREFIX = config()['elasticsearch_index_prefix']
+_WS_CLIENT = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
 _IDX = _PREFIX + ".*"
 _HEADERS = {"Content-Type": "application/json"}
-_GLOBAL_MAPPINGS = _CONFIG['global']['global_mappings']
-_MAPPINGS = _CONFIG['global']['mappings']
-_ALIASES = _CONFIG['global']['aliases']
+_GLOBAL_MAPPINGS = config()['global']['global_mappings']
+_MAPPINGS = config()['global']['mappings']
+_ALIASES = config()['global']['aliases']
 
 
 class ESWriter:
@@ -120,7 +121,7 @@ class ESWriter:
         _update_by_query(
             {'term': {'access_group': workspace_id}},
             f"ctx._source.is_public={is_public_str}",
-            _CONFIG
+            config()
         )
 
     def init_generic_index(self, msg):
@@ -181,7 +182,7 @@ def _put_mapping(index_name, mapping):
     """
     Create or update the type mapping for a given index.
     """
-    type_name = _CONFIG['global']['es_type_global_name']
+    type_name = config()['global']['es_type_global_name']
     url = f"{_ES_URL}/{index_name}/_mapping/{type_name}"
     resp = requests.put(url, data=json.dumps({'properties': mapping}), headers=_HEADERS)
     if not resp.ok:
@@ -203,7 +204,7 @@ def _delete_from_elastic(batch_deletes):
         msg = batch_deletes.pop()
         if msg.get('workspace_id'):
             wsid = msg['workspace_id']
-            for obj_id in get_obj_ids_from_ws(wsid):
+            for obj_id in _WS_CLIENT.generate_all_ids_for_workspace(wsid):
                 id_set.add(f"WS::{wsid}:{obj_id}")
         else:
             id_set.add(f"WS::{msg['object_id']}")
@@ -232,7 +233,7 @@ def _write_to_elastic(data):
         delete - bool (for delete events)
     """
     start = time.time()
-    es_type = _CONFIG['global']['es_type_global_name']
+    es_type = config()['global']['es_type_global_name']
     # Construct the post body for the bulk index
     json_body = ''
     while data:

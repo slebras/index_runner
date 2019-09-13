@@ -4,15 +4,13 @@ Relation engine API client functions.
 import json
 import requests
 
-from src.utils.config import get_config
-
-_CONFIG = get_config()
+from src.utils.config import config
 
 
 def stored_query(name, params):
     """Run a stored query."""
     resp = requests.post(
-        _CONFIG['re_api_url'] + '/api/v1/query_results',
+        config()['re_api_url'] + '/api/v1/query_results',
         params={'stored_query': name},
         data=json.dumps(params),
     )
@@ -24,13 +22,13 @@ def stored_query(name, params):
 def get_doc(coll, key):
     """Fetch a doc in a collection by key."""
     resp = requests.post(
-        _CONFIG['re_api_url'] + '/api/v1/query_results',
+        config()['re_api_url'] + '/api/v1/query_results',
         data=json.dumps({
             'query': "for v in @@coll filter v._key == @key limit 1 return v",
             '@coll': coll,
             'key': key
         }),
-        headers={'Authorization': _CONFIG['re_api_token']}
+        headers={'Authorization': config()['re_api_token']}
     )
     if not resp.ok:
         raise RuntimeError(resp.text)
@@ -44,13 +42,13 @@ def check_doc_existence(_id):
     for d in @@coll filter d._key == @key limit 1 return 1
     """
     resp = requests.post(
-        _CONFIG['re_api_url'] + '/api/v1/query_results',
+        config()['re_api_url'] + '/api/v1/query_results',
         data=json.dumps({
             'query': query,
             '@coll': coll,
             'key': key
         }),
-        headers={'Authorization': _CONFIG['re_api_token']}
+        headers={'Authorization': config()['re_api_token']}
     )
     if not resp.ok:
         raise RuntimeError(resp.text)
@@ -66,14 +64,14 @@ def get_edge(coll, from_key, to_key):
         return v
     """
     resp = requests.post(
-        _CONFIG['re_api_url'] + '/api/v1/query_results',
+        config()['re_api_url'] + '/api/v1/query_results',
         data=json.dumps({
             'query': query,
             '@coll': coll,
             'from': from_key,
             'to': to_key
         }),
-        headers={'Authorization': _CONFIG['re_api_token']}
+        headers={'Authorization': config()['re_api_token']}
     )
     if not resp.ok:
         raise RuntimeError(resp.text)
@@ -88,7 +86,7 @@ def save(coll_name, docs):
         coll_name - collection name
         docs - list of dicts to save into the collection as json documents
     """
-    url = _CONFIG['re_api_url'] + '/api/v1/documents'
+    url = config()['re_api_url'] + '/api/v1/documents'
     # convert the docs into a string, where each obj is separated by a linebreak
     payload = '\n'.join([json.dumps(d) for d in docs])
     params = {'collection': coll_name, 'on_duplicate': 'update'}
@@ -96,7 +94,7 @@ def save(coll_name, docs):
         url,
         data=payload,
         params=params,
-        headers={'Authorization': _CONFIG['ws_token']}
+        headers={'Authorization': config()['re_api_token']}
     )
     if not resp.ok:
         raise RuntimeError(f'Error response from RE API: {resp.text}')

@@ -1,7 +1,7 @@
 """
 Take object info from the workspace and import various vertices and edges into Arangodb.
 
-wsfull_object (unversioned)
+ws_object (unversioned)
     workspace_id
     object_id
     deleted
@@ -14,19 +14,19 @@ from src.utils.formatting import ts_to_epoch, get_method_key_from_prov, get_modu
 
 def import_object(obj_info):
     """
-    Given a workspace object downloaded to disk, convert it to a wsfull arangodb document and import it.
+    Given a workspace object downloaded to disk, convert it to a ws arangodb document and import it.
     `is_new_version` indicates whether this object is a brand new (latest as of runtime) version of an object.
     """
-    # TODO handle the wsfull_latest_version_of edge -- some tricky considerations here
-    # Save the wsfull_object document
+    # TODO handle the ws_latest_version_of edge -- some tricky considerations here
+    # Save the ws_object document
     info_tup = obj_info['info']
     wsid = info_tup[6]
     objid = info_tup[0]
     obj_key = f'{wsid}:{objid}'
-    _save_wsfull_object(obj_key, wsid, objid)
-    # Save the wsfull_object_hash document
+    _save_ws_object(obj_key, wsid, objid)
+    # Save the ws_object_hash document
     _save_obj_hash(info_tup)
-    # Save the wsfull_object_version document
+    # Save the ws_object_version document
     obj_ver = info_tup[4]
     obj_ver_key = f'{obj_key}:{obj_ver}'
     _save_obj_version(obj_ver_key, wsid, objid, obj_ver, info_tup)
@@ -44,9 +44,9 @@ def import_object(obj_info):
     connect_taxon.create_taxon_edge(obj_ver_key, info_tup)
 
 
-def _save_wsfull_object(key, wsid, objid):
-    print(f'Saving wsfull_object with key {key}')
-    save('wsfull_object', [{
+def _save_ws_object(key, wsid, objid):
+    print(f'Saving ws_object with key {key}')
+    save('ws_object', [{
         '_key': key,
         'workspace_id': wsid,
         'object_id': objid,
@@ -57,8 +57,8 @@ def _save_wsfull_object(key, wsid, objid):
 def _save_obj_hash(info_tup):
     obj_hash = info_tup[8]
     obj_hash_type = 'MD5'
-    print(f'Saving wsfull_object_hash with key {obj_hash}')
-    save('wsfull_object_hash', [{
+    print(f'Saving ws_object_hash with key {obj_hash}')
+    save('ws_object_hash', [{
         '_key': obj_hash,
         'type': obj_hash_type
     }])
@@ -69,8 +69,8 @@ def _save_obj_version(key, wsid, objid, ver, info_tup):
     hsh = info_tup[8]
     size = info_tup[9]
     epoch = ts_to_epoch(info_tup[3])
-    print(f"Saving wsfull_object_version with key {key}")
-    save('wsfull_object_version', [{
+    print(f"Saving ws_object_version with key {key}")
+    save('ws_object_version', [{
         '_key': key,
         'workspace_id': wsid,
         'object_id': objid,
@@ -84,53 +84,53 @@ def _save_obj_version(key, wsid, objid, ver, info_tup):
 
 
 def _save_copy_edge(obj_ver_key, obj_info):
-    """Save wsfull_copied_from document."""
+    """Save ws_copied_from document."""
     copy_ref = obj_info.get('copied')
     if not copy_ref:
         print('Not a copied object.')
         return
     copied_key = copy_ref.replace('/', ':')
-    from_id = 'wsfull_object_version/' + obj_ver_key
-    to_id = 'wsfull_object_version/' + copied_key
-    print(f'Saving wsfull_copied_from edge from {from_id} to {to_id}')
+    from_id = 'ws_object_version/' + obj_ver_key
+    to_id = 'ws_object_version/' + copied_key
+    print(f'Saving ws_copied_from edge from {from_id} to {to_id}')
     # "The _from object is a copy of the _to object
-    save('wsfull_copied_from', [{
+    save('ws_copied_from', [{
         '_from': from_id,
         '_to': to_id
     }])
 
 
 def _save_obj_ver_edge(obj_ver_key, obj_key):
-    """Save the wsfull_version_of edge."""
+    """Save the ws_version_of edge."""
     # The _from is a version of the _to
-    from_id = 'wsfull_object_version/' + obj_ver_key
-    to_id = 'wsfull_object/' + obj_key
-    print(f'Saving wsfull_version_of edge from {from_id} to {to_id}')
-    save('wsfull_version_of', [{
+    from_id = 'ws_object_version/' + obj_ver_key
+    to_id = 'ws_object/' + obj_key
+    print(f'Saving ws_version_of edge from {from_id} to {to_id}')
+    save('ws_version_of', [{
         '_from': from_id,
         '_to': to_id
     }])
 
 
 def _save_ws_contains_edge(obj_key, info_tup):
-    """Save the wsfull_ws_contains_obj edge."""
-    from_id = 'wsfull_workspace/' + str(info_tup[6])
-    to_id = 'wsfull_object/' + obj_key
-    print(f'Saving wsfull_ws_contains_obj edge from {from_id} to {to_id}')
-    save('wsfull_ws_contains_obj', [{
+    """Save the ws_workspace_contains_obj edge."""
+    from_id = 'ws_workspace/' + str(info_tup[6])
+    to_id = 'ws_object/' + obj_key
+    print(f'Saving ws_workspace_contains_obj edge from {from_id} to {to_id}')
+    save('ws_workspace_contains_obj', [{
         '_from': from_id,
         '_to': to_id
     }])
 
 
 def _save_created_with_method_edge(obj_ver_key, prov):
-    """Save the wsfull_obj_created_with_method edge."""
+    """Save the ws_obj_created_with_method edge."""
     method_key = get_method_key_from_prov(prov)
-    from_id = 'wsfull_object_version/' + obj_ver_key
-    to_id = 'wsfull_method_version/' + method_key
+    from_id = 'ws_object_version/' + obj_ver_key
+    to_id = 'ws_method_version/' + method_key
     params = prov[0].get('method_params')
-    print(f'Saving wsfull_obj_created_with_method edge from {from_id} to {to_id}')
-    save('wsfull_obj_created_with_method', [{
+    print(f'Saving ws_obj_created_with_method edge from {from_id} to {to_id}')
+    save('ws_obj_created_with_method', [{
         '_from': from_id,
         '_to': to_id,
         'method_params': params
@@ -138,63 +138,63 @@ def _save_created_with_method_edge(obj_ver_key, prov):
 
 
 def _save_created_with_module_edge(obj_ver_key, prov):
-    """Save the wsfull_obj_created_with_module edge."""
+    """Save the ws_obj_created_with_module edge."""
     module_key = get_module_key_from_prov(prov)
-    from_id = 'wsfull_object_version/' + obj_ver_key
-    to_id = 'wsfull_module_version/' + module_key
-    print(f'Saving wsfull_obj_created_with_module edge from {from_id} to {to_id}')
-    save('wsfull_obj_created_with_module', [{
+    from_id = 'ws_object_version/' + obj_ver_key
+    to_id = 'ws_module_version/' + module_key
+    print(f'Saving ws_obj_created_with_module edge from {from_id} to {to_id}')
+    save('ws_obj_created_with_module', [{
         '_from': from_id,
         '_to': to_id
     }])
 
 
 def _save_inst_of_type_edge(obj_ver_key, info_tup):
-    """Save the wsfull_obj_instance_of_type of edge."""
-    from_id = 'wsfull_object_version/' + obj_ver_key
-    to_id = 'wsfull_type_version/' + info_tup[2]
-    print(f'Saving wsfull_obj_instance_of_type edge from {from_id} to {to_id}')
-    save('wsfull_obj_instance_of_type', [{
+    """Save the ws_obj_instance_of_type of edge."""
+    from_id = 'ws_object_version/' + obj_ver_key
+    to_id = 'ws_type_version/' + info_tup[2]
+    print(f'Saving ws_obj_instance_of_type edge from {from_id} to {to_id}')
+    save('ws_obj_instance_of_type', [{
         '_from': from_id,
         '_to': to_id
     }])
 
 
 def _save_owner_edge(obj_ver_key, info_tup):
-    """Save the wsfull_owner_of edge."""
+    """Save the ws_owner_of edge."""
     username = info_tup[5]
-    from_id = 'wsfull_user/' + username
-    to_id = 'wsfull_object_version/' + obj_ver_key
-    print(f'Saving wsfull_owner_of edge from {from_id} to {to_id}')
-    save('wsfull_owner_of', [{
+    from_id = 'ws_user/' + username
+    to_id = 'ws_object_version/' + obj_ver_key
+    print(f'Saving ws_owner_of edge from {from_id} to {to_id}')
+    save('ws_owner_of', [{
         '_from': from_id,
         '_to': to_id
     }])
 
 
 def _save_referral_edge(obj_ver_key, obj_info):
-    """Save the wsfull_refers_to edge."""
-    from_id = 'wsfull_object_version/' + obj_ver_key
+    """Save the ws_refers_to edge."""
+    from_id = 'ws_object_version/' + obj_ver_key
     for upa in obj_info.get('refs', []):
-        to_id = 'wsfull_object_version/' + upa.replace('/', ':')
-        print(f'Saving wsfull_refers_to edge from {from_id} to {to_id}')
-        save('wsfull_refers_to', [{
+        to_id = 'ws_object_version/' + upa.replace('/', ':')
+        print(f'Saving ws_refers_to edge from {from_id} to {to_id}')
+        save('ws_refers_to', [{
             '_from': from_id,
             '_to': to_id
         }])
 
 
 def _save_prov_desc_edge(obj_ver_key, obj_info):
-    """Save the wsfull_prov_descendant_of edge."""
+    """Save the ws_prov_descendant_of edge."""
     prov = obj_info.get('provenance')
     if not prov:
         return
     input_objs = prov[0].get('input_ws_objects', [])
-    from_id = 'wsfull_object_version/' + obj_ver_key
+    from_id = 'ws_object_version/' + obj_ver_key
     for upa in input_objs:
-        to_id = 'wsfull_object_version/' + upa.replace('/', ':')
-        print(f'Saving wsfull_prov_descendant_of edge from {from_id} to {to_id}')
-        save('wsfull_prov_descendant_of', [{
+        to_id = 'ws_object_version/' + upa.replace('/', ':')
+        print(f'Saving ws_prov_descendant_of edge from {from_id} to {to_id}')
+        save('ws_prov_descendant_of', [{
             '_from': from_id,
             '_to': to_id
         }])
