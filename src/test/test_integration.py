@@ -171,7 +171,7 @@ def _produce(data, topic=config()['topics']['workspace_events']):
     producer.poll(60)
 
 
-def _get_es_doc_blocking(_id, timeout=60):
+def _get_es_doc_blocking(_id, timeout=180):
     """Fetch a doc on ES, waiting for it to become available, with a timeout."""
     start_time = int(time.time())
     while True:
@@ -217,15 +217,15 @@ def _wait_for_re_edge(coll, from_key, to_key):
     return results['results'][0]
 
 
-def _wait_for_re_doc(coll, key):
+def _wait_for_re_doc(coll, key, timeout=180):
     """Fetch a doc with the RE API, waiting for it to become available with a 30s timeout."""
-    timeout = int(time.time()) + 30
+    start_time = time.time()
     while True:
         results = get_doc(coll, key)
         if results['count'] > 0:
             break
         else:
-            if int(time.time()) > timeout:
+            if int(time.time() - start_time) > timeout:
                 raise RuntimeError('Timed out trying to fetch', key)
             time.sleep(1)
     return results['results'][0]
