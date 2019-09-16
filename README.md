@@ -36,7 +36,7 @@ Start the servers:
 docker-compose up
 ```
 
-Run the tests (servers must be running):
+Run the tests (servers need not be running, and will be shut down if they are):
 
 ```sh
 make test

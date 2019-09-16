@@ -8,8 +8,6 @@ Architecture:
         - es_writer -- receives updates from index_runner and bulk-updates elasticsearch.
     The index_runner and es_writer run in separate workers with message queues in between.
 """
-import time
-import requests
 import json
 from confluent_kafka import Consumer, KafkaError
 
@@ -17,6 +15,7 @@ from src.utils.config import config
 from src.utils.worker_group import WorkerGroup
 from src.index_runner.es_indexer import ESIndexer
 from src.index_runner.releng_importer import RelengImporter
+from src.utils.service_utils import wait_for_dependencies
 
 
 def main():
@@ -27,7 +26,8 @@ def main():
     Work is sent from the Kafka consumer to the es_writer or releng_importer via ZMQ sockets.
     """
     # Wait for dependency services (ES and RE) to be live
-    _wait_for_dependencies()
+    wait_for_dependencies(timeout=180)
+    print('Services started! Now starting the app..')
     # Initialize worker group of ESIndexer
     es_indexers = WorkerGroup(ESIndexer, (), count=config()['workers']['num_es_indexers'])
     # Initialize a worker group of RelengImporter
@@ -75,24 +75,6 @@ def _set_consumer():
     print(f"Kafka server: {config()['kafka_server']}")
     consumer.subscribe(topics)
     return consumer
-
-
-def _wait_for_dependencies():
-    """Block and wait for elasticsearch."""
-    timeout = 180  # in seconds
-    start_time = int(time.time())
-    while True:
-        # Check for Elasticsearch
-        try:
-            requests.get(config()['elasticsearch_url']).raise_for_status()
-            requests.get(config()['re_api_url'] + '/').raise_for_status()
-            break
-        except Exception:
-            print('Waiting for dependency services...')
-            time.sleep(5)
-            if (int(time.time()) - start_time) > timeout:
-                raise RuntimeError(f"Failed to connect to other services in {timeout}s")
-    print('Services started! Now starting the app..')
 
 
 if __name__ == '__main__':
