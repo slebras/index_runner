@@ -1,10 +1,9 @@
-import time
-import requests
-from src.utils.config import config
-
 """
 Utilites for dealing with the various services the index runner depends on.
 """
+import time
+import requests
+from src.utils.config import config
 
 
 def wait_for_dependencies(elasticsearch=True, re_api=True, timeout=60):
