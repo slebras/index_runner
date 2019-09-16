@@ -26,7 +26,7 @@ def main():
     Work is sent from the Kafka consumer to the es_writer or releng_importer via ZMQ sockets.
     """
     # Wait for dependency services (ES and RE) to be live
-    wait_for_dependencies()
+    wait_for_dependencies(timeout=180)
     print('Services started! Now starting the app..')
     # Initialize worker group of ESIndexer
     es_indexers = WorkerGroup(ESIndexer, (), count=config()['workers']['num_es_indexers'])
