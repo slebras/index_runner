@@ -42,15 +42,14 @@ class RelengImporter:
 def _import_obj(msg):
     print('Downloading obj')
     ws = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-    ref = f"{msg['wsid']}/{msg['objid']}/{msg['ver']}"
+    ref = _get_ref(msg)
     resp = ws.admin_req('getObjects', {'objects': [{'ref': ref}], 'no_data': 1})
     import_object(resp['data'][0])
 
 
 def _import_nonexistent(msg):
     """Import an object only if it does not exist in RE already."""
-    upa = ':'.join([str(p) for p in [msg['wsid'], msg['objid'], msg['ver']]])
-    print(f'_import_nonexistent on {upa}')  # TODO
+    upa = _get_ref(msg, delim=':')
     _id = 'ws_object_version/' + upa
     exists = check_doc_existence(_id)
     if not exists:
@@ -79,3 +78,9 @@ def _set_global_perms(msg):
     """Set permissions for an entire workspace (SET_GLOBAL_PERMISSION)."""
     print('_set_global_perms TODO')  # TODO
     # raise NotImplementedError()
+
+
+def _get_ref(msg, delim='/'):
+    """Get the workspace object reference from a kafka event."""
+    parts = [msg['wsid'], msg['objid'], msg.get('ver')]
+    return delim.join([str(_id) for _id in parts if _id])
