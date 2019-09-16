@@ -13,7 +13,7 @@ from src.utils.re_client import save
 
 _OBJ_VER_COLL = "ws_object_version"
 _TAX_VER_COLL = "ncbi_taxon"
-_TAX_EDGE_COLL = "ws_object_version_has_taxon"
+_TAX_EDGE_COLL = "ws_obj_version_has_taxon"
 _COMPAT_TYPES = ["KBaseGenomes.Genome"]
 
 # KBaseGenomeAnnotations.Assembly could also be used. It has a taxon_ref but no
@@ -26,6 +26,7 @@ def create_taxon_edge(obj_ver_key, obj_info_tup):
     obj_ver_key is the RE vertex key for the object (eg. "123:123:123")
     obj_info_tup is the workspace object info tuple from get_objects2
     """
+    # obj_ver_key and obj_info_tup are kind of redundant
     # Check if the object is a compatible type
     obj_type = obj_info_tup[2].split("-")[0]
     if obj_type not in _COMPAT_TYPES:
@@ -44,10 +45,9 @@ def create_taxon_edge(obj_ver_key, obj_info_tup):
     if 'taxonomy' not in data:
         print('No lineage in object; skipping..')
         return
-    lineage = resp['data'][0]['data']['taxonomy'].split('; ')
-    nonalpha = r'[^a-zA-Z ]'
+    lineage = data['taxonomy'].split(';')
     # Get the species or strain name, and filter out any non-alphabet chars
-    most_specific = re.sub(nonalpha, '', lineage[-1])
+    most_specific = re.sub(r'[^a-zA-Z ]', '', lineage[-1].strip())
     # Search by scientific name via the RE API
     adb_resp = stored_query('ncbi_taxon_search_sci_name', {
         'search_text': most_specific,
@@ -64,10 +64,7 @@ def create_taxon_edge(obj_ver_key, obj_info_tup):
     match = adb_results['results'][0]
     # Create an edge from the ws_object_ver to the taxon
     tax_key = match['_key']
-    wsid = obj_info_tup[6]
-    objid = obj_info_tup[0]
-    ver = obj_info_tup[4]
-    from_id = f"{_OBJ_VER_COLL}/{wsid}:{objid}:{ver}"
+    from_id = f"{_OBJ_VER_COLL}/{obj_ver_key}"
     to_id = f"{_TAX_VER_COLL}/{tax_key}"
     print(f'Creating taxon edge from {from_id} to {to_id}')
     save(_TAX_EDGE_COLL, [{'_from': from_id, '_to': to_id, 'assigned_by': '_system'}])
