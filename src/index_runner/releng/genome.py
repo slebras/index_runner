@@ -5,10 +5,8 @@ If a workspace object, such as a genome, has taxonomy info in it, then:
 """
 import re
 import time
-from kbase_workspace_client import WorkspaceClient
 
 from src.utils.re_client import stored_query
-from src.utils.config import config
 from src.utils.re_client import save
 
 _OBJ_VER_COLL = "ws_object_version"
@@ -20,7 +18,7 @@ _COMPAT_TYPES = ["KBaseGenomes.Genome"]
 # other taxon-related fields.
 
 
-def process_genome(obj_ver_key, obj_info_tup):
+def process_genome(obj_ver_key, obj_data):
     """
     Create an edge between a workspace object with taxonomy info and an NCBI taxon on RE.
     obj_ver_key is the RE vertex key for the object (eg. "123:123:123")
@@ -28,24 +26,14 @@ def process_genome(obj_ver_key, obj_info_tup):
     """
     # obj_ver_key and obj_info_tup are kind of redundant
     # Check if the object is a compatible type
-    obj_type = obj_info_tup[2].split("-")[0]
-    if obj_type not in _COMPAT_TYPES:
-        print('Object type not compatible for taxon edge.')
-        print(f'Object type is {obj_type}')
-        # No-op
-        return
-    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-    resp = ws_client.admin_req('getObjects', {
-        'objects': [{
-            'ref': obj_ver_key.replace(':', '/'),
-            'included': ["/taxonomy"]
-        }]
-    })
-    data = resp['data'][0]['data']
-    if 'taxonomy' not in data:
+    _generate_taxon_edge(obj_ver_key, obj_data)
+
+
+def _generate_taxon_edge(obj_ver_key, obj_data):
+    if 'taxonomy' not in obj_data['data']:
         print('No lineage in object; skipping..')
         return
-    lineage = data['taxonomy'].split(';')
+    lineage = obj_data['data']['taxonomy'].split(';')
     # Get the species or strain name, and filter out any non-alphabet chars
     most_specific = re.sub(r'[^a-zA-Z ]', '', lineage[-1].strip())
     # Search by scientific name via the RE API
