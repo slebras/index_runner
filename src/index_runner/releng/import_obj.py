@@ -9,7 +9,15 @@ ws_object (unversioned)
 """
 from src.index_runner.releng import genome
 from src.utils.re_client import save
+from src.utils.config import config
 from src.utils.formatting import ts_to_epoch, get_method_key_from_prov, get_module_key_from_prov
+from kbase_workspace_client import WorkspaceClient
+
+# need version specific processors here? Or expect the processor to handle all versions?
+# could also have an includes field to reduce the amount of data fetched from the ws
+_TYPE_PROCESSOR_MAP = {
+    'KBaseGenomes.Genome': genome.process_genome
+}
 
 
 def import_object(obj_info):
@@ -41,7 +49,18 @@ def import_object(obj_info):
     _save_owner_edge(obj_ver_key, info_tup)
     _save_referral_edge(obj_ver_key, obj_info)
     _save_prov_desc_edge(obj_ver_key, obj_info)
-    genome.process_genome(obj_ver_key, info_tup)
+    type_, _ = info_tup[2].split('-')  # 2nd var is version
+    if type_ in _TYPE_PROCESSOR_MAP:
+        # this could use a lot of memory. There's a bunch of code in the workspace for
+        # dealing with this situation, but that'd have to be ported to Python and it's pretty
+        # complex, so YAGNI for now.
+        ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+        resp = ws_client.admin_req('getObjects', {
+            'objects': [{
+                'ref': obj_ver_key.replace(':', '/'),
+            }]
+        })
+        _TYPE_PROCESSOR_MAP[type_](obj_ver_key, resp['data'][0])
 
 
 def _save_ws_object(key, wsid, objid):
