@@ -7,7 +7,7 @@ ws_object (unversioned)
     deleted
     _key: wsid/objid
 """
-from src.index_runner.releng import connect_taxon
+from src.index_runner.releng import genome
 from src.utils.re_client import save
 from src.utils.formatting import ts_to_epoch, get_method_key_from_prov, get_module_key_from_prov
 
@@ -41,7 +41,7 @@ def import_object(obj_info):
     _save_owner_edge(obj_ver_key, info_tup)
     _save_referral_edge(obj_ver_key, obj_info)
     _save_prov_desc_edge(obj_ver_key, obj_info)
-    connect_taxon.create_taxon_edge(obj_ver_key, info_tup)
+    genome.process_genome(obj_ver_key, info_tup)
 
 
 def _save_ws_object(key, wsid, objid):

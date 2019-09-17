@@ -20,7 +20,7 @@ _COMPAT_TYPES = ["KBaseGenomes.Genome"]
 # other taxon-related fields.
 
 
-def create_taxon_edge(obj_ver_key, obj_info_tup):
+def process_genome(obj_ver_key, obj_info_tup):
     """
     Create an edge between a workspace object with taxonomy info and an NCBI taxon on RE.
     obj_ver_key is the RE vertex key for the object (eg. "123:123:123")
