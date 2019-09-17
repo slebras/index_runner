@@ -14,6 +14,7 @@ from src.utils.formatting import ts_to_epoch, get_method_key_from_prov, get_modu
 from kbase_workspace_client import WorkspaceClient
 
 # need version specific processors here? Or expect the processor to handle all versions?
+# could also have an includes field to reduce the amount of data fetched from the ws
 _TYPE_PROCESSOR_MAP = {
     'KBaseGenomes.Genome': genome.process_genome
 }
