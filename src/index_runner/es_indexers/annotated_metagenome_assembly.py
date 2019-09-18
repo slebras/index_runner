@@ -7,15 +7,21 @@ import shutil
 import os
 
 _NAMESPACE = "WS"
+_VER_NAMESPACE = "WSVER"
 _AMA_INDEX_VERSION = 1
 _AMA_FEATURES_INDEX_VERSION = 1
 _AMA_INDEX_NAME = "annotated_metagenome_assembly:" + str(_AMA_INDEX_VERSION)
 _AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features:" + str(_AMA_FEATURES_INDEX_VERSION)
+# version indices
+_VER_AMA_INDEX_VERSION = 1
+_VER_AMA_FEATURES_INDEX_VERSION = 1
+_VER_AMA_INDEX_NAME = "annotated_metagenome_assembly:" + str(_VER_AMA_INDEX_VERSION)
+_VER_AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features:" + str(_VER_AMA_FEATURES_INDEX_VERSION)
 
 _DIR = os.path.dirname(os.path.realpath(__file__))
 
 
-def _index_ama(features_file_gz_path, data, ama_id):
+def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
     """"""
     publication_titles = [pub[2] for pub in data.get('publications', [])]
     publication_authors = [pub[5] for pub in data.get('publications', [])]
@@ -45,6 +51,11 @@ def _index_ama(features_file_gz_path, data, ama_id):
         'index': _AMA_INDEX_NAME,
         'id': ama_id
     }
+    ama_index['id'] = ama_id
+    yield ama_index
+    ama_index['id'] = ver_ama_id
+    # ama_index['namespace'] = _VER_NAMESPACE
+    ama_index['index'] = _VER_AMA_INDEX_NAME
     yield ama_index
 
     # unzip gzip file.
@@ -59,6 +70,7 @@ def _index_ama(features_file_gz_path, data, ama_id):
     for feat in features:
         id_ = feat.get('id')
         feat_id = ama_id + f"::ama_ft::{id_}"
+        ver_feat_id = ver_ama_id + f"::ama_ft::{id_}"
         # calculate gc content for each feature.
         # if feat.get('dna_sequence'):
         #     dna_seq = feat.get('dna_sequence')
@@ -98,6 +110,11 @@ def _index_ama(features_file_gz_path, data, ama_id):
             'id': feat_id
         }
         yield feat_index
+        feat_index['id'] = ver_feat_id
+        feat_index['doc']['parent_id'] = ver_ama_id
+        # feat_index['namespace'] = _VER_NAMESPACE
+        feat_index['index'] = _VER_AMA_FEATURES_INDEX_NAME
+        yield feat_index
     # remove unzipped file
     os.remove(features_file_path)
 
@@ -114,8 +131,10 @@ def index_annotated_metagenome_assembly(obj_data, ws_info, obj_data_v1):
     info = obj_data.get('info')
     workspace_id = info[6]
     object_id = info[0]
+    version = info[4]
 
     ama_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
+    ver_ama_id = f"{_VER_NAMESPACE}::{workspace_id}:{object_id}:{version}"
 
     if not data.get('features_handle_ref'):
         raise Exception("AnnotatedMetagenomeAssembly object does not have features_handle_ref"
@@ -126,7 +145,7 @@ def index_annotated_metagenome_assembly(obj_data, ws_info, obj_data_v1):
     features_file_gz_path = _DIR + "/features.json.gz"
     handle_id_to_file(features_handle_ref, features_file_gz_path)
 
-    for doc in _index_ama(features_file_gz_path, data, ama_id):
+    for doc in _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
         yield doc
     # remove zipped file
     os.remove(features_file_gz_path)

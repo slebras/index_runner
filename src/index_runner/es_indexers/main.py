@@ -82,6 +82,8 @@ def index_obj(msg_data):
             if '_no_defaults' not in indexer_ret:
                 # Inject all default fields into the index document.
                 indexer_ret['doc'].update(defaults)
+            # if not indexer_ret.get('namespace'):
+            #     indexer_ret['namespace'] = "WS"
         yield indexer_ret
 
 
@@ -119,7 +121,8 @@ def generic_indexer():
             'doc': indexer_utils.default_fields(obj_data, ws_info, obj_data_v1),
             'index': obj_type_name.lower() + ":0",
             'id': f"WS::{workspace_id}:{object_id}",
-            'no_defaults': True
+            'no_defaults': True,
+            # 'namespace': "WS"
         }
     return fn
 

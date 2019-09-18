@@ -98,6 +98,7 @@ class ESWriter:
             alias - optional - index alias
             props - property type mappings
         """
+        # index_name = f"{_PREFIX}.{msg['namespace']}.{msg['name']}"  # namespace
         index_name = f"{_PREFIX}.{msg['name']}"
         status = _create_index(index_name)
         if status == Status.CREATED:
@@ -108,6 +109,7 @@ class ESWriter:
         _put_mapping(index_name, msg['props'])
         # Create the alias
         if msg.get('alias'):
+            # alias_name = f"{_PREFIX}.{msg['namespace']}.{msg['alias']}"
             alias_name = f"{_PREFIX}.{msg['alias']}"
             status = _create_alias(alias_name, index_name)
             print(f"es_writer Alias {alias_name} for index {index_name} created.")
@@ -204,7 +206,8 @@ def _delete_from_elastic(batch_deletes):
         msg = batch_deletes.pop()
         if msg.get('workspace_id'):
             wsid = msg['workspace_id']
-            for obj_id in _WS_CLIENT.generate_all_ids_for_workspace(wsid):
+            # TODO: update to check/work for multiple versions.
+            for (obj_id, obj_ver) in _WS_CLIENT.generate_all_ids_for_workspace(wsid):
                 id_set.add(f"WS::{wsid}:{obj_id}")
         else:
             id_set.add(f"WS::{msg['object_id']}")
@@ -240,6 +243,7 @@ def _write_to_elastic(data):
         datum = data.pop()
         json_body += json.dumps({
             'index': {
+                # '_index': f"{_PREFIX}.{datum['namespace']}.{datum['index']}",
                 '_index': f"{_PREFIX}.{datum['index']}",
                 '_type': es_type,
                 '_id': datum['id']

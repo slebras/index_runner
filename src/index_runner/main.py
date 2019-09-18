@@ -56,12 +56,12 @@ def main():
             print(f'Message content: {val}')
         for receiver in receivers:
             receiver.queue.put(('ws_event', data))
-        # reload config every few iterations?
-        if iters % _RESET_CONFIG_ITERS == int(_RESET_CONFIG_ITERS - 1):
-            consumer = _set_consumer(get_config())
-            # avoid integer overflows
-            iters = 0
-        iters += 1
+        # # reload config every few iterations?
+        # if iters % _RESET_CONFIG_ITERS == int(_RESET_CONFIG_ITERS - 1):
+        #     consumer = _set_consumer(get_config())
+        #     # avoid integer overflows
+        #     iters = 0
+        # iters += 1
 
 
 def _set_consumer():
