@@ -20,7 +20,7 @@ _IDX = _PREFIX + ".*"
 _HEADERS = {"Content-Type": "application/json"}
 _GLOBAL_MAPPINGS = config()['global']['global_mappings']
 _MAPPINGS = config()['global']['mappings']
-_ALIASES = config()['global']['aliases']
+_INDEX_TO_ALIASES = config()['global']['aliases']
 
 
 class ESWriter:
@@ -39,9 +39,14 @@ class ESWriter:
                     global_mappings.update(_GLOBAL_MAPPINGS[g_map])
             self.init_index({
                 'name': index,
-                'alias': _ALIASES.get(index),
+                'alias': _INDEX_TO_ALIASES.get(index),
                 'props': {**mapping['properties'], **global_mappings}
             })
+        # make group_aliases (if it exists.)
+        if config()['global'].get('group_aliases'):
+            group_aliases = config()['global']['group_aliases']
+            for alias_name in group_aliases:
+                _create_alias(alias_name, group_aliases[alias_name])
 
     def on_queue_empty(self):
         """
@@ -144,11 +149,12 @@ class ESWriter:
 
 # -- Utils
 
-def _create_alias(alias_name, index_name):
+def _create_alias(alias_name, index_names):
     """
-    Create an alias from `alias_name` to the  `index_name`.
+    Create an alias from `alias_name` to the  `index_names`.
+    NOTE: index_names can be a string or list of strings
     """
-    body = {'actions': [{'add': {'index': index_name, 'alias': alias_name}}]}
+    body = {'actions': [{'add': {'index': index_names, 'alias': alias_name}}]}
     url = _ES_URL + '/_aliases'
     resp = requests.post(url, data=json.dumps(body), headers=_HEADERS)
     if not resp.ok:
