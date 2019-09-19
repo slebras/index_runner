@@ -7,7 +7,7 @@
     "method": "Workspace.administer",
     "params": [{
       "command": "getObjects",
-      "params": {"objects": [{"ref": "6/7/8"}]}
+      "params": {"objects": [{"ref": "6/9/1"}]}
     }]
   },
   "response": {
@@ -19,18 +19,14 @@
                   "data": [
                       {
                           "data": {
-                              "taxonomy": "Bacteria;Firmicutes;Bacilli;Bacillales;Bacillaceae;Bacillus;Bacillus subtilis",
-                              "features": [
-                                  {"id": "id1"},
-                                  {"id": "id2"}
-                              ]
+                              "features": []
                           },
                           "info": [
-                              7,
-                              "my_genome",
+                              9,
+                              "my_genome3",
                               "KBaseGenomes.Genome-15.1",
                               "2016-10-05T17:11:32+0000",
-                              8,
+                              1,
                               "someuser",
                               6,
                               "godilovebacillus",
@@ -39,7 +35,7 @@
                               {}
                           ],
                           "path": [
-                              "6/7/8"
+                              "6/9/1"
                           ],
                           "provenance": [
                               {

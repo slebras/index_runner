@@ -6,6 +6,10 @@ import requests
 
 from src.utils.config import config
 
+# see https://www.arangodb.com/2018/07/time-traveling-with-graph-databases/
+# in unix epoch ms this is 2255/6/5
+MAX_ADB_INTEGER = 2**53 - 1
+
 
 def stored_query(name, params):
     """Run a stored query."""
@@ -13,6 +17,43 @@ def stored_query(name, params):
         config()['re_api_url'] + '/api/v1/query_results',
         params={'stored_query': name},
         data=json.dumps(params),
+    )
+    if not resp.ok:
+        raise RuntimeError(resp.text)
+    return resp.json()
+
+
+def clear_collection(collection_name):
+    """
+    Remove all the documents in a collection without affecting indexes.
+
+    collection_name - the collection to clear.
+    """
+    resp = requests.post(
+        config()['re_api_url'] + '/api/v1/query_results',
+        data=json.dumps({
+            'query': 'FOR d in @@col REMOVE(d) IN @@col',
+            '@col': collection_name
+        }),
+        headers={'Authorization': config()['re_api_token']}
+    )
+    if not resp.ok:
+        raise RuntimeError(resp.text)
+
+
+def get_all_documents(collection_name):
+    """
+    Returns all the documents in a collection. Using this on a large collection is not advised.
+
+    collection_name - the collection from which documents will be returned.
+    """
+    resp = requests.post(
+        config()['re_api_url'] + '/api/v1/query_results',
+        data=json.dumps({
+            'query': 'FOR d in @@col RETURN d',
+            '@col': collection_name
+        }),
+        headers={'Authorization': config()['re_api_token']}
     )
     if not resp.ok:
         raise RuntimeError(resp.text)
