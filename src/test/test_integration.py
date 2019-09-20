@@ -158,7 +158,12 @@ class TestIntegration(unittest.TestCase):
     def test_reload_aliases(self):
         """test the RELOAD_ELASTIC_ALIASES event. TODO: fill out test."""
         _produce({'evtype': "RELOAD_ELASTIC_ALIASES", 'wsid': 1, 'objid': 1, 'ver': 1})
-        time.sleep(10)
+        es_aliases = _get_es_aliases_blocking()
+        config_aliases = config()['global']['aliases']
+        for alias in config_aliases:
+            self.assertTrue(alias in es_aliases)
+            for index in config_aliases[alias]:
+                self.assertTrue(index in es_aliases[alias])
 
 
 # -- Test utils
@@ -188,6 +193,18 @@ def _get_es_doc_blocking(_id, timeout=180):
         time.sleep(5)
 
 
+def _get_es_aliases_blocking(timeout=180):
+    """"""
+    start_time = int(time.time())
+    while True:
+        result = _get_es_aliases()
+        if result:
+            return result
+        if (int(time.time()) - start_time) > timeout:
+            raise RuntimeError(f"Aliases not found in {timeout}s.")
+        time.sleep(5)
+
+
 def _get_es_doc(_id):
     """Fetch a document from elastic based on ID."""
     prefix = config()['elasticsearch_index_prefix']
@@ -206,6 +223,27 @@ def _get_es_doc(_id):
         return None
         # raise RuntimeError(f"Document {_id} not found.")
     return respj['hits']['hits'][0]
+
+
+def _get_es_aliases():
+    """fetch aliases from elasticsearch"""
+    url = f"{config()['elasticsearch_url']}/_aliases"
+    resp = requests.get(url)
+    if not resp.ok:
+        raise RuntimeError(resp.text)
+    respj = resp.json()
+    if len(respj) < 1:
+        return None
+    aliases = {}
+    # we remove prefix from index and alias names (should all be "search2.")
+    for index in respj:
+        for al in respj[index]['aliases'].keys():
+            al = al.split('.')[1]
+            if al in aliases:
+                aliases[al].append(index.split('.')[1])
+            else:
+                aliases[al] = [index.split('.')[1]]
+    return aliases
 
 
 def _wait_for_re_edge(coll, from_key, to_key):

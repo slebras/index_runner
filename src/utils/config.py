@@ -40,11 +40,8 @@ def get_config():
         raise RuntimeError(f"Invalid global config url: {config_url}")
     if not github_release_url.startswith('http'):
         raise RuntimeError(f"Invalid global github release url: {github_release_url}")
-    try:
-        with urllib.request.urlopen(config_url) as res:  # nosec
-            global_config = yaml.safe_load(res)  # type: ignore
-    except Exception as err:
-        raise RuntimeError(f"config url I'm trying to use {config_url}, {github_release_url}")
+    with urllib.request.urlopen(config_url) as res:  # nosec
+        global_config = yaml.safe_load(res)  # type: ignore
     return {
         # All worker-group subprocess configuration
         'workers': {

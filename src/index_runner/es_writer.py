@@ -56,10 +56,10 @@ class ESWriter:
                         f"{_PREFIX}.{alias_name}",
                         [f"{_PREFIX }.{name}" for name in group_aliases[alias_name]]
                     )
-                except Exception as err:
+                except RuntimeError as err:
                     names = group_aliases[alias_name]
-                    raise RuntimeError(f"alias name: {alias_name}, resulted in "
-                                       f"error with aliases: {names}")
+                    raise RuntimeError(f"Failed creating alias name: {alias_name}, "
+                                       f"for indices: {names}..\nerror: {err}")
 
     def on_queue_empty(self):
         """

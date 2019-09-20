@@ -31,19 +31,6 @@ class ESIndexer:
         es_writers = WorkerGroup(ESWriter, (), count=config()['workers']['num_es_writers'])
         return {'es_writers': es_writers}
 
-    def reload_aliases(self, msg):
-        """"""
-        try:
-            self.children['es_writers'].put(('reload_aliases', msg))
-        except Exception as err:
-            print('=' * 80)
-            print(f"Error reloading aliases:\n{type(err)} - {err}")
-            print(msg)
-            print(err)
-            traceback.print_exc()
-            print('=' * 80)
-            _log_err_to_es(self.children['es_writers'], msg, err)
-
     def ws_event(self, msg):
         """
         Receive a workspace event from the kafka consumer.
@@ -51,11 +38,11 @@ class ESIndexer:
         """
         event_type = msg.get('evtype')
         ws_id = msg.get('wsid')
-        if not ws_id:
-            print(f'Invalid wsid in event: {ws_id}')
-            return
         if not event_type:
             print(f"Missing 'evtype' in event: {msg}")
+            return
+        if event_type != "RELOAD_ELASTIC_ALIASES" and not ws_id:
+            print(f'Invalid wsid in event: {ws_id}')
             return
         print(f'es_writer received {msg["evtype"]} for {ws_id}/{msg.get("objid", "?")}')
         try:
@@ -78,7 +65,7 @@ class ESIndexer:
             elif event_type == 'SET_GLOBAL_PERMISSION':
                 self._set_global_permission(msg)
             elif event_type == 'RELOAD_ELASTIC_ALIASES':
-                self.reload_aliases(msg)
+                self._reload_aliases(msg)
             else:
                 print(f"Unrecognized event {event_type}.")
                 return
@@ -90,6 +77,10 @@ class ESIndexer:
             traceback.print_exc()
             print('=' * 80)
             _log_err_to_es(self.children['es_writers'], msg, err)
+
+    def _reload_aliases(self, msg):
+        """event handler for relading/resetting elasticsearch aliases."""
+        self.children['es_writers'].put(('reload_aliases', msg))
 
     def _run_indexer(self, msg):
         """
