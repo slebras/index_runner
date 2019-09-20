@@ -158,6 +158,7 @@ class TestIntegration(unittest.TestCase):
     def test_reload_aliases(self):
         """test the RELOAD_ELASTIC_ALIASES event. TODO: fill out test."""
         _produce({'evtype': "RELOAD_ELASTIC_ALIASES", 'wsid': 1, 'objid': 1, 'ver': 1})
+        time.sleep(10)
 
 
 # -- Test utils

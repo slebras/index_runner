@@ -40,7 +40,7 @@ class ESWriter:
                 'name': index,
                 'props': {**mapping['properties'], **global_mappings}
             })
-        self.reload_aliases({})
+        self.reload_aliases({'msg': "from initalization"})
 
     def reload_aliases(self, data):
         """Currently this function only adds new indexes to aliases
@@ -48,7 +48,8 @@ class ESWriter:
         but not in the config."""
         if config()['global'].get('aliases'):
             group_aliases = config()['global']['aliases']
-            print(f"Resetting Elasticsearch aliases....")
+            msg = data.get('msg', "manually")
+            print(f"Resetting Elasticsearch aliases {msg}....")
             for alias_name in group_aliases:
                 try:
                     _create_alias(
