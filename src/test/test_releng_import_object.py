@@ -5,9 +5,17 @@ Test importing objects into the RE directly, without going through the higher la
 from src.index_runner.releng.import_obj import import_object
 from src.utils.service_utils import wait_for_dependencies
 import unittest
-from src.utils.re_client import save, get_doc, get_edge
+from src.utils.re_client import save, get_doc, get_edge, clear_collection, get_all_documents
 
 # TODO TEST more tests. Just tests very basic happy path for now
+
+
+def clear_collections():
+    for c in ['ws_object', 'ws_object_version', 'ws_object_hash', 'ws_version_of',
+              'ws_workspace_contains_obj', 'ws_obj_instance_of_type', 'ws_owner_of',
+              'ws_obj_version_has_taxon', 'ws_genome_features', 'ws_genome_has_feature',
+              'ncbi_taxon']:
+        clear_collection(c)
 
 
 class TestRelEngImportObject(unittest.TestCase):
@@ -20,6 +28,7 @@ class TestRelEngImportObject(unittest.TestCase):
         """
         Test importing a genome into the RE, including creating a object -> ncbi_taxon edge.
         """
+        clear_collections()
         # stick a taxon node into the RE so seach works.
         # TODO remove when we switch to pulling the taxon ID directly.
         save('ncbi_taxon', [{
@@ -162,12 +171,112 @@ class TestRelEngImportObject(unittest.TestCase):
             'assigned_by': '_system'
         })
 
+        f1 = get_re_doc('ws_genome_features', '6:7:8_id1')
+        del f1['updated_at']
+        self.assertEqual(f1, {
+            '_key': '6:7:8_id1',
+            '_id': 'ws_genome_features/6:7:8_id1',
+            'workspace_id': 6,
+            'object_id': 7,
+            'version': 8,
+            'feature_id': 'id1'})
+
+        f2 = get_re_doc('ws_genome_features', '6:7:8_id2')
+        del f2['updated_at']
+        self.assertEqual(f2, {
+            '_key': '6:7:8_id2',
+            '_id': 'ws_genome_features/6:7:8_id2',
+            'workspace_id': 6,
+            'object_id': 7,
+            'version': 8,
+            'feature_id': 'id2'})
+
+        e1 = get_re_edge(
+            'ws_genome_has_feature',
+            'ws_object_version/6:7:8',
+            'ws_genome_features/6:7:8_id1',
+            False)
+        del e1['updated_at']
+        self.assertEqual(e1, {
+            '_key': '6:7:8_id1',
+            '_id': 'ws_genome_has_feature/6:7:8_id1',
+            '_from': 'ws_object_version/6:7:8',
+            '_to': 'ws_genome_features/6:7:8_id1',
+        })
+        e2 = get_re_edge(
+            'ws_genome_has_feature',
+            'ws_object_version/6:7:8',
+            'ws_genome_features/6:7:8_id2',
+            False)
+        del e2['updated_at']
+        self.assertEqual(e2, {
+            '_key': '6:7:8_id2',
+            '_id': 'ws_genome_has_feature/6:7:8_id2',
+            '_from': 'ws_object_version/6:7:8',
+            '_to': 'ws_genome_features/6:7:8_id2',
+        })
+
+    def test_genome_no_feature_key(self):
+        """
+        Test importing a genome without a feature key or tax lineage into the RE.
+        """
+        self._genome_no_features(8, "my_genome2")
+
+    def test_genome_no_features_key(self):
+        """
+        Test importing a genome with an empty features array and no tax lineage into the RE.
+        """
+        self._genome_no_features(9, "my_genome3")
+
+    def _genome_no_features(self, objid, objname):
+        clear_collections()
+
+        # trigger the import
+        import_object({
+            "info": [
+                objid,
+                objname,
+                "KBaseGenomes.Genome-15.1",
+                "2016-10-05T17:11:32+0000",
+                1,
+                "someuser",
+                6,
+                "godilovebacillus",
+                "31b40bb1004929f69cd4acfe247ea46d",
+                351,
+                {}
+            ]
+            })
+
+        # only check one collection, since we already checked this stuff in previous tests
+        # Check for ws_object_version
+        ver_doc = get_re_doc('ws_object_version', f'6:{objid}:1')
+        self.assertEqual(ver_doc['workspace_id'], 6)
+        self.assertEqual(ver_doc['object_id'], objid)
+        self.assertEqual(ver_doc['version'], 1)
+        self.assertEqual(ver_doc['name'], objname)
+        self.assertEqual(ver_doc['hash'], "31b40bb1004929f69cd4acfe247ea46d")
+        self.assertEqual(ver_doc['size'], 351)
+        self.assertEqual(ver_doc['epoch'], 1475687492000)
+        self.assertEqual(ver_doc['deleted'], False)
+
+        # check no taxon or feature data added
+        self.assertEqual(get_re_docs('ws_obj_version_has_taxon'), [])
+        self.assertEqual(get_re_docs('ws_genome_features'), [])
+        self.assertEqual(get_re_docs('ws_genome_has_feature'), [])
+
 
 def get_re_doc(collection, key):
     d = get_doc(collection, key)
     if len(d['results']) > 0:
-        return d['results'][0]
+        r = d['results'][0]
+        del r['_rev']
+        return r
     return None
+
+
+def get_re_docs(collection):
+    return get_all_documents(collection)['results']
 
 
 def get_re_edge(collection, from_, to, del_key=True):
