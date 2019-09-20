@@ -155,6 +155,10 @@ class TestIntegration(unittest.TestCase):
         obj_doc2 = _wait_for_re_doc('ws_object', '41347:6')
         self.assertEqual(obj_doc1['_rev'], obj_doc2['_rev'])
 
+    def test_reload_aliases(self):
+        """test the RELOAD_ELASTIC_ALIASES event. TODO: fill out test."""
+        _produce({'evtype': "RELOAD_ELASTIC_ALIASES", 'wsid': 1, 'objid': 1, 'ver': 1})
+
 
 # -- Test utils
 

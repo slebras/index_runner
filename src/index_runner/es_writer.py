@@ -20,7 +20,6 @@ _IDX = _PREFIX + ".*"
 _HEADERS = {"Content-Type": "application/json"}
 _GLOBAL_MAPPINGS = config()['global']['global_mappings']
 _MAPPINGS = config()['global']['mappings']
-_INDEX_TO_ALIASES = config()['global']['aliases']
 
 
 class ESWriter:
@@ -39,14 +38,27 @@ class ESWriter:
                     global_mappings.update(_GLOBAL_MAPPINGS[g_map])
             self.init_index({
                 'name': index,
-                'alias': _INDEX_TO_ALIASES.get(index),
                 'props': {**mapping['properties'], **global_mappings}
             })
-        # make group_aliases (if it exists.)
-        if config()['global'].get('group_aliases'):
-            group_aliases = config()['global']['group_aliases']
+        self.reload_aliases({})
+
+    def reload_aliases(self, data):
+        """Currently this function only adds new indexes to aliases
+        in future we want it to remove aliases that exist on elastic
+        but not in the config."""
+        if config()['global'].get('aliases'):
+            group_aliases = config()['global']['aliases']
+            print(f"Resetting Elasticsearch aliases....")
             for alias_name in group_aliases:
-                _create_alias(alias_name, group_aliases[alias_name])
+                try:
+                    _create_alias(
+                        f"{_PREFIX}.{alias_name}",
+                        [f"{_PREFIX }.{name}" for name in group_aliases[alias_name]]
+                    )
+                except Exception as err:
+                    names = group_aliases[alias_name]
+                    raise RuntimeError(f"alias name: {alias_name}, resulted in "
+                                       f"error with aliases: {names}")
 
     def on_queue_empty(self):
         """
@@ -100,7 +112,6 @@ class ESWriter:
         Initialize an index on elasticsearch if it doesn't already exist.
         Message fields:
             name - index name
-            alias - optional - index alias
             props - property type mappings
         """
         # index_name = f"{_PREFIX}.{msg['namespace']}.{msg['name']}"  # namespace
@@ -112,12 +123,6 @@ class ESWriter:
             print(f"es_writer Index {index_name} already exists.")
         # Update the type mapping
         _put_mapping(index_name, msg['props'])
-        # Create the alias
-        if msg.get('alias'):
-            # alias_name = f"{_PREFIX}.{msg['namespace']}.{msg['alias']}"
-            alias_name = f"{_PREFIX}.{msg['alias']}"
-            status = _create_alias(alias_name, index_name)
-            print(f"es_writer Alias {alias_name} for index {index_name} created.")
 
     def set_global_perm(self, msg):
         """
@@ -154,7 +159,7 @@ def _create_alias(alias_name, index_names):
     Create an alias from `alias_name` to the  `index_names`.
     NOTE: index_names can be a string or list of strings
     """
-    body = {'actions': [{'add': {'index': index_names, 'alias': alias_name}}]}
+    body = {'actions': [{'add': {'indices': index_names, 'alias': alias_name}}]}
     url = _ES_URL + '/_aliases'
     resp = requests.post(url, data=json.dumps(body), headers=_HEADERS)
     if not resp.ok:

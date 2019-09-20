@@ -31,6 +31,19 @@ class ESIndexer:
         es_writers = WorkerGroup(ESWriter, (), count=config()['workers']['num_es_writers'])
         return {'es_writers': es_writers}
 
+    def reload_aliases(self, msg):
+        """"""
+        try:
+            self.children['es_writers'].put(('reload_aliases', msg))
+        except Exception as err:
+            print('=' * 80)
+            print(f"Error reloading aliases:\n{type(err)} - {err}")
+            print(msg)
+            print(err)
+            traceback.print_exc()
+            print('=' * 80)
+            _log_err_to_es(self.children['es_writers'], msg, err)
+
     def ws_event(self, msg):
         """
         Receive a workspace event from the kafka consumer.
@@ -64,6 +77,8 @@ class ESIndexer:
                 self._clone_workspace(msg)
             elif event_type == 'SET_GLOBAL_PERMISSION':
                 self._set_global_permission(msg)
+            elif event_type == 'RELOAD_ELASTIC_ALIASES':
+                self.reload_aliases(msg)
             else:
                 print(f"Unrecognized event {event_type}.")
                 return

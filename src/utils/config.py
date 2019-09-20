@@ -31,11 +31,20 @@ def get_config():
         'GLOBAL_CONFIG_URL',
         'https://github.com/kbase/search_config/releases/latest/download/config.yaml'
     )
+    github_release_url = os.environ.get(
+        'GITHUB_RELEASE_URL',
+        'https://api.github.com/repos/kbase/search_config/releases/latest'
+    )
     # Load the global configuration release (non-environment specific, public config)
     if not config_url.startswith('http'):
         raise RuntimeError(f"Invalid global config url: {config_url}")
-    with urllib.request.urlopen(config_url) as res:  # nosec
-        global_config = yaml.safe_load(res)  # type: ignore
+    if not github_release_url.startswith('http'):
+        raise RuntimeError(f"Invalid global github release url: {github_release_url}")
+    try:
+        with urllib.request.urlopen(config_url) as res:  # nosec
+            global_config = yaml.safe_load(res)  # type: ignore
+    except Exception as err:
+        raise RuntimeError(f"config url I'm trying to use {config_url}, {github_release_url}")
     return {
         # All worker-group subprocess configuration
         'workers': {
@@ -44,6 +53,7 @@ def get_config():
             'num_re_importers': int(os.environ.get('NUM_RE_IMPORTERS', 4)),
         },
         'global': global_config,
+        'github_release_url': github_release_url,
         'ws_token': os.environ['WORKSPACE_TOKEN'],
         'mount_dir': os.environ['MOUNT_DIR'],
         'kbase_endpoint': kbase_endpoint,
