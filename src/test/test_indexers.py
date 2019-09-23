@@ -197,10 +197,15 @@ class TestIndexers(unittest.TestCase):
         info = test_data['obj']['info']
         workspace_id = info[6]
         object_id = info[0]
+        version = info[4]
         ama_index = f"WS::{workspace_id}:{object_id}"
-
-        for (idx, msg_data) in enumerate(_index_ama(features_test_file, test_data['obj']['data'], ama_index)):
+        ver_ama_index = f"WSVER::{workspace_id}:{object_id}:{version}"
+        # print('[')
+        for (idx, msg_data) in enumerate(_index_ama(features_test_file, test_data['obj']['data'],
+                                                    ama_index, ver_ama_index)):
+            # print(json.dumps(msg_data), ',')
             self.assertEqual(msg_data, check_against[idx])
+        # print(']')
 
     # @unittest.skip('x')
     def test_genome_indexer(self):

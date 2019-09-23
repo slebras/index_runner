@@ -38,11 +38,11 @@ class ESIndexer:
         """
         event_type = msg.get('evtype')
         ws_id = msg.get('wsid')
-        if not ws_id:
-            print(f'Invalid wsid in event: {ws_id}')
-            return
         if not event_type:
             print(f"Missing 'evtype' in event: {msg}")
+            return
+        if event_type != "RELOAD_ELASTIC_ALIASES" and not ws_id:
+            print(f'Invalid wsid in event: {ws_id}')
             return
         print(f'es_writer received {msg["evtype"]} for {ws_id}/{msg.get("objid", "?")}')
         try:
@@ -64,6 +64,8 @@ class ESIndexer:
                 self._clone_workspace(msg)
             elif event_type == 'SET_GLOBAL_PERMISSION':
                 self._set_global_permission(msg)
+            elif event_type == 'RELOAD_ELASTIC_ALIASES':
+                self._reload_aliases(msg)
             else:
                 print(f"Unrecognized event {event_type}.")
                 return
@@ -75,6 +77,10 @@ class ESIndexer:
             traceback.print_exc()
             print('=' * 80)
             _log_err_to_es(self.children['es_writers'], msg, err)
+
+    def _reload_aliases(self, msg):
+        """event handler for relading/resetting elasticsearch aliases."""
+        self.children['es_writers'].put(('reload_aliases', msg))
 
     def _run_indexer(self, msg):
         """

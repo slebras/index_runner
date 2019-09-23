@@ -9,6 +9,8 @@ Architecture:
     The index_runner and es_writer run in separate workers with message queues in between.
 """
 import json
+import time
+import requests
 from confluent_kafka import Consumer, KafkaError
 
 from src.utils.config import config
@@ -35,6 +37,10 @@ def main():
     # All worker groups to send kafka messages to
     receivers = [es_indexers, releng_importers]
 
+    # used to check update every minute
+    last_updated_minute = int(time.time()/60)
+    _CONFIG_TAG = _query_for_config_tag()
+
     # Initialize and run the Kafka consumer
     consumer = _set_consumer()
 
@@ -42,6 +48,17 @@ def main():
         msg = consumer.poll(timeout=0.5)
         if msg is None:
             continue
+        curr_min = int(time.time()/60)
+        if curr_min > last_updated_minute:
+            config_tag = _query_for_config_tag()
+            if config_tag is not None and config_tag != _CONFIG_TAG:
+                _CONFIG_TAG = config_tag
+                last_updated_minute = curr_min
+                # send message to es_indexers to update config.
+                es_indexers.queue.put(('ws_event', {
+                    'evtype': "RELOAD_ELASTIC_ALIASES",
+                    "msg": f"updating to tag {_CONFIG_TAG}"
+                }))
         if msg.error():
             if msg.error().code() == KafkaError._PARTITION_EOF:
                 print('End of stream.')
@@ -56,6 +73,18 @@ def main():
             print(f'Message content: {val}')
         for receiver in receivers:
             receiver.queue.put(('ws_event', data))
+
+
+def _query_for_config_tag():
+    """using github release api (https://developer.github.com/v3/repos/releases/) find
+    out if there is new version of the config."""
+    github_release_url = config()['github_release_url']
+    resp = requests.get(url=github_release_url)
+    if not resp.ok:
+        return None
+        # raise RuntimeError("not able to get github config release")
+    data = resp.json()
+    return data['tag_name']
 
 
 def _set_consumer():
