@@ -15,8 +15,8 @@ _AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features:" + str(_AMA_
 # version indices
 _VER_AMA_INDEX_VERSION = 1
 _VER_AMA_FEATURES_INDEX_VERSION = 1
-_VER_AMA_INDEX_NAME = "annotated_metagenome_assembly:" + str(_VER_AMA_INDEX_VERSION)
-_VER_AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features:" + str(_VER_AMA_FEATURES_INDEX_VERSION)
+_VER_AMA_INDEX_NAME = "annotated_metagenome_assembly_version:" + str(_VER_AMA_INDEX_VERSION)
+_VER_AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features_version:" + str(_VER_AMA_FEATURES_INDEX_VERSION)
 
 _DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -54,7 +54,6 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
     ama_index['id'] = ama_id
     yield ama_index
     ama_index['id'] = ver_ama_id
-    # ama_index['namespace'] = _VER_NAMESPACE
     ama_index['index'] = _VER_AMA_INDEX_NAME
     yield ama_index
 
@@ -112,7 +111,6 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
         yield feat_index
         feat_index['id'] = ver_feat_id
         feat_index['doc']['parent_id'] = ver_ama_id
-        # feat_index['namespace'] = _VER_NAMESPACE
         feat_index['index'] = _VER_AMA_FEATURES_INDEX_NAME
         yield feat_index
     # remove unzipped file
