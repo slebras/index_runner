@@ -21,7 +21,16 @@
                           "data": {
                               "taxonomy": "Bacteria;Firmicutes;Bacilli;Bacillales;Bacillaceae;Bacillus;Bacillus subtilis",
                               "features": [
-                                  {"id": "id1"},
+                                  {"id": "id1",
+                                   "ontology_terms": {
+                                        "ignore": {"t1": [5, 7, 8]},
+                                        "GO": {
+                                            "GO:1": [5, 9],
+                                            "GO:2": [4, 2],
+                                            "GO:3": [0],
+                                            "GO:100": [2]}
+                                        }
+                                   },
                                   {"id": "id2"}
                               ]
                           },

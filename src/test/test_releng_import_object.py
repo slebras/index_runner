@@ -5,7 +5,9 @@ Test importing objects into the RE directly, without going through the higher la
 from src.index_runner.releng.import_obj import import_object
 from src.utils.service_utils import wait_for_dependencies
 import unittest
+import datetime
 from src.utils.re_client import save, get_doc, get_edge, clear_collection, get_all_documents
+from src.utils import re_client
 
 # TODO TEST more tests. Just tests very basic happy path for now
 
@@ -46,6 +48,98 @@ class TestRelEngImportObject(unittest.TestCase):
                 "release_created": 0,
                 "release_expired": 9007199254740991
             }])
+
+        # add some go terms and merge edges
+        # feature 1 -> go 1 will be a standard lookup
+        # feature 1 -> go 2 will already exist and so should be a noop
+        # feature 1 -> go 3 will go through 2 merge edges to resolve
+        # feature 1 -> go 100 will not resolve
+        # feature 2 has no GO annotations
+        # omit the first/last version and release created/expired fields, not necessary
+
+        save('GO_terms', [
+            # check that the query only finds extant nodes
+            add_go_fields(
+                {'_key': 'GO:1_v1',
+                 'id': 'GO:1',
+                 'name': 'X-gene',
+                 'created': 0,
+                 'expired': 6,
+                 }),
+            add_go_fields(
+                {'_key': 'GO:1_v2',
+                 'id': 'GO:1',
+                 'name': 'prof-X-gene',
+                 'created': 7,
+                 'expired': re_client.MAX_ADB_INTEGER,
+                 }),
+            add_go_fields(
+                {'_key': 'GO:2_v1',
+                 'id': 'GO:2',
+                 'name': 'IPR015239',
+                 'created': 0,
+                 'expired': re_client.MAX_ADB_INTEGER,
+                 }),
+            # check that the query only finds extant nodes
+            add_go_fields(
+                {'_key': 'GO:3_v1',
+                 'id': 'GO:3',
+                 'name': 'thingy',
+                 'created': 0,
+                 'expired': 99,
+                 }),
+            add_go_fields(
+                {'_key': 'GO:5_v1',
+                 'id': 'GO:5',
+                 'name': 'GDF-8',
+                 'created': 0,
+                 'expired': re_client.MAX_ADB_INTEGER,
+                 }),
+        ])
+        save('GO_merges', [
+            # check that only the newest edge is considered
+            {'_key': 'GO:3::GO:42::replaced_by_v1',
+             'id': 'GO:3::GO:42::replaced_by',
+             'type': 'replaced_by',
+             'from': 'GO:3',
+             'to': 'GO:42',
+             '_from': 'GO_terms/GO:3_v1',
+             '_to': 'GO_terms/GO:42_v1',
+             'created': 0,
+             'expired': 99,
+             },
+            {'_key': 'GO:3::GO:4::replaced_by_v1',
+             'id': 'GO:3::GO:4::replaced_by',
+             'type': 'replaced_by',
+             'from': 'GO:3',
+             'to': 'GO:4',
+             '_from': 'GO_terms/GO:3_v1',
+             '_to': 'GO_terms/GO:4_v1',
+             'created': 100,
+             'expired': re_client.MAX_ADB_INTEGER,
+             },
+            {'_key': 'GO:4::GO:5::replaced_by_v1',
+             'id': 'GO:4::GO:5::replaced_by',
+             'type': 'replaced_by',
+             'from': 'GO:4',
+             'to': 'GO:5',
+             '_from': 'GO_terms/GO:4_v1',
+             '_to': 'GO_terms/GO:5_v1',
+             'created': 0,
+             'expired': re_client.MAX_ADB_INTEGER,
+             },
+        ], display_errors=True)
+
+        # add an edge that already exists and so should not be overwritten
+        save('ws_feature_has_GO_annotation', [
+            {'_key': '6:7:8_id1::GO:2_v1::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1',
+             '_to': 'GO_terms/GO:2_v1',
+             'source': 'kbase_RE_indexer',
+             'expired': re_client.MAX_ADB_INTEGER,
+             'created': 678,
+             }
+        ])
 
         # trigger the import
         import_object({
@@ -216,6 +310,46 @@ class TestRelEngImportObject(unittest.TestCase):
             '_to': 'ws_genome_features/6:7:8_id2',
         })
 
+        f_to_GO_edges = sorted(get_re_docs('ws_feature_has_GO_annotation'), key=lambda e: e['_to'])
+        now = int(datetime.datetime.now(tz=datetime.timezone.utc).timestamp()) * 1000
+        for e in f_to_GO_edges:
+            created = e['created']
+            del e['created']
+            del e['_rev']
+            del e['updated_at']
+            if e['_to'] != 'GO_terms/GO:2_v1':
+                # check time is close to now
+                self.assertLess(created, now + 2000)
+                self.assertGreater(created, now - 2000)
+            else:
+                # check time wasn't overwritten
+                self.assertEqual(created, 678)
+
+        expected = [
+            {'_key': '6:7:8_id1::GO:1_v2::kbase_RE_indexer',
+             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1::GO:1_v2::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1',
+             '_to': 'GO_terms/GO:1_v2',
+             'source': 'kbase_RE_indexer',
+             'expired': 9007199254740991,
+             },
+            {'_key': '6:7:8_id1::GO:2_v1::kbase_RE_indexer',
+             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1::GO:2_v1::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1',
+             '_to': 'GO_terms/GO:2_v1',
+             'source': 'kbase_RE_indexer',
+             'expired': 9007199254740991,
+             },
+            {'_key': '6:7:8_id1::GO:5_v1::kbase_RE_indexer',
+             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1::GO:5_v1::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1',
+             '_to': 'GO_terms/GO:5_v1',
+             'source': 'kbase_RE_indexer',
+             'expired': 9007199254740991,
+             }
+        ]
+        self.assertEqual(f_to_GO_edges, expected)
+
     def test_genome_no_feature_key(self):
         """
         Test importing a genome without a feature key or tax lineage into the RE.
@@ -289,3 +423,19 @@ def get_re_edge(collection, from_, to, del_key=True):
         del r['_rev']
         return r
     return None
+
+
+def add_go_fields(term):
+    """
+    Adds empty required GO fields other than ID and name to a go term dict.
+    """
+    u = dict(term)  # no side effects
+    u['type'] = 'CLASS'
+    u['namespace'] = None
+    u['alt_ids'] = []
+    u['def'] = None
+    u['comments'] = []
+    u['subsets'] = []
+    u['synonyms'] = []
+    u['xrefs'] = []
+    return u
