@@ -40,7 +40,7 @@ GO term `_key`. On a reindex import the edges as usual but ignore key collisions
 the pre-existing edge with the same creation and expiration dates). This means that updated
 edges are added to the schema with a new created timestamp and existing edges are untouched.
 
-The created timestamp in both cases should be reasonably far in the future such that all edges
+The created timestamp in should be reasonably far in the future such that all edges
 can be loaded before it occurs to avoid queries against partial loads.
 
 Note that if the load fails midway reproducibility may be impacted if it cannot be completed
