@@ -156,7 +156,7 @@ def handle_id_to_file(handle_id, dest_path):
     """given handle id, download associated file from shock."""
     ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
     shock_id = ws_client.handle_to_shock(handle_id)
-    ws_client.download_from_shock(shock_id)
+    ws_client.download_shock_file(shock_id, dest_path)
 
 
 def get_upa_from_msg_data(msg_data):
