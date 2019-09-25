@@ -7,7 +7,9 @@ ws_object (unversioned)
     deleted
     _key: wsid/objid
 """
+import functools
 from src.index_runner.releng import genome
+from src.utils.ws_utils import get_type_pieces
 from src.utils.re_client import save
 from src.utils.config import config
 from src.utils.formatting import ts_to_epoch, get_method_key_from_prov, get_module_key_from_prov
@@ -171,12 +173,31 @@ def _save_created_with_module_edge(obj_ver_key, prov):
 def _save_inst_of_type_edge(obj_ver_key, info_tup):
     """Save the ws_obj_instance_of_type of edge."""
     from_id = 'ws_object_version/' + obj_ver_key
-    to_id = 'ws_type_version/' + info_tup[2]
+    obj_type = info_tup[2]
+    _save_type_vertex(obj_type)
+    to_id = 'ws_type_version/' + obj_type
     print(f'Saving ws_obj_instance_of_type edge from {from_id} to {to_id}')
     save('ws_obj_instance_of_type', [{
         '_from': from_id,
         '_to': to_id
     }])
+
+
+@functools.lru_cache(maxsize=128)
+def _save_type_vertex(obj_type):
+    """Save associated vertices for an object type."""
+    (type_module, type_name, type_ver) = get_type_pieces(obj_type)
+    (maj_ver, min_ver) = [int(v) for v in type_ver.split('.')]
+    print(f'Saving ws_type_version, ws_type, and ws_type_module for {obj_type}')
+    save('ws_type_version', {
+        '_key': obj_type,
+        'type_name': type_name,
+        'module_name': type_module,
+        'maj_ver': maj_ver,
+        'min_ver': min_ver
+    })
+    save('ws_type', {'_key': f'{type_module}.{type_name}', 'type_name': type_name, 'module_name': type_module})
+    save('ws_type_module', {'_key': type_module})
 
 
 def _save_owner_edge(obj_ver_key, info_tup):

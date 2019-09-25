@@ -125,11 +125,13 @@ def save(coll_name, docs, on_duplicate='update', display_errors=False):
     API docs: https://github.com/kbase/relation_engine_api
     Args:
         coll_name - collection name
-        docs - list of dicts to save into the collection as json documents
+        docs - single dict or list of dicts to save into the collection as json documents
         on_duplicate - what to do on a unique key collision. One of 'update', 'replace' 'ignore',
             'error'.
         display_errors - include error information if insert errors occur.
     """
+    if isinstance(docs, dict):
+        docs = [docs]
     url = config()['re_api_url'] + '/api/v1/documents'
     # convert the docs into a string, where each obj is separated by a linebreak
     payload = '\n'.join([json.dumps(d) for d in docs])

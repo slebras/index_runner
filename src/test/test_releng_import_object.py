@@ -31,7 +31,7 @@ class TestRelEngImportObject(unittest.TestCase):
         Test importing a genome into the RE, including creating a object -> ncbi_taxon edge.
         """
         clear_collections()
-        # stick a taxon node into the RE so seach works.
+        # stick a taxon node into the RE so search works.
         # TODO remove when we switch to pulling the taxon ID directly.
         save('ncbi_taxon', [{
                 "_key": "1423_2018-11-01",
@@ -140,13 +140,14 @@ class TestRelEngImportObject(unittest.TestCase):
              'created': 678,
              }
         ])
-
+        (type_module, type_name, maj_ver, min_ver) = ("KBaseGenomes", "Genome", 15, 1)
+        obj_type = f"{type_module}.{type_name}-{maj_ver}.{min_ver}"
         # trigger the import
         import_object({
             "info": [
                 7,
                 "my_genome",
-                "KBaseGenomes.Genome-15.1",
+                obj_type,
                 "2016-10-05T17:11:32+0000",
                 8,
                 "someuser",
@@ -157,7 +158,6 @@ class TestRelEngImportObject(unittest.TestCase):
                 {}
             ]
             })
-
         # check results
         obj_doc = get_re_doc('ws_object', '6:7')
         self.assertEqual(obj_doc['workspace_id'], 6)
@@ -218,6 +218,22 @@ class TestRelEngImportObject(unittest.TestCase):
             'ws_object_version/6:7:8',  # from
             'ws_type_version/KBaseGenomes.Genome-15.1'  # to
         )
+        # Check for type vertices
+        self.assertDictContainsSubset({
+            '_key': 'KBaseGenomes.Genome-15.1',
+            'module_name': 'KBaseGenomes',
+            'type_name': 'Genome',
+            'maj_ver': 15,
+            'min_ver': 1
+        }, get_re_doc('ws_type_version', obj_type))
+        self.assertDictContainsSubset({
+            '_key': 'KBaseGenomes.Genome',
+            'module_name': 'KBaseGenomes',
+            'type_name': 'Genome'
+        }, get_re_doc('ws_type', f"{type_module}.{type_name}"))
+        self.assertDictContainsSubset({
+            '_key': 'KBaseGenomes'
+        }, get_re_doc('ws_type_module', type_module))
         self.assertTrue(type_edge)
         # Check for the ws_owner_of edge
         owner_edge = get_re_edge(
