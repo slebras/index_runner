@@ -7,8 +7,8 @@ ws_object (unversioned)
     deleted
     _key: wsid/objid
 """
-import functools
 from src.index_runner.releng import genome
+from src.utils.run_func_once import run_once
 from src.utils.ws_utils import get_type_pieces
 from src.utils.re_client import save
 from src.utils.config import config
@@ -66,6 +66,7 @@ def import_object(obj_info):
 
 
 def _save_ws_object(key, wsid, objid):
+    """Runs at most every 300 seconds; otherwise a no-op."""
     print(f'Saving ws_object with key {key}')
     save('ws_object', [{
         '_key': key,
@@ -138,10 +139,31 @@ def _save_ws_contains_edge(obj_key, info_tup):
     from_id = 'ws_workspace/' + str(info_tup[6])
     to_id = 'ws_object/' + obj_key
     print(f'Saving ws_workspace_contains_obj edge from {from_id} to {to_id}')
-    save('ws_workspace_contains_obj', [{
-        '_from': from_id,
-        '_to': to_id
-    }])
+    save('ws_workspace_contains_obj', {'_from': from_id, '_to': to_id})
+    _save_workspace(info_tup[0])
+
+
+@run_once
+def _save_workspace(wsid):
+    """Save the ws_workspace vertex given an object info tuple."""
+    workspace_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+    ws_info = workspace_client.admin_req('getWorkspaceInfo', {"id": wsid})
+    # Workspace info tuple is as follows:
+    #    0  1    2     3       4        5          6          7        8
+    #   [id,name,owner,moddate,maxobjid,user_perms,globalread,lockstat,metadata]
+    metadata = ws_info[-1]
+    print(f'Saving workspace vertex {wsid}')
+    save('ws_workspace', {
+        '_key': str(wsid),
+        'narr_name': metadata.get('narrative_nice_name', ''),
+        'owner': ws_info[2],
+        'max_obj_id': ws_info[4],
+        'lock_status': ws_info[7],
+        'name': ws_info[1],
+        'mod_epoch': ts_to_epoch(ws_info[3]),
+        'is_public': ws_info[6] == 'r',
+        'is_deleted': False
+    })
 
 
 def _save_created_with_method_edge(obj_ver_key, prov):
@@ -183,7 +205,7 @@ def _save_inst_of_type_edge(obj_ver_key, info_tup):
     }])
 
 
-@functools.lru_cache(maxsize=128)
+@run_once
 def _save_type_vertex(obj_type):
     """Save associated vertices for an object type."""
     (type_module, type_name, type_ver) = get_type_pieces(obj_type)

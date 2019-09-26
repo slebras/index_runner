@@ -143,9 +143,10 @@ class TestRelEngImportObject(unittest.TestCase):
         (type_module, type_name, maj_ver, min_ver) = ("KBaseGenomes", "Genome", 15, 1)
         obj_type = f"{type_module}.{type_name}-{maj_ver}.{min_ver}"
         # trigger the import
+        wsid = 7
         import_object({
             "info": [
-                7,
+                wsid,
                 "my_genome",
                 obj_type,
                 "2016-10-05T17:11:32+0000",
@@ -157,7 +158,7 @@ class TestRelEngImportObject(unittest.TestCase):
                 351,
                 {}
             ]
-            })
+        })
         # check results
         obj_doc = get_re_doc('ws_object', '6:7')
         self.assertEqual(obj_doc['workspace_id'], 6)
@@ -218,6 +219,16 @@ class TestRelEngImportObject(unittest.TestCase):
             'ws_object_version/6:7:8',  # from
             'ws_type_version/KBaseGenomes.Genome-15.1'  # to
         )
+        # Check for the workspace vertex
+        self.assertDictContainsSubset({
+            '_key': str(wsid),
+            'narr_name': 'narr7',
+            'owner': 'username',
+            'lock_status': 'unlocked',
+            'name': 'username:narrative_7',
+            'is_public': True,
+            'is_deleted': False
+        }, get_re_doc('ws_workspace', str(wsid)))
         # Check for type vertices
         self.assertDictContainsSubset({
             '_key': 'KBaseGenomes.Genome-15.1',
