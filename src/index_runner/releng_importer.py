@@ -30,7 +30,7 @@ class RelengImporter:
             _delete_obj(msg)
         elif event_type == 'WORKSPACE_DELETE_STATE_CHANGE':
             _delete_ws(msg)
-        elif event_type in ['CLONE_WORKSPACE', 'INDEX_WORKSPACE']:
+        elif event_type in ['CLONE_WORKSPACE', 'REINDEX_WS']:
             _import_ws(msg)
         elif event_type == 'SET_GLOBAL_PERMISSION':
             _set_global_perms(msg)
@@ -70,8 +70,7 @@ def _delete_ws(msg):
 
 def _import_ws(msg):
     """Import all data for an entire workspace."""
-    print('_import_ws TODO')  # TODO
-    # raise NotImplementedError()
+    pass
 
 
 def _set_global_perms(msg):

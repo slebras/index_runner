@@ -137,7 +137,7 @@ def _generate_GO_links(obj_ver_key, obj_data):
                     '_to': f'{_GO_TERM_COLL}/{resolved_terms[g]}',
                     'source': 'kbase_RE_indexer',
                     'expired': _MAX_ADB_INTEGER
-                    })
+                })
     created_time = _now_epoch_ms() + 20 * len(edges)  # allow 20 ms to transport & save each edge
     for e in edges:
         e['created'] = created_time
