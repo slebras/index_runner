@@ -285,11 +285,11 @@ class TestRelEngImportObject(unittest.TestCase):
             'ws_object_version/6:7:8',
             'ncbi_taxon/562_2018-11-01')
 
-        self.assertEqual(taxon_edge, {
+        self.assertDictContainsSubset({
             '_from': 'ws_object_version/6:7:8',
-            '_to': 'ncbi_taxon/1423_2018-11-01',
+            '_to': 'ncbi_taxon/562_2018-11-01',
             'assigned_by': '_system'
-        })
+        }, taxon_edge)
 
         f1 = get_re_doc('ws_genome_features', '6:7:8_id1')
         del f1['updated_at']
