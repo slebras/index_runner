@@ -143,16 +143,16 @@ class TestRelEngImportObject(unittest.TestCase):
         (type_module, type_name, maj_ver, min_ver) = ("KBaseGenomes", "Genome", 15, 1)
         obj_type = f"{type_module}.{type_name}-{maj_ver}.{min_ver}"
         # trigger the import
-        wsid = 7
+        wsid = 6
         import_object({
             "info": [
-                wsid,
+                7,
                 "my_genome",
                 obj_type,
                 "2016-10-05T17:11:32+0000",
                 8,
                 "someuser",
-                6,
+                wsid,
                 "godilovebacillus",
                 "31b40bb1004929f69cd4acfe247ea46d",
                 351,
@@ -222,10 +222,10 @@ class TestRelEngImportObject(unittest.TestCase):
         # Check for the workspace vertex
         self.assertDictContainsSubset({
             '_key': str(wsid),
-            'narr_name': 'narr7',
+            'narr_name': 'narr' + str(wsid),
             'owner': 'username',
             'lock_status': 'unlocked',
-            'name': 'username:narrative_7',
+            'name': 'username:narrative_' + str(wsid),
             'is_public': True,
             'is_deleted': False
         }, get_re_doc('ws_workspace', str(wsid)))
