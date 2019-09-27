@@ -2,6 +2,7 @@
 Relation engine API client functions.
 """
 import json
+import re
 import requests
 
 from src.utils.config import config
@@ -9,6 +10,17 @@ from src.utils.config import config
 # see https://www.arangodb.com/2018/07/time-traveling-with-graph-databases/
 # in unix epoch ms this is 2255/6/5
 MAX_ADB_INTEGER = 2**53 - 1
+
+_ADB_KEY_DISALLOWED_CHARS_REGEX = re.compile(r"[^a-zA-Z0-9_\-:\.@\(\)\+,=;\$!\*'%]")
+
+
+# should this live somewhere else?
+def clean_key(key):
+    """
+    Swaps disallowed characters for an ArangoDB '_key' with an underscore.
+    See https://www.arangodb.com/docs/stable/data-modeling-naming-conventions-document-keys.html
+    """
+    return _ADB_KEY_DISALLOWED_CHARS_REGEX.sub('_', key)
 
 
 def stored_query(name, params):
