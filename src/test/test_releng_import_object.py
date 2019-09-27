@@ -34,12 +34,12 @@ class TestRelEngImportObject(unittest.TestCase):
         # stick a taxon node into the RE so search works.
         # TODO remove when we switch to pulling the taxon ID directly.
         save('ncbi_taxon', [{
-                "_key": "1423_2018-11-01",
-                "id": "1423",
+                "_key": "562_2018-11-01",
+                "id": "562",
                 "scientific_name": "Bacillus subtilis",
                 "rank": "species",
                 "aliases": [],  # dumped the aliases
-                "ncbi_taxon_id": 1423,
+                "ncbi_taxon_id": 562,
                 "gencode": 11,
                 "first_version": "2018-11-01",
                 "last_version": "2019-08-01",
@@ -283,9 +283,8 @@ class TestRelEngImportObject(unittest.TestCase):
         taxon_edge = get_re_edge(
             'ws_obj_version_has_taxon',
             'ws_object_version/6:7:8',
-            'ncbi_taxon/1423_2018-11-01')
+            'ncbi_taxon/562_2018-11-01')
 
-        del taxon_edge['updated_at']
         self.assertEqual(taxon_edge, {
             '_from': 'ws_object_version/6:7:8',
             '_to': 'ncbi_taxon/1423_2018-11-01',
