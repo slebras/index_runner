@@ -105,8 +105,8 @@ def _generate_features(obj_ver_key, obj_data):
     # retry is doable, but should probably be implemented much higher in the stack
     # So 3 for now
     # reindexing will overwrite and fix
-    _save(_WS_FEAT_COLL, verts)
-    _save(_WS_FEAT_EDGE_COLL, edges)
+    _save(_WS_FEAT_COLL, verts, display_errors=True)
+    _save(_WS_FEAT_EDGE_COLL, edges, display_errors=True)
 
 
 def _generate_GO_links(obj_ver_key, obj_data):
@@ -142,7 +142,7 @@ def _generate_GO_links(obj_ver_key, obj_data):
     for e in edges:
         e['created'] = created_time
     print(f'Writing {len(edges)} feature -> GO edges for genome {obj_ver_key}')
-    _save(_WS_FEAT_TO_GO_COLL, edges, on_duplicate='ignore')
+    _save(_WS_FEAT_TO_GO_COLL, edges, on_duplicate='ignore', display_errors=True)
 
 
 # terms that can't be resolved are missing from results
