@@ -168,13 +168,13 @@ def _resolve_GO_terms(terms_set, query_time):
     for chunk in _chunkiter(terms_set_copy, _MAX_RE_QUERY_SIZE):
         c = list(chunk)
         res = _stored_query('GO_get_merges_from', {'froms': c})
-        from_to_time = _defaultdict(list)
+        from_to_time = _defaultdict(list)  # type: dict
         for e in res['results']:
             from_to_time[e['from']].append((e['to'], e['created']))
         for f in from_to_time.keys():
             to = sorted(from_to_time[f], key=lambda tt: tt[1])[-1]  # get most recent edge
             replaced_by[f] = to[0]
-    terms_set_copy = None
+    terms_set_copy = None  # type: ignore
     res = _resolve_GO_terms(set(replaced_by.values()), query_time)
     for old, new in replaced_by.items():
         if new in res:
