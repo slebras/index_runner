@@ -132,8 +132,8 @@ class TestRelEngImportObject(unittest.TestCase):
 
         # add an edge that already exists and so should not be overwritten
         save('ws_feature_has_GO_annotation', [
-            {'_key': '6:7:8_id1::GO:2_v1::kbase_RE_indexer',
-             '_from': 'ws_genome_features/6:7:8_id1',
+            {'_key': '6:7:8_id1-_o::GO:2_v1::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1-_o',
              '_to': 'GO_terms/GO:2_v1',
              'source': 'kbase_RE_indexer',
              'expired': re_client.MAX_ADB_INTEGER,
@@ -265,15 +265,15 @@ class TestRelEngImportObject(unittest.TestCase):
             'assigned_by': '_system'
         })
 
-        f1 = get_re_doc('ws_genome_features', '6:7:8_id1')
+        f1 = get_re_doc('ws_genome_features', '6:7:8_id1-_o')
         del f1['updated_at']
         self.assertEqual(f1, {
-            '_key': '6:7:8_id1',
-            '_id': 'ws_genome_features/6:7:8_id1',
+            '_key': '6:7:8_id1-_o',
+            '_id': 'ws_genome_features/6:7:8_id1-_o',
             'workspace_id': 6,
             'object_id': 7,
             'version': 8,
-            'feature_id': 'id1'})
+            'feature_id': 'id1-|o'})
 
         f2 = get_re_doc('ws_genome_features', '6:7:8_id2')
         del f2['updated_at']
@@ -288,14 +288,14 @@ class TestRelEngImportObject(unittest.TestCase):
         e1 = get_re_edge(
             'ws_genome_has_feature',
             'ws_object_version/6:7:8',
-            'ws_genome_features/6:7:8_id1',
+            'ws_genome_features/6:7:8_id1-_o',
             False)
         del e1['updated_at']
         self.assertEqual(e1, {
-            '_key': '6:7:8_id1',
-            '_id': 'ws_genome_has_feature/6:7:8_id1',
+            '_key': '6:7:8_id1-_o',
+            '_id': 'ws_genome_has_feature/6:7:8_id1-_o',
             '_from': 'ws_object_version/6:7:8',
-            '_to': 'ws_genome_features/6:7:8_id1',
+            '_to': 'ws_genome_features/6:7:8_id1-_o',
         })
         e2 = get_re_edge(
             'ws_genome_has_feature',
@@ -326,23 +326,23 @@ class TestRelEngImportObject(unittest.TestCase):
                 self.assertEqual(created, 678)
 
         expected = [
-            {'_key': '6:7:8_id1::GO:1_v2::kbase_RE_indexer',
-             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1::GO:1_v2::kbase_RE_indexer',
-             '_from': 'ws_genome_features/6:7:8_id1',
+            {'_key': '6:7:8_id1-_o::GO:1_v2::kbase_RE_indexer',
+             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1-_o::GO:1_v2::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1-_o',
              '_to': 'GO_terms/GO:1_v2',
              'source': 'kbase_RE_indexer',
              'expired': 9007199254740991,
              },
-            {'_key': '6:7:8_id1::GO:2_v1::kbase_RE_indexer',
-             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1::GO:2_v1::kbase_RE_indexer',
-             '_from': 'ws_genome_features/6:7:8_id1',
+            {'_key': '6:7:8_id1-_o::GO:2_v1::kbase_RE_indexer',
+             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1-_o::GO:2_v1::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1-_o',
              '_to': 'GO_terms/GO:2_v1',
              'source': 'kbase_RE_indexer',
              'expired': 9007199254740991,
              },
-            {'_key': '6:7:8_id1::GO:5_v1::kbase_RE_indexer',
-             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1::GO:5_v1::kbase_RE_indexer',
-             '_from': 'ws_genome_features/6:7:8_id1',
+            {'_key': '6:7:8_id1-_o::GO:5_v1::kbase_RE_indexer',
+             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1-_o::GO:5_v1::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1-_o',
              '_to': 'GO_terms/GO:5_v1',
              'source': 'kbase_RE_indexer',
              'expired': 9007199254740991,
