@@ -11,6 +11,8 @@ import itertools as _itertools
 
 from src.utils.re_client import stored_query as _stored_query
 from src.utils.re_client import save as _save
+# may want to html encode vs replace with _ to avoid collisions? Seems really improbable
+from src.utils.re_client import clean_key as _clean_key
 from src.utils.re_client import MAX_ADB_INTEGER as _MAX_ADB_INTEGER
 
 _OBJ_VER_COLL = "ws_object_version"
@@ -85,7 +87,7 @@ def _generate_features(obj_ver_key, obj_data):
     ver = obj_data['info'][4]
     # might want to do this in smaller batches if memory pressure is an issue
     for f in d['features']:
-        feature_key = f'{obj_ver_key}_{f["id"]}'  # check f['id'] for weird chars?
+        feature_key = _clean_key(f'{obj_ver_key}_{f["id"]}')
         verts.append({
             '_key': feature_key,
             'workspace_id': wsid,
@@ -131,9 +133,10 @@ def _generate_GO_links(obj_ver_key, obj_data):
             if g not in resolved_terms:
                 print(f"Couldn't resolve GO term {g} in Genome {obj_ver_key} feature {f}")
             else:
+                featurekey = _clean_key(f'{obj_ver_key}_{f}')
                 edges.append({
-                    '_key': f'{obj_ver_key}_{f}::{resolved_terms[g]}::kbase_RE_indexer',
-                    '_from': f'{_WS_FEAT_COLL}/{obj_ver_key}_{f}',
+                    '_key': f'{featurekey}::{resolved_terms[g]}::kbase_RE_indexer',
+                    '_from': f'{_WS_FEAT_COLL}/{featurekey}',
                     '_to': f'{_GO_TERM_COLL}/{resolved_terms[g]}',
                     'source': 'kbase_RE_indexer',
                     'expired': _MAX_ADB_INTEGER
@@ -165,13 +168,13 @@ def _resolve_GO_terms(terms_set, query_time):
     for chunk in _chunkiter(terms_set_copy, _MAX_RE_QUERY_SIZE):
         c = list(chunk)
         res = _stored_query('GO_get_merges_from', {'froms': c})
-        from_to_time = _defaultdict(list)
+        from_to_time = _defaultdict(list)  # type: dict
         for e in res['results']:
             from_to_time[e['from']].append((e['to'], e['created']))
         for f in from_to_time.keys():
             to = sorted(from_to_time[f], key=lambda tt: tt[1])[-1]  # get most recent edge
             replaced_by[f] = to[0]
-    terms_set_copy = None
+    terms_set_copy = None  # type: ignore
     res = _resolve_GO_terms(set(replaced_by.values()), query_time)
     for old, new in replaced_by.items():
         if new in res:
