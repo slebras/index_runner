@@ -1,0 +1,76 @@
+{
+  "methods": ["POST"],
+  "path": "/ws",
+  "headers": {"Authorization": "valid_admin_token"},
+  "body": {
+    "version": "1.1",
+    "method": "Workspace.administer",
+    "params": [{
+      "command": "getObjects",
+      "params": {"objects": [{"ref": "19/1/1"}]}
+    }]
+  },
+  "response": {
+    "status": "200",
+    "body": {
+          "version": "1.1",
+          "result": [
+              {
+                  "data": [
+                      {
+                          "data": {
+                              "GenBank_hidden_flag": 1,
+                              "aliases": [
+                                  "\"Bacillus coli\" Migula 1895"
+                              ],
+                              "comments": "",
+                              "division_id": 0,
+                              "domain": "Bacteria",
+                              "embl_code": "EC",
+                              "genetic_code": 11,
+                              "hidden_substree_root_flag": "0",
+                              "inherited_GC_flag": 1,
+                              "inherited_MGC_flag": 1,
+                              "inherited_div_flag": 1,
+                              "mitochondrial_genetic_code": 0,
+                              "parent_taxon_ref": "1779/125680/3",
+                              "rank": "species",
+                              "scientific_lineage": "cellular organisms; Bacteria; Proteobacteria; Gammaproteobacteria; Enterobacterales; Enterobacteriaceae; Escherichia",
+                              "scientific_name": "Escherichia coli",
+                              "taxonomy_id": 562
+                          },
+                          "info": [
+                              302658,
+                              "562_taxon",
+                              "KBaseGenomeAnnotations.Taxon-1.0",
+                              "2017-01-06T23:30:18+0000",
+                              3,
+                              "kbasetest",
+                              1779,
+                              "ReferenceTaxons",
+                              "4ac08943e378bf3d7e075cdb670b3059",
+                              1023,
+                              {}
+                          ],
+                          "path": [
+                              "1779/302658/3"
+                          ],
+                          "provenance": [
+                          ],
+                          "creator": "kbasetest",
+                          "orig_wsid": 1779,
+                          "created": "2017-01-06T23:30:09+0000",
+                          "epoch": 1483745409829,
+                          "refs": [
+                              "1779/125680/3"
+                          ],
+                          "copy_source_inaccessible": 0,
+                          "extracted_ids": {}
+                      }
+                  ]
+              }
+          ]
+      } 
+  }
+}
+

@@ -3,12 +3,13 @@ If a workspace object, such as a genome, has taxonomy info in it, then:
     - try to find the best-match taxon node in the RE ncbi taxonomy
     - create an edge from the ws_object_version to the ncbi taxon vertex
 """
-import re as _re
-import time as _time
+import time
 from collections import defaultdict as _defaultdict
 import datetime as _datetime
 import itertools as _itertools
+from kbase_workspace_client import WorkspaceClient
 
+from src.utils.config import config
 from src.utils.re_client import stored_query as _stored_query
 from src.utils.re_client import save as _save
 # may want to html encode vs replace with _ to avoid collisions? Seems really improbable
@@ -46,28 +47,24 @@ def process_genome(obj_ver_key, obj_data):
 
 
 def _generate_taxon_edge(obj_ver_key, obj_data):
-    if 'taxonomy' not in obj_data['data']:
-        print('No lineage in object; skipping..')
+    if 'taxon_ref' not in obj_data['data']:
+        print('No taxon ref in object; skipping..')
         return
-    lineage = obj_data['data']['taxonomy'].split(';')
-    # Get the species or strain name, and filter out any non-alphabet chars
-    most_specific = _re.sub(r'[^a-zA-Z ]', '', lineage[-1].strip())
-    # Search by scientific name via the RE API
-    adb_resp = _stored_query('ncbi_taxon_search_sci_name', {
-        'search_text': most_specific,
-        'ts': int(_time.time() * 1000),
-        'offset': 0,
-        'limit': 10,
+    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+    result = ws_client.admin_req('getObjects', {
+        'objects': [{'ref': obj_data['data']['taxon_ref']}]
     })
-    # `adb_results` will be a dict with keys for 'total_count' and 'results'
-    adb_results = adb_resp['results'][0]
-    if adb_results['total_count'] == 0:
-        print('No matching taxon found for object.')
-        # No matching taxon found; no-op
+    taxonomy_id = result['data'][0]['data']['taxonomy_id']
+    adb_resp = _stored_query('ncbi_fetch_taxon', {
+       'id': str(taxonomy_id),
+       'ts': int(time.time() * 1000),
+    })
+    adb_results = adb_resp['results']
+    if not adb_results:
+        print(f'No taxonomy node in database for id {taxonomy_id}')
         return
-    match = adb_results['results'][0]
+    tax_key = adb_results[0]['_key']
     # Create an edge from the ws_object_ver to the taxon
-    tax_key = match['_key']
     from_id = f"{_OBJ_VER_COLL}/{obj_ver_key}"
     to_id = f"{_TAX_VER_COLL}/{tax_key}"
     print(f'Creating taxon edge from {from_id} to {to_id}')

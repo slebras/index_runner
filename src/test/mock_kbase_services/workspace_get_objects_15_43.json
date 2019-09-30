@@ -33,7 +33,8 @@
                                   "type": "fq"
                               },
                               "sequencing_tech": "Illumina",
-                              "single_genome": 1
+                              "single_genome": 1,
+                              "taxon_ref": "19/1/1"
                           },
                           "info": [
                               43,

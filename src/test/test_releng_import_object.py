@@ -34,12 +34,12 @@ class TestRelEngImportObject(unittest.TestCase):
         # stick a taxon node into the RE so search works.
         # TODO remove when we switch to pulling the taxon ID directly.
         save('ncbi_taxon', [{
-                "_key": "1423_2018-11-01",
-                "id": "1423",
+                "_key": "562_2018-11-01",
+                "id": "562",
                 "scientific_name": "Bacillus subtilis",
                 "rank": "species",
                 "aliases": [],  # dumped the aliases
-                "ncbi_taxon_id": 1423,
+                "ncbi_taxon_id": 562,
                 "gencode": 11,
                 "first_version": "2018-11-01",
                 "last_version": "2019-08-01",
@@ -143,16 +143,16 @@ class TestRelEngImportObject(unittest.TestCase):
         (type_module, type_name, maj_ver, min_ver) = ("KBaseGenomes", "Genome", 15, 1)
         obj_type = f"{type_module}.{type_name}-{maj_ver}.{min_ver}"
         # trigger the import
-        wsid = 7
+        wsid = 6
         import_object({
             "info": [
-                wsid,
+                7,
                 "my_genome",
                 obj_type,
                 "2016-10-05T17:11:32+0000",
                 8,
                 "someuser",
-                6,
+                wsid,
                 "godilovebacillus",
                 "31b40bb1004929f69cd4acfe247ea46d",
                 351,
@@ -222,10 +222,10 @@ class TestRelEngImportObject(unittest.TestCase):
         # Check for the workspace vertex
         self.assertDictContainsSubset({
             '_key': str(wsid),
-            'narr_name': 'narr7',
+            'narr_name': 'narr' + str(wsid),
             'owner': 'username',
             'lock_status': 'unlocked',
-            'name': 'username:narrative_7',
+            'name': 'username:narrative_' + str(wsid),
             'is_public': True,
             'is_deleted': False
         }, get_re_doc('ws_workspace', str(wsid)))
@@ -283,14 +283,13 @@ class TestRelEngImportObject(unittest.TestCase):
         taxon_edge = get_re_edge(
             'ws_obj_version_has_taxon',
             'ws_object_version/6:7:8',
-            'ncbi_taxon/1423_2018-11-01')
+            'ncbi_taxon/562_2018-11-01')
 
-        del taxon_edge['updated_at']
-        self.assertEqual(taxon_edge, {
+        self.assertDictContainsSubset({
             '_from': 'ws_object_version/6:7:8',
-            '_to': 'ncbi_taxon/1423_2018-11-01',
+            '_to': 'ncbi_taxon/562_2018-11-01',
             'assigned_by': '_system'
-        })
+        }, taxon_edge)
 
         f1 = get_re_doc('ws_genome_features', '6:7:8_id1-_o')
         del f1['updated_at']
