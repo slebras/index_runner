@@ -165,7 +165,8 @@ def _save_workspace(ws_info):
         'name': ws_info[1],
         'mod_epoch': ts_to_epoch(ws_info[3]),
         'is_public': ws_info[6] == 'r',
-        'is_deleted': False
+        'is_deleted': False,
+        'metadata': metadata
     })
 
 
