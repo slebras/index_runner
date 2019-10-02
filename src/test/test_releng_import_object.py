@@ -13,10 +13,15 @@ from src.utils import re_client
 
 
 def clear_collections():
-    for c in ['ws_object', 'ws_object_version', 'ws_object_hash', 'ws_version_of',
-              'ws_workspace_contains_obj', 'ws_obj_instance_of_type', 'ws_owner_of',
-              'ws_obj_version_has_taxon', 'ws_genome_features', 'ws_genome_has_feature',
-              'ncbi_taxon']:
+    for c in ['ws_object', 'ws_object_version', 'ws_object_hash',
+              'ws_version_of', 'ws_workspace', 'ws_workspace_contains_obj',
+              'ws_obj_instance_of_type', 'ws_owner_of',
+              'ws_obj_version_has_taxon', 'ws_genome_features',
+              'ws_genome_has_feature', 'ncbi_taxon', 'ws_copied_from',
+              'ws_method_version', 'ws_obj_created_with_method',
+              'ws_module_version', 'ws_obj_created_with_module',
+              'ws_type_version', 'ws_type', 'ws_type_module', 'ws_refers_to',
+              'ws_prov_descendant_of']:
         clear_collection(c)
 
 
@@ -192,7 +197,7 @@ class TestRelEngImportObject(unittest.TestCase):
             'ws_object/6:7'  # to
         )
         self.assertTrue(ver_edge)
-        # Check for ws_workspace_contains_obj
+        # Check for ws_workspace_contains_obj to unversioned obj
         contains_edge = get_re_edge(
             'ws_workspace_contains_obj',  # collection
             'ws_workspace/6',  # from
@@ -220,6 +225,10 @@ class TestRelEngImportObject(unittest.TestCase):
             'ws_type_version/KBaseGenomes.Genome-15.1'  # to
         )
         # Check for the workspace vertex
+        ws_metadata = {'cell_count': '1', 'data_palette_id': '2',
+                       'is_temporary': 'false', 'narrative': '1',
+                       'narrative_nice_name': 'narr6', 'searchtags':
+                       'narrative'}
         self.assertDictContainsSubset({
             '_key': str(wsid),
             'narr_name': 'narr' + str(wsid),
@@ -227,7 +236,8 @@ class TestRelEngImportObject(unittest.TestCase):
             'lock_status': 'unlocked',
             'name': 'username:narrative_' + str(wsid),
             'is_public': True,
-            'is_deleted': False
+            'is_deleted': False,
+            'metadata': ws_metadata,
         }, get_re_doc('ws_workspace', str(wsid)))
         # Check for type vertices
         self.assertDictContainsSubset({
