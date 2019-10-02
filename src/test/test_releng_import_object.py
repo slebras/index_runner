@@ -197,7 +197,7 @@ class TestRelEngImportObject(unittest.TestCase):
             'ws_object/6:7'  # to
         )
         self.assertTrue(ver_edge)
-        # Check for ws_workspace_contains_obj to unversioned obj
+        # Check for ws_workspace_contains_obj
         contains_edge = get_re_edge(
             'ws_workspace_contains_obj',  # collection
             'ws_workspace/6',  # from
