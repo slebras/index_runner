@@ -98,6 +98,7 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
                 'parent_gene': feat.get('parent_gene'),
                 'inference_data': feat.get('inference_data'),
                 'dna_sequence': feat.get('dna_sequence'),
+                'aliases': feat.get('aliases'),
                 # 'gc_content': feat_gc_content,
                 # Parent ids below
                 'parent_id': ama_id,
