@@ -2,6 +2,7 @@
 Relation engine API client functions.
 """
 import json
+import re
 import requests
 
 from src.utils.config import config
@@ -9,6 +10,17 @@ from src.utils.config import config
 # see https://www.arangodb.com/2018/07/time-traveling-with-graph-databases/
 # in unix epoch ms this is 2255/6/5
 MAX_ADB_INTEGER = 2**53 - 1
+
+_ADB_KEY_DISALLOWED_CHARS_REGEX = re.compile(r"[^a-zA-Z0-9_\-:\.@\(\)\+,=;\$!\*'%]")
+
+
+# should this live somewhere else?
+def clean_key(key):
+    """
+    Swaps disallowed characters for an ArangoDB '_key' with an underscore.
+    See https://www.arangodb.com/docs/stable/data-modeling-naming-conventions-document-keys.html
+    """
+    return _ADB_KEY_DISALLOWED_CHARS_REGEX.sub('_', key)
 
 
 def stored_query(name, params):
@@ -125,11 +137,13 @@ def save(coll_name, docs, on_duplicate='update', display_errors=False):
     API docs: https://github.com/kbase/relation_engine_api
     Args:
         coll_name - collection name
-        docs - list of dicts to save into the collection as json documents
+        docs - single dict or list of dicts to save into the collection as json documents
         on_duplicate - what to do on a unique key collision. One of 'update', 'replace' 'ignore',
             'error'.
         display_errors - include error information if insert errors occur.
     """
+    if isinstance(docs, dict):
+        docs = [docs]
     url = config()['re_api_url'] + '/api/v1/documents'
     # convert the docs into a string, where each obj is separated by a linebreak
     payload = '\n'.join([json.dumps(d) for d in docs])

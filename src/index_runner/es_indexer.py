@@ -7,6 +7,7 @@ import time
 import json
 import hashlib
 import traceback
+import logging
 from confluent_kafka import Producer
 from kbase_workspace_client import WorkspaceClient
 
@@ -21,6 +22,8 @@ from src.index_runner.es_indexers.indexer_utils import (
     fetch_objects_in_workspace,
     is_workspace_public
 )
+
+logging.getLogger(__name__)
 
 
 class ESIndexer:
@@ -39,17 +42,18 @@ class ESIndexer:
         event_type = msg.get('evtype')
         ws_id = msg.get('wsid')
         if not event_type:
-            print(f"Missing 'evtype' in event: {msg}")
+            logging.info(f"Missing 'evtype' in event: {msg}")
             return
         if event_type != "RELOAD_ELASTIC_ALIASES" and not ws_id:
-            print(f'Invalid wsid in event: {ws_id}')
+            # TODO this logic and error message is weird
+            logging.error(f'Invalid wsid in event: {ws_id}')
             return
-        print(f'es_writer received {msg["evtype"]} for {ws_id}/{msg.get("objid", "?")}')
+        logging.info(f'es_writer received {msg["evtype"]} for {ws_id}/{msg.get("objid", "?")}')
         try:
             if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
-                print('Running indexer..')
+                logging.info('Running indexer..')
                 self._run_indexer(msg)
-                print('Done running indexer..')
+                logging.info('Done running indexer..')
             elif event_type == 'REINDEX_WS':
                 self._index_ws(msg)
             elif event_type == 'INDEX_NONEXISTENT_WS':
@@ -67,15 +71,16 @@ class ESIndexer:
             elif event_type == 'RELOAD_ELASTIC_ALIASES':
                 self._reload_aliases(msg)
             else:
-                print(f"Unrecognized event {event_type}.")
+                logging.info(f"Unrecognized event {event_type}.")
                 return
         except Exception as err:
-            print('=' * 80)
-            print(f"Error indexing:\n{type(err)} - {err}")
-            print(msg)
-            print(err)
-            traceback.print_exc()
-            print('=' * 80)
+            logging.error('Error indexing:\n'
+                          + '-' * 80 + '\n'
+                          + str(msg) + '\n'
+                          + str(err) + '\n'
+                          + '-' * 80 + '\n'
+                          + traceback.format_exc() + '\n'
+                          + '=' * 80)
             _log_err_to_es(self.children['es_writers'], msg, err)
 
     def _reload_aliases(self, msg):
@@ -95,7 +100,7 @@ class ESIndexer:
                 continue
             # Push to the elasticsearch write queue
             self.children['es_writers'].put((result['_action'], result))
-        print(f'_run_indexer finished in {time.time() - start}s')
+        logging.info(f'_run_indexer finished in {time.time() - start}s')
 
     def _index_ws(self, msg):
         """Index all objects in a workspace."""
@@ -118,7 +123,7 @@ class ESIndexer:
         objid = msg['objid']
         if not check_object_deleted(wsid, objid):
             # Object is not deleted
-            print(f'object {objid} in workspace {wsid} not deleted')
+            logging.info(f'object {objid} in workspace {wsid} not deleted')
             return
         self.children['es_writers'].put(('delete', {'object_id': f"{wsid}:{objid}"}))
 
@@ -130,7 +135,7 @@ class ESIndexer:
         # Verify that this workspace is actually deleted
         wsid = msg['wsid']
         if not check_workspace_deleted(wsid):
-            print(f'Workspace {wsid} not deleted')
+            logging.info(f'Workspace {wsid} not deleted')
             return
         self.children['es_writers'].put(('delete', {'workspace_id': str(wsid)}))
 
@@ -169,7 +174,7 @@ class ESIndexer:
         """
         exists = es_utils.does_doc_exist(msg['wsid'], msg['objid'])
         if not exists:
-            print('Doc does not exist..')
+            logging.info('Doc does not exist')
             self._run_indexer(msg)
 
 
@@ -193,6 +198,6 @@ def _produce(data, topic=config()['topics']['admin_events']):
 
 def _delivery_report(err, msg):
     if err is not None:
-        print('Message delivery failed:', err)
+        logging.error('Message delivery failed:', err)
     else:
-        print('Message delivered to', msg.topic())
+        logging.info('Message delivered to', msg.topic())

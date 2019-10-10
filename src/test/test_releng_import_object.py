@@ -13,10 +13,15 @@ from src.utils import re_client
 
 
 def clear_collections():
-    for c in ['ws_object', 'ws_object_version', 'ws_object_hash', 'ws_version_of',
-              'ws_workspace_contains_obj', 'ws_obj_instance_of_type', 'ws_owner_of',
-              'ws_obj_version_has_taxon', 'ws_genome_features', 'ws_genome_has_feature',
-              'ncbi_taxon']:
+    for c in ['ws_object', 'ws_object_version', 'ws_object_hash',
+              'ws_version_of', 'ws_workspace', 'ws_workspace_contains_obj',
+              'ws_obj_instance_of_type', 'ws_owner_of',
+              'ws_obj_version_has_taxon', 'ws_genome_features',
+              'ws_genome_has_feature', 'ncbi_taxon', 'ws_copied_from',
+              'ws_method_version', 'ws_obj_created_with_method',
+              'ws_module_version', 'ws_obj_created_with_module',
+              'ws_type_version', 'ws_type', 'ws_type_module', 'ws_refers_to',
+              'ws_prov_descendant_of']:
         clear_collection(c)
 
 
@@ -31,15 +36,15 @@ class TestRelEngImportObject(unittest.TestCase):
         Test importing a genome into the RE, including creating a object -> ncbi_taxon edge.
         """
         clear_collections()
-        # stick a taxon node into the RE so seach works.
+        # stick a taxon node into the RE so search works.
         # TODO remove when we switch to pulling the taxon ID directly.
         save('ncbi_taxon', [{
-                "_key": "1423_2018-11-01",
-                "id": "1423",
+                "_key": "562_2018-11-01",
+                "id": "562",
                 "scientific_name": "Bacillus subtilis",
                 "rank": "species",
                 "aliases": [],  # dumped the aliases
-                "ncbi_taxon_id": 1423,
+                "ncbi_taxon_id": 562,
                 "gencode": 11,
                 "first_version": "2018-11-01",
                 "last_version": "2019-08-01",
@@ -132,32 +137,33 @@ class TestRelEngImportObject(unittest.TestCase):
 
         # add an edge that already exists and so should not be overwritten
         save('ws_feature_has_GO_annotation', [
-            {'_key': '6:7:8_id1::GO:2_v1::kbase_RE_indexer',
-             '_from': 'ws_genome_features/6:7:8_id1',
+            {'_key': '6:7:8_id1-_o::GO:2_v1::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1-_o',
              '_to': 'GO_terms/GO:2_v1',
              'source': 'kbase_RE_indexer',
              'expired': re_client.MAX_ADB_INTEGER,
              'created': 678,
              }
         ])
-
+        (type_module, type_name, maj_ver, min_ver) = ("KBaseGenomes", "Genome", 15, 1)
+        obj_type = f"{type_module}.{type_name}-{maj_ver}.{min_ver}"
         # trigger the import
+        wsid = 6
         import_object({
             "info": [
                 7,
                 "my_genome",
-                "KBaseGenomes.Genome-15.1",
+                obj_type,
                 "2016-10-05T17:11:32+0000",
                 8,
                 "someuser",
-                6,
+                wsid,
                 "godilovebacillus",
                 "31b40bb1004929f69cd4acfe247ea46d",
                 351,
                 {}
             ]
-            })
-
+        })
         # check results
         obj_doc = get_re_doc('ws_object', '6:7')
         self.assertEqual(obj_doc['workspace_id'], 6)
@@ -218,6 +224,37 @@ class TestRelEngImportObject(unittest.TestCase):
             'ws_object_version/6:7:8',  # from
             'ws_type_version/KBaseGenomes.Genome-15.1'  # to
         )
+        # Check for the workspace vertex
+        ws_metadata = {'cell_count': '1', 'data_palette_id': '2',
+                       'is_temporary': 'false', 'narrative': '1',
+                       'narrative_nice_name': 'narr6', 'searchtags':
+                       'narrative'}
+        self.assertDictContainsSubset({
+            '_key': str(wsid),
+            'narr_name': 'narr' + str(wsid),
+            'owner': 'username',
+            'lock_status': 'unlocked',
+            'name': 'username:narrative_' + str(wsid),
+            'is_public': True,
+            'is_deleted': False,
+            'metadata': ws_metadata,
+        }, get_re_doc('ws_workspace', str(wsid)))
+        # Check for type vertices
+        self.assertDictContainsSubset({
+            '_key': 'KBaseGenomes.Genome-15.1',
+            'module_name': 'KBaseGenomes',
+            'type_name': 'Genome',
+            'maj_ver': 15,
+            'min_ver': 1
+        }, get_re_doc('ws_type_version', obj_type))
+        self.assertDictContainsSubset({
+            '_key': 'KBaseGenomes.Genome',
+            'module_name': 'KBaseGenomes',
+            'type_name': 'Genome'
+        }, get_re_doc('ws_type', f"{type_module}.{type_name}"))
+        self.assertDictContainsSubset({
+            '_key': 'KBaseGenomes'
+        }, get_re_doc('ws_type_module', type_module))
         self.assertTrue(type_edge)
         # Check for the ws_owner_of edge
         owner_edge = get_re_edge(
@@ -256,24 +293,23 @@ class TestRelEngImportObject(unittest.TestCase):
         taxon_edge = get_re_edge(
             'ws_obj_version_has_taxon',
             'ws_object_version/6:7:8',
-            'ncbi_taxon/1423_2018-11-01')
+            'ncbi_taxon/562_2018-11-01')
 
-        del taxon_edge['updated_at']
-        self.assertEqual(taxon_edge, {
+        self.assertDictContainsSubset({
             '_from': 'ws_object_version/6:7:8',
-            '_to': 'ncbi_taxon/1423_2018-11-01',
+            '_to': 'ncbi_taxon/562_2018-11-01',
             'assigned_by': '_system'
-        })
+        }, taxon_edge)
 
-        f1 = get_re_doc('ws_genome_features', '6:7:8_id1')
+        f1 = get_re_doc('ws_genome_features', '6:7:8_id1-_o')
         del f1['updated_at']
         self.assertEqual(f1, {
-            '_key': '6:7:8_id1',
-            '_id': 'ws_genome_features/6:7:8_id1',
+            '_key': '6:7:8_id1-_o',
+            '_id': 'ws_genome_features/6:7:8_id1-_o',
             'workspace_id': 6,
             'object_id': 7,
             'version': 8,
-            'feature_id': 'id1'})
+            'feature_id': 'id1-|o'})
 
         f2 = get_re_doc('ws_genome_features', '6:7:8_id2')
         del f2['updated_at']
@@ -288,14 +324,14 @@ class TestRelEngImportObject(unittest.TestCase):
         e1 = get_re_edge(
             'ws_genome_has_feature',
             'ws_object_version/6:7:8',
-            'ws_genome_features/6:7:8_id1',
+            'ws_genome_features/6:7:8_id1-_o',
             False)
         del e1['updated_at']
         self.assertEqual(e1, {
-            '_key': '6:7:8_id1',
-            '_id': 'ws_genome_has_feature/6:7:8_id1',
+            '_key': '6:7:8_id1-_o',
+            '_id': 'ws_genome_has_feature/6:7:8_id1-_o',
             '_from': 'ws_object_version/6:7:8',
-            '_to': 'ws_genome_features/6:7:8_id1',
+            '_to': 'ws_genome_features/6:7:8_id1-_o',
         })
         e2 = get_re_edge(
             'ws_genome_has_feature',
@@ -326,23 +362,23 @@ class TestRelEngImportObject(unittest.TestCase):
                 self.assertEqual(created, 678)
 
         expected = [
-            {'_key': '6:7:8_id1::GO:1_v2::kbase_RE_indexer',
-             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1::GO:1_v2::kbase_RE_indexer',
-             '_from': 'ws_genome_features/6:7:8_id1',
+            {'_key': '6:7:8_id1-_o::GO:1_v2::kbase_RE_indexer',
+             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1-_o::GO:1_v2::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1-_o',
              '_to': 'GO_terms/GO:1_v2',
              'source': 'kbase_RE_indexer',
              'expired': 9007199254740991,
              },
-            {'_key': '6:7:8_id1::GO:2_v1::kbase_RE_indexer',
-             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1::GO:2_v1::kbase_RE_indexer',
-             '_from': 'ws_genome_features/6:7:8_id1',
+            {'_key': '6:7:8_id1-_o::GO:2_v1::kbase_RE_indexer',
+             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1-_o::GO:2_v1::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1-_o',
              '_to': 'GO_terms/GO:2_v1',
              'source': 'kbase_RE_indexer',
              'expired': 9007199254740991,
              },
-            {'_key': '6:7:8_id1::GO:5_v1::kbase_RE_indexer',
-             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1::GO:5_v1::kbase_RE_indexer',
-             '_from': 'ws_genome_features/6:7:8_id1',
+            {'_key': '6:7:8_id1-_o::GO:5_v1::kbase_RE_indexer',
+             '_id': 'ws_feature_has_GO_annotation/6:7:8_id1-_o::GO:5_v1::kbase_RE_indexer',
+             '_from': 'ws_genome_features/6:7:8_id1-_o',
              '_to': 'GO_terms/GO:5_v1',
              'source': 'kbase_RE_indexer',
              'expired': 9007199254740991,

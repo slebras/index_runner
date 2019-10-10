@@ -3,10 +3,14 @@ Relation Engine (ArangoDB) data importer.
 
 Writes data to arangodb from workspace update events.
 """
+import logging
+
 from kbase_workspace_client import WorkspaceClient
 from src.index_runner.releng.import_obj import import_object
 from src.utils.re_client import check_doc_existence
 from src.utils.config import config
+
+logging.getLogger(__name__)
 
 # Initialize configuration data
 
@@ -21,7 +25,7 @@ class RelengImporter:
             raise RuntimeError(f'Invalid wsid in event: {wsid}')
         if not event_type:
             raise RuntimeError(f"Missing 'evtype' in event: {msg}")
-        print(f'Received {msg["evtype"]} for {wsid}/{msg.get("objid", "?")}')
+        logging.info(f'Received {msg["evtype"]} for {wsid}/{msg.get("objid", "?")}')
         if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
             _import_obj(msg)
         elif event_type == 'INDEX_NONEXISTENT':
@@ -30,17 +34,17 @@ class RelengImporter:
             _delete_obj(msg)
         elif event_type == 'WORKSPACE_DELETE_STATE_CHANGE':
             _delete_ws(msg)
-        elif event_type in ['CLONE_WORKSPACE', 'INDEX_WORKSPACE']:
+        elif event_type in ['CLONE_WORKSPACE', 'REINDEX_WS']:
             _import_ws(msg)
         elif event_type == 'SET_GLOBAL_PERMISSION':
             _set_global_perms(msg)
         else:
-            print(f"Unrecognized event {event_type}.")
+            logging.info(f"Unrecognized event {event_type}.")
             return
 
 
 def _import_obj(msg):
-    print('Downloading obj')
+    logging.info('Downloading obj')
     ws = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
     ref = _get_ref(msg)
     resp = ws.admin_req('getObjects', {'objects': [{'ref': ref}], 'no_data': 1})
@@ -58,25 +62,24 @@ def _import_nonexistent(msg):
 
 def _delete_obj(msg):
     """Handle an object deletion event (OBJECT_DELETE_STATE_CHANGE)"""
-    print('_delete_obj TODO')  # TODO
+    logging.info('_delete_obj TODO')  # TODO
     # raise NotImplementedError()
 
 
 def _delete_ws(msg):
     """Handle a workspace deletion event (WORKSPACE_DELETE_STATE_CHANGE)."""
-    print('_delete_ws TODO')  # TODO
+    logging.info('_delete_ws TODO')  # TODO
     # raise NotImplementedError()
 
 
 def _import_ws(msg):
     """Import all data for an entire workspace."""
-    print('_import_ws TODO')  # TODO
-    # raise NotImplementedError()
+    pass
 
 
 def _set_global_perms(msg):
     """Set permissions for an entire workspace (SET_GLOBAL_PERMISSION)."""
-    print('_set_global_perms TODO')  # TODO
+    logging.info('_set_global_perms TODO')  # TODO
     # raise NotImplementedError()
 
 

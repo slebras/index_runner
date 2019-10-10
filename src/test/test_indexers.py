@@ -105,7 +105,6 @@ _TEST_EVENTS = {
 _DIR = os.path.dirname(os.path.realpath(__file__))
 
 
-@unittest.skip('temp')
 class TestIndexers(unittest.TestCase):
 
     maxDiff = None
@@ -119,7 +118,7 @@ class TestIndexers(unittest.TestCase):
         for (idx, msg_data) in enumerate(indexer(test_data['obj'], test_data['ws_info'], test_data['obj'])):
             self.assertEqual(msg_data, check_against[idx])
 
-    # @unittest.skip('x')
+    @unittest.skip('Incompatible with travis.ci')
     def test_from_sdk(self):
         check_against = [{
             '_action': 'index',
@@ -139,7 +138,6 @@ class TestIndexers(unittest.TestCase):
         }]
         self._default_obj_test('genomeset_save', index_from_sdk, check_against)
 
-    # @unittest.skip('x')
     def test_reads_indexer(self):
         check_against = [{
             '_action': 'index',
@@ -158,7 +156,6 @@ class TestIndexers(unittest.TestCase):
         }]
         self._default_obj_test('reads_save', index_reads, check_against)
 
-    # @unittest.skip('x')
     def test_assembly_indexer(self):
         check_against = [{
             '_action': 'index',
@@ -181,7 +178,6 @@ class TestIndexers(unittest.TestCase):
         }]
         self._default_obj_test('assembly_save', index_assembly, check_against)
 
-    # @unittest.skip('x')
     def test_annotated_metagenome_assembly_indexer(self):
         # the annotated_meganome_assembly 'check_against' data is really big, so we keep it in an external file
         event_data_str = "annotated_metagenome_assembly_save"
@@ -208,21 +204,18 @@ class TestIndexers(unittest.TestCase):
             self.assertEqual(msg_data, check_against[idx])
         # print(']')
 
-    # @unittest.skip('x')
     def test_genome_indexer(self):
         # The genome `check_against` data is really big, so we keep it in an external file
         with open(os.path.join(_DIR, 'test_data/genome_check_against.json')) as fd:
             check_against = json.load(fd)
         self._default_obj_test('genome_save', index_genome, check_against)
 
-    # @unittest.skip('x')
     def test_pangenome_indexer(self):
         # The pangenome `check_against` data is really big, so we keep it in an external file
         with open(os.path.join(_DIR, 'test_data/pangenome_check_against.json')) as fd:
             check_against = json.load(fd)
         self._default_obj_test('pangenome_save', index_pangenome, check_against)
 
-    # @unittest.skip('x')
     def test_tree_indexer(self):
         check_against = [{
             '_action': 'index',
@@ -239,7 +232,6 @@ class TestIndexers(unittest.TestCase):
         }]
         self._default_obj_test('tree_save', index_tree, check_against)
 
-    # @unittest.skip('x')
     def test_taxon_indexer(self):
         check_against = [{
             '_action': 'index',

@@ -4,11 +4,13 @@ import json
 import shutil
 import docker
 import requests
+import logging
 from configparser import ConfigParser
 
 from src.utils.config import config
 from src.utils import ws_utils
 
+logging.getLogger(__name__)
 
 _DOCKER = docker.from_env()
 _SCRATCH = "/scratch"
@@ -112,7 +114,7 @@ def _pull_docker_image(image):
             # id_ = im.id
             pulled = True
     if not pulled:
-        print("Pulling %s" % image)
+        logging.info("Pulling %s" % image)
         _DOCKER.images.pull(image)
 
 
