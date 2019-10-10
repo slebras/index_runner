@@ -3,7 +3,10 @@ Utilites for dealing with the various services the index runner depends on.
 """
 import time
 import requests
+import logging
 from src.utils.config import config
+
+logging.getLogger(__name__)
 
 
 def wait_for_dependencies(elasticsearch=True, re_api=True, timeout=60):
@@ -27,8 +30,7 @@ def _wait_for_service(url, name, start_time, timeout):
             requests.get(url).raise_for_status()
             break
         except Exception:
-            print(f'Waiting for {name} service...')
+            logging.info(f'Waiting for {name} service...')
             time.sleep(5)
             if (int(time.time()) - start_time) > timeout:
-                raise RuntimeError(
-                    f"Failed to connect to all services in {timeout}s. Timed out on {name}.")
+                raise RuntimeError(f"Failed to connect to all services in {timeout}s. Timed out on {name}.")

@@ -20,6 +20,9 @@ import traceback
 from dataclasses import dataclass
 from typing import Tuple, Callable
 from multiprocessing import Process, Queue
+import logging
+
+logging.getLogger(__name__)
 
 
 @dataclass
@@ -92,8 +95,8 @@ def _run_worker(cls, args, queue, child_queues):
 
 def _report_err(err):
     """Verbosely print an error caught in a worker's event loop."""
-    print('=' * 80)
-    print(err)
-    print('-' * 80)
-    traceback.print_exc()
-    print('=' * 80)
+    logging.error('=' * 80 + '\n'
+                  + str(err) + '\n'
+                  + '-' * 80 + '\n'
+                  + traceback.format_exc() + '\n'
+                  + '=' * 80)

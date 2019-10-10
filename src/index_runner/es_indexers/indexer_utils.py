@@ -1,8 +1,11 @@
+import logging
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from src.utils.config import config
 from src.utils.ws_utils import get_type_pieces
+
+logging.getLogger(__name__)
 
 _REF_DATA_WORKSPACES = []  # type: list
 
@@ -21,7 +24,7 @@ def check_object_deleted(ws_id, obj_id):
             'ids': [ws_id]
         })
     except WorkspaceResponseError as err:
-        print("Workspace response error: ", err.resp_data)
+        logging.error("Workspace response error: ", err.resp_data)
         # NOTE: not sure if we want to raise err here, worth thinking about
         raise err
     # make sure obj_id is not in list of object ids of workspace (this means its deleted)
@@ -70,7 +73,7 @@ def get_shared_users(ws_id):
             'workspaces': [{'id': ws_id}]
         })['perms'][0]
     except WorkspaceResponseError as err:
-        print("Workspace response error: ", err.resp_data)
+        logging.error("Workspace response error: ", err.resp_data)
         raise err
     shared_users = []
     for username, user_perms in obj_perm.items():
@@ -92,7 +95,7 @@ def fetch_objects_in_workspace(ws_id, include_narrative=False):
             "ids": [ws_id]
         })
     except WorkspaceResponseError as err:
-        print("Workspace response error: ", err.resp_data)
+        logging.error("Workspace response error: ", err.resp_data)
         raise err
     if include_narrative:
         narrative_data = [

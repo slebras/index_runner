@@ -8,6 +8,8 @@ Architecture:
         - es_writer -- receives updates from index_runner and bulk-updates elasticsearch.
     The index_runner and es_writer run in separate workers with message queues in between.
 """
+import logging
+import os
 import json
 import time
 import requests
@@ -29,7 +31,7 @@ def main():
     """
     # Wait for dependency services (ES and RE) to be live
     wait_for_dependencies(timeout=180)
-    print('Services started! Now starting the app..')
+    logging.info('Services started! Now starting the app..')
     # Initialize worker group of ESIndexer
     es_indexers = WorkerGroup(ESIndexer, (), count=config()['workers']['num_es_indexers'])
     # Initialize a worker group of RelengImporter
@@ -61,16 +63,16 @@ def main():
                 }))
         if msg.error():
             if msg.error().code() == KafkaError._PARTITION_EOF:
-                print('End of stream.')
+                logging.info('End of stream.')
             else:
-                print(f"Kafka message error: {msg.error()}")
+                logging.error(f"Kafka message error: {msg.error()}")
             continue
         val = msg.value().decode('utf-8')
         try:
             data = json.loads(val)
         except ValueError as err:
-            print(f'JSON parsing error: {err}')
-            print(f'Message content: {val}')
+            logging.error(f'JSON parsing error: {err}')
+            logging.error(f'Message content: {val}')
         for receiver in receivers:
             receiver.queue.put(('ws_event', data))
 
@@ -99,13 +101,19 @@ def _set_consumer():
         config()['topics']['workspace_events'],
         config()['topics']['admin_events']
     ]
-    print(f"Subscribing to: {topics}")
-    print(f"Client group: {config()['kafka_clientgroup']}")
-    print(f"Kafka server: {config()['kafka_server']}")
+    logging.info(f"Subscribing to: {topics}")
+    logging.info(f"Client group: {config()['kafka_clientgroup']}")
+    logging.info(f"Kafka server: {config()['kafka_server']}")
     consumer.subscribe(topics)
     return consumer
 
 
 if __name__ == '__main__':
-    print('before main..')
+    # Set up the logger
+    # Make the urllib debug logs less noisy
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    # Set out own log level from the env
+    level = os.environ.get('LOGLEVEL', 'DEBUG').upper()
+    logging.basicConfig(level=level)
+    # Run the main thread
     main()

@@ -7,6 +7,7 @@ import time
 from collections import defaultdict as _defaultdict
 import datetime as _datetime
 import itertools as _itertools
+import logging
 from kbase_workspace_client import WorkspaceClient
 
 from src.utils.config import config
@@ -15,6 +16,8 @@ from src.utils.re_client import save as _save
 # may want to html encode vs replace with _ to avoid collisions? Seems really improbable
 from src.utils.re_client import clean_key as _clean_key
 from src.utils.re_client import MAX_ADB_INTEGER as _MAX_ADB_INTEGER
+
+logging.getLogger(__name__)
 
 _OBJ_VER_COLL = "ws_object_version"
 _TAX_VER_COLL = "ncbi_taxon"
@@ -48,7 +51,7 @@ def process_genome(obj_ver_key, obj_data):
 
 def _generate_taxon_edge(obj_ver_key, obj_data):
     if 'taxon_ref' not in obj_data['data']:
-        print('No taxon ref in object; skipping..')
+        logging.info('No taxon ref in object; skipping..')
         return
     ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
     result = ws_client.admin_req('getObjects', {
@@ -61,20 +64,20 @@ def _generate_taxon_edge(obj_ver_key, obj_data):
     })
     adb_results = adb_resp['results']
     if not adb_results:
-        print(f'No taxonomy node in database for id {taxonomy_id}')
+        logging.info(f'No taxonomy node in database for id {taxonomy_id}')
         return
     tax_key = adb_results[0]['_key']
     # Create an edge from the ws_object_ver to the taxon
     from_id = f"{_OBJ_VER_COLL}/{obj_ver_key}"
     to_id = f"{_TAX_VER_COLL}/{tax_key}"
-    print(f'Creating taxon edge from {from_id} to {to_id}')
+    logging.info(f'Creating taxon edge from {from_id} to {to_id}')
     _save(_TAX_EDGE_COLL, [{'_from': from_id, '_to': to_id, 'assigned_by': '_system'}])
 
 
 def _generate_features(obj_ver_key, obj_data):
     d = obj_data['data']
     if not d.get('features'):
-        print(f'Genome {obj_ver_key} has no features')
+        logging.info(f'Genome {obj_ver_key} has no features')
         return
 
     verts = []
@@ -98,7 +101,7 @@ def _generate_features(obj_ver_key, obj_data):
             '_to': f'{_WS_FEAT_COLL}/{feature_key}'
         })
 
-    print(f'Saving {len(verts)} features for genome {obj_ver_key}')
+    logging.info(f'Saving {len(verts)} features for genome {obj_ver_key}')
     # hmm, this could leave the db in a corrupt state... options are 1) rollback 2) retry 3) leave
     # rollback is kind of impossible as an error here implies the re api isn't reachable
     # retry is doable, but should probably be implemented much higher in the stack
@@ -128,7 +131,7 @@ def _generate_GO_links(obj_ver_key, obj_data):
     for f in f_to_go:
         for g in f_to_go[f]:
             if g not in resolved_terms:
-                print(f"Couldn't resolve GO term {g} in Genome {obj_ver_key} feature {f}")
+                logging.info(f"Couldn't resolve GO term {g} in Genome {obj_ver_key} feature {f}")
             else:
                 featurekey = _clean_key(f'{obj_ver_key}_{f}')
                 edges.append({
@@ -141,7 +144,7 @@ def _generate_GO_links(obj_ver_key, obj_data):
     created_time = _now_epoch_ms() + 20 * len(edges)  # allow 20 ms to transport & save each edge
     for e in edges:
         e['created'] = created_time
-    print(f'Writing {len(edges)} feature -> GO edges for genome {obj_ver_key}')
+    logging.info(f'Writing {len(edges)} feature -> GO edges for genome {obj_ver_key}')
     _save(_WS_FEAT_TO_GO_COLL, edges, on_duplicate='ignore', display_errors=True)
 
 

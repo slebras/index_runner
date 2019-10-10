@@ -7,10 +7,13 @@ import json
 import requests
 import time
 from enum import Enum
+import logging
 from kbase_workspace_client import WorkspaceClient
 
 from src.utils.config import config
 from src.utils.ws_utils import get_type_pieces
+
+logging.getLogger(__name__)
 
 # Initialize configuration data
 _ES_URL = config()['elasticsearch_url']
@@ -28,7 +31,7 @@ class ESWriter:
 
     def __init__(self):
         """Initialize the indices, aliases, and type mappings on ES."""
-        print("Initializing all ES indices and mappings from the global config:")
+        logging.info("Initializing all ES indices and mappings from the global config:")
         self.batch_writes = []  # type: list
         self.batch_deletes = []  # type: list
         for index, mapping in _MAPPINGS.items():
@@ -49,7 +52,7 @@ class ESWriter:
         if config()['global'].get('aliases'):
             group_aliases = config()['global']['aliases']
             msg = data.get('msg', "manually")
-            print(f"Resetting Elasticsearch aliases {msg}....")
+            logging.info(f"Resetting Elasticsearch aliases {msg}....")
             for alias_name in group_aliases:
                 try:
                     _create_alias(
@@ -94,7 +97,7 @@ class ESWriter:
         if write_len >= min_length:
             _write_to_elastic(self.batch_writes)
             self.batch_writes = []
-            print(f"es_writer wrote {write_len} documents to elasticsearch.")
+            logging.info(f"es_writer wrote {write_len} documents to elasticsearch.")
 
     def _perform_batch_deletes(self, min_length=1):
         """
@@ -106,7 +109,7 @@ class ESWriter:
         if delete_len >= min_length:
             _delete_from_elastic(self.batch_deletes)
             self.batch_deletes = []
-            print(f"es_writer deleted {delete_len} documents from elasticsearch.")
+            logging.info(f"es_writer deleted {delete_len} documents from elasticsearch.")
 
     def init_index(self, msg):
         """
@@ -119,9 +122,9 @@ class ESWriter:
         index_name = f"{_PREFIX}.{msg['name']}"
         status = _create_index(index_name)
         if status == Status.CREATED:
-            print(f"es_writer Index {index_name} created.")
+            logging.info(f"es_writer Index {index_name} created.")
         elif status == Status.EXISTS:
-            print(f"es_writer Index {index_name} already exists.")
+            logging.info(f"es_writer Index {index_name} already exists.")
         # Update the type mapping
         _put_mapping(index_name, msg['props'])
 
@@ -269,7 +272,7 @@ def _write_to_elastic(data):
     if not resp.ok:
         # Unsuccesful save to elasticsearch.
         raise RuntimeError(f"Error saving to elasticsearch:\n{resp.text}")
-    print(f'write_to_elastic took {time.time() - start}s')
+    logging.info(f'write_to_elastic took {time.time() - start}s')
 
 
 def _update_by_query(query, script, config):
