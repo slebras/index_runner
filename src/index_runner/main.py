@@ -53,9 +53,10 @@ def main():
         curr_min = int(time.time()/60)
         if curr_min > last_updated_minute:
             config_tag = _query_for_config_tag()
+            # update minute here
+            last_updated_minute = curr_min
             if config_tag is not None and config_tag != _CONFIG_TAG:
                 _CONFIG_TAG = config_tag
-                last_updated_minute = curr_min
                 # send message to es_indexers to update config.
                 es_indexers.queue.put(('ws_event', {
                     'evtype': "RELOAD_ELASTIC_ALIASES",
