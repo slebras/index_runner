@@ -222,7 +222,8 @@ def _delete_from_elastic(batch_deletes):
         if msg.get('workspace_id'):
             wsid = msg['workspace_id']
             # TODO: update to check/work for multiple versions.
-            for (obj_id, ver) in _WS_CLIENT.generate_all_ids_for_workspace(wsid):
+            # XXX versioned objects?
+            for (obj_id, ver) in _WS_CLIENT.generate_all_ids_for_workspace(wsid, admin=True):
                 id_set.add(f"WS::{wsid}:{obj_id}")
         else:
             id_set.add(f"WS::{msg['object_id']}")
