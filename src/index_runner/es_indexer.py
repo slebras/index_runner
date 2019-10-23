@@ -198,6 +198,6 @@ def _produce(data, topic=config()['topics']['admin_events']):
 
 def _delivery_report(err, msg):
     if err is not None:
-        logging.error('Message delivery failed:', err)
+        logging.error(f'Message delivery failed:\n{err}')
     else:
-        logging.info('Message delivered to', msg.topic())
+        logging.info(f'Message delivered to {msg.topic()}')
