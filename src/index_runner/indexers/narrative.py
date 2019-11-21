@@ -5,6 +5,7 @@ from markdown2 import Markdown
 from utils.get_path import get_path
 from . import indexer_utils
 
+_NAMESPACE = "WS"
 _MARKDOWNER = Markdown()
 _NARRATIVE_INDEX_VERSION = 1
 _NARRATIVE_INDEX_NAME = 'narrative:' + str(_NARRATIVE_INDEX_VERSION)
@@ -55,6 +56,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
     metadata = obj_info[-1] or {}  # last elem of obj info is a metadata dict
     narrative_title = metadata.get('name')
     result = {
+        '_action': 'index',
         'doc': {
             'narrative_title': narrative_title,
             'data_objects': narrative_data_objects,
@@ -63,7 +65,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             'total_cells': len(cells),
         },
         'index': _NARRATIVE_INDEX_NAME,
-        'id': f'{workspace_id}:{obj_id}',
+        'id': f'{_NAMESPACE}::{workspace_id}:{obj_id}',
     }
     yield result
 

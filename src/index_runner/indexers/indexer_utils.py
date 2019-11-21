@@ -1,10 +1,11 @@
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
-from ..utils.config import get_config
-from ..utils import ws_type
+from utils.config import get_config
+from utils.ws_utils import get_type_pieces
 
 _REF_DATA_WORKSPACES = []  # type: list
+_CONFIG = get_config()
 
 
 def check_object_deleted(ws_id, obj_id):
@@ -15,9 +16,8 @@ def check_object_deleted(ws_id, obj_id):
     We want to do this because the DELETE event can correspond to more than
     just an object deletion, so we want to make sure the object is deleted
     """
-    config = get_config()
-    ws_url = config['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
+    ws_url = _CONFIG['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
     try:
         narr_data_obj_info = ws_client.admin_req("listObjects", {
             'ids': [ws_id]
@@ -33,12 +33,12 @@ def check_object_deleted(ws_id, obj_id):
         return False
 
 
-def is_workspace_public(ws_id, config):
+def is_workspace_public(ws_id):
     """
     Check if a workspace is public, returning bool.
     """
-    ws_url = config['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
+    ws_url = _CONFIG['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
     ws_info = ws_client.admin_req('getWorkspaceInfo', {'id': ws_id})
     global_read = ws_info[6]
     return global_read != 'n'
@@ -50,16 +50,14 @@ def check_workspace_deleted(ws_id):
     we make sure that the workspace is deleted. This is done by making sure we get an excpetion
     with the word 'delete' in the error body.
     """
-    config = get_config()
-    ws_url = config['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
+    ws_url = _CONFIG['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
     try:
-        ws_client.ws_client.admin_req("getWorkspaceInfo", {
+        ws_client.admin_req("getWorkspaceInfo", {
             'id': ws_id
         })
     except WorkspaceResponseError as err:
-        if 'delete' in err.text:
-            # we want this
+        if 'delete' in err.resp_text:
             return True
     return False
 
@@ -70,9 +68,8 @@ def get_shared_users(ws_id):
     Args:
         ws_id - workspace id of requested workspace object
     """
-    config = get_config()
-    ws_url = config['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
+    ws_url = _CONFIG['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
     try:
         obj_perm = ws_client.admin_req("getPermissionsMass", {
             'workspaces': [{'id': ws_id}]
@@ -94,9 +91,8 @@ def fetch_objects_in_workspace(ws_id, include_narrative=False):
     Args:
         ws_id - a workspace id
     """
-    config = get_config()
-    ws_url = config['workspace_url']
-    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
+    ws_url = _CONFIG['workspace_url']
+    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
     try:
         narr_data_obj_info = ws_client.admin_req("listObjects", {
             "ids": [ws_id]
@@ -118,6 +114,18 @@ def fetch_objects_in_workspace(ws_id, include_narrative=False):
     return narrative_data
 
 
+def _get_tags(ws_info):
+    """Get the tags relevant to search from the ws_info metadata"""
+    metadata = ws_info[-1]
+    if metadata.get('searchtags'):
+        if isinstance(metadata['searchtags'], list):
+            return metadata['searchtags']
+        else:
+            return [metadata['searchtags']]
+    else:
+        return []
+
+
 def default_fields(obj_data, ws_info, obj_data_v1):
     """
     Produce data for fields that are present in any workspace object document on elasticsearch.
@@ -130,16 +138,13 @@ def default_fields(obj_data, ws_info, obj_data_v1):
     shared_users = get_shared_users(ws_id)
     copy_ref = obj_data.get('copied')
     obj_type = obj_data['info'][2]
-    (type_module, type_name, type_version) = ws_type.get_pieces(obj_type)
-    tags = []
-    if ws_id in _REF_DATA_WORKSPACES:
-        tags.append("refdata")
+    (type_module, type_name, type_version) = get_type_pieces(obj_type)
+    tags = _get_tags(ws_info)
     return {
         "creator": obj_data["creator"],
         "access_group": ws_id,
         "obj_name": obj_data['info'][1],
         "shared_users": shared_users,
-        "guid": ":".join([str(ws_id), str(obj_id)]),
         "timestamp": obj_data['epoch'],
         "creation_date": v1_info[3],
         "is_public": is_public,

@@ -12,17 +12,27 @@ services:
         DEVELOPMENT: 1
     depends_on:
       - kafka
+      - elasticsearch
       - workspace
+      - catalog
+    ports:
+      - "127.0.0.1:5000:5000"
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - ${PWD}/src:/app
+      - ${PWD}/scratch:/scratch
     environment:
       - DEVELOPMENT=1
       - PYTHONUNBUFFERED=true
       - KBASE_WORKSPACE_URL=http://workspace:5000
+      - KBASE_CATALOG_URL=http://catalog:5000
       - WORKSPACE_TOKEN=valid_admin_token
+      - MOUNT_DIR=${PWD}
 
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
+    ports:
+      - "127.0.0.1:2181:2181"
     environment:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_CLIENT_PORT: 2181
@@ -35,7 +45,7 @@ services:
     image: confluentinc/cp-kafka:5.0.0
     hostname: kafka
     ports:
-      - 9092:9092
+      - "127.0.0.1:9092:9092"
     depends_on:
       - zookeeper
     environment:
@@ -44,10 +54,6 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_HEAP_OPTS: -Xmx512m -Xms512m
-    deploy:
-      resources:
-        limits:
-          memory: 550M
 
   # Mock workspace server (see src/test/mock_workspace/endpoints.json)
   workspace:
@@ -55,7 +61,19 @@ services:
     volumes:
       - ${PWD}/src/test/mock_workspace:/config
 
+  # Mock catalog server (see src/test/mock_catalog)
+  catalog:
+    image: mockservices/mock_json_service:1.1
+    volumes:
+      - ${PWD}/src/test/mock_catalog:/config
 
-volumes:
-  esdata1:
-    driver: local
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.5.3
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "127.0.0.1:9200:9200"
+      - "127.0.0.1:9300:9300"

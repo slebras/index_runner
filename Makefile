@@ -1,9 +1,12 @@
 .PHONY: test
 
+
 test:
-	docker-compose restart app && docker-compose run app sh /app/scripts/run_tests.sh
+	docker-compose down
+	docker-compose run app sh scripts/run_tests.sh
+	docker-compose down
 
 reset:
-	docker-compose down -v  --remove-orphans --rmi all
+	# Remove everything in the docker-compose cluster and rebuild
+	docker-compose down -v --remove-orphans --rmi all
 	docker-compose build --no-cache
-	docker-compose up

@@ -5,8 +5,8 @@ from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from . import indexer_utils
-from ..utils.config import get_config
-from ..utils import ws_type, set_up_indexes
+from utils.config import get_config
+from utils import ws_utils
 from .narrative import index_narrative
 from .reads import index_reads
 from .genome import index_genome
@@ -14,6 +14,9 @@ from .assembly import index_assembly
 from .tree import index_tree
 from .taxon import index_taxon
 from .pangenome import index_pangenome
+from .from_sdk import index_from_sdk
+
+_CONFIG = get_config()
 
 
 def index_obj(msg_data):
@@ -25,20 +28,23 @@ def index_obj(msg_data):
         stream. Must have keys for `wsid` and `objid`
     """
     upa = indexer_utils.get_upa_from_msg_data(msg_data)
-    config = get_config()
-    ws_url = config['workspace_url']
+    ws_url = _CONFIG['workspace_url']
     # Fetch the object data from the workspace API
-    ws_client = WorkspaceClient(url=ws_url, token=config['ws_token'])
+    ws_client = WorkspaceClient(url=ws_url, token=_CONFIG['ws_token'])
     try:
         obj_data = ws_client.admin_req('getObjects', {
             'objects': [{'ref': upa}]
         })
     except WorkspaceResponseError as err:
         print('Workspace response error:', err.resp_data)
-        raise err
+        # Workspace has deleted; ignore the error
+        if err.resp_data and err.resp_data['error'] and err.resp_data['error']['code'] == -32500:
+            return
+        else:
+            raise err
     obj_data = obj_data['data'][0]
     obj_type = obj_data['info'][2]
-    (type_module, type_name, type_version) = ws_type.get_pieces(obj_type)
+    (type_module, type_name, type_version) = ws_utils.get_type_pieces(obj_type)
     if (type_module + '.' + type_name) in _TYPE_BLACKLIST:
         # Blacklisted type, so we don't index it
         return
@@ -49,6 +55,13 @@ def index_obj(msg_data):
     except WorkspaceResponseError as err:
         print('Workspace response error:', err.resp_data)
         raise err
+
+    # check if this particular object has the tag "noindex"
+    metadata = ws_info[-1]
+    if metadata.get('searchtags'):
+        if 'noindex' in metadata['searchtags']:
+            return
+
     # Get the info of the first object to get the origin creation date of the
     # object.
     try:
@@ -64,13 +77,11 @@ def index_obj(msg_data):
     indexer = _find_indexer(type_module, type_name, type_version)
     # All indexers are generators that yield document data for ES.
     for indexer_ret in indexer(obj_data, ws_info, obj_data_v1):
-        if indexer_ret.get('no_defaults'):
-            # Skip default fields.
-            del indexer_ret['no_defaults']
-        else:
-            # Inject all default fields into the index document.
-            defaults = indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
-            indexer_ret['doc'].update(defaults)
+        if indexer_ret['_action'] == 'index':
+            if '_no_defaults' not in indexer_ret:
+                # Inject all default fields into the index document.
+                defaults = indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
+                indexer_ret['doc'].update(defaults)
         yield indexer_ret
 
 
@@ -84,25 +95,33 @@ def _find_indexer(type_module, type_name, type_version):
         name_match = ('type' not in entry) or entry['type'] == type_name
         ver_match = ('version' not in entry) or entry['version'] == type_version
         if module_match and name_match and ver_match:
-            return entry.get('indexer', generic_indexer)
-    # No indexer found for this type
-    return generic_indexer
+            return entry.get('indexer', generic_indexer())
+    # No indexer found for this type, check if there is a sdk indexer app
+    if type_module + '.' + type_name in _CONFIG['global']['sdk_indexer_apps']:
+        return index_from_sdk
+    return generic_indexer()
 
 
-def generic_indexer(obj_data, ws_info, obj_data_v1):
-    workspace_id = obj_data['info'][6]
-    object_id = obj_data['info'][0]
-    obj_type = obj_data['info'][2]
-    # Send an event to the elasticsearch_writer to initialize an index for this
-    # type, if it does not exist.
-    set_up_indexes.set_up_generic_index(obj_type)
-    obj_type_name = ws_type.get_pieces(obj_type)[1]
-    yield {
-        'doc': indexer_utils.default_fields(obj_data, ws_info, obj_data_v1),
-        'index': obj_type_name.lower() + ":0",
-        'id': f"{workspace_id}:{object_id}",
-        'no_defaults': True
-    }
+def generic_indexer():
+    def fn(obj_data, ws_info, obj_data_v1):
+        workspace_id = obj_data['info'][6]
+        object_id = obj_data['info'][0]
+        obj_type = obj_data['info'][2]
+        # Send an event to the elasticsearch_writer to initialize an index for this
+        # type, if it does not exist.
+        yield {
+            '_action': 'init_generic_index',
+            'full_type_name': obj_type
+        }
+        obj_type_name = ws_utils.get_type_pieces(obj_type)[1]
+        yield {
+            '_action': 'index',
+            'doc': indexer_utils.default_fields(obj_data, ws_info, obj_data_v1),
+            'index': obj_type_name.lower() + ":0",
+            'id': f"WS::{workspace_id}:{object_id}",
+            'no_defaults': True
+        }
+    return fn
 
 
 # Directory of all indexer functions.

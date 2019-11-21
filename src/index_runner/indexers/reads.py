@@ -1,5 +1,6 @@
 from utils.get_path import get_path
 
+_NAMESPACE = "WS"
 _READS_INDEX_VERSION = 1
 _READS_INDEX_NAME = 'reads:' + str(_READS_INDEX_VERSION)
 
@@ -35,6 +36,7 @@ def index_reads(obj_data, ws_info, obj_data_v1):
     phred_type = data.get('phred_type', None)
 
     yield {
+        '_action': 'index',
         'doc': {
             'phred_type': phred_type,
             'gc_content': gc_content,
@@ -46,5 +48,5 @@ def index_reads(obj_data, ws_info, obj_data_v1):
             'single_genome': single_genome,
         },
         'index': _READS_INDEX_NAME,
-        'id': f'{workspace_id}:{object_id}'
+        'id': f'{_NAMESPACE}::{workspace_id}:{object_id}'
     }
