@@ -129,22 +129,16 @@ def _reindex_ws_type(args):
     evtype = 'INDEX_NONEXISTENT'
     if args.overwrite:
         evtype = 'REINDEX'
-    wsid = 1
-    while True:
+    for wsid in range(args.start, args.stop + 1):
         try:
             infos = ws.admin_req('listObjects', {'ids': [wsid]})
         except WorkspaceResponseError as err:
-            if err.resp_data['error']['message'] == f'No workspace with id {wsid} exists':
-                # Workspace does not exist; we've reached the end
-                break
-            else:
-                # Eg. workspace was deleted
-                continue
+            print(err.resp_data['error']['message'])
+            continue
         for obj_info in infos:
             obj_type = obj_info[2]
             if obj_type == args.type:
                 _produce({'evtype': evtype, 'wsid': wsid, 'objid': obj_info[0]})
-        wsid += 1
     print('..done!')
 
 
@@ -215,6 +209,22 @@ if __name__ == '__main__':
         required=False,
         default=False,
         action='store_true'
+    )
+    reindex_type.add_argument(
+        '--start',
+        help='ID of workspace to start indexing.',
+        required=False,
+        default=1,
+        type=int,
+        action='store'
+    )
+    reindex_type.add_argument(
+        '--stop',
+        help='ID of workspace to stop indexing (inclusive).',
+        required=False,
+        type=int,
+        default=50000,
+        action='store'
     )
     reindex_type.set_defaults(func=_reindex_ws_type)
     # -- reindex range command
