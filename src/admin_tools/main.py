@@ -131,14 +131,16 @@ def _reindex_ws_type(args):
         evtype = 'REINDEX'
     wsid = 1
     while True:
+        print(f'Checking workspace {wsid}')
         try:
-            infos = ws.admin_req('listObjects', {'ids': [wsid]})
+            infos = ws.generate_all_ids_for_workspace(wsid, admin=True)
         except WorkspaceResponseError as err:
             if err.resp_data['error']['message'] == f'No workspace with id {wsid} exists':
                 # Workspace does not exist; we've reached the end
                 break
             else:
                 # Eg. workspace was deleted
+                wsid += 1
                 continue
         for obj_info in infos:
             obj_type = obj_info[2]
