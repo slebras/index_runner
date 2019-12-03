@@ -131,7 +131,7 @@ def _reindex_ws_type(args):
         evtype = 'REINDEX'
     for wsid in range(args.start, args.stop + 1):
         try:
-            infos = ws.admin_req('listObjects', {'ids': [wsid]})
+            infos = ws.generate_all_ids_for_workspace(wsid, admin=True)
         except WorkspaceResponseError as err:
             print(err.resp_data['error']['message'])
             continue
