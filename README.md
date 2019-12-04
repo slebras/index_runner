@@ -105,7 +105,7 @@ Note: this outputs ALL upas to stdout. You might want to pipe this into a file.
 indexer_admin err_upas
 ```
 
-_Index all objects of a certain type
+_Index all objects of a certain type_
 
 ```sh
 indexer_admin reindex_type --type "KBaseNarrative.Narrative"
