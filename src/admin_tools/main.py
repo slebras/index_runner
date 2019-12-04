@@ -1,8 +1,11 @@
 import requests
 import sys
+import re
 import json
 import argparse
 from confluent_kafka import Producer
+from kbase_workspace_client import WorkspaceClient
+from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from src.utils.config import config
 
@@ -112,7 +115,34 @@ def _reindex_ws_range(args):
     print(f'Produced {count} total events.')
 
 
-def _produce(data, topic=config()['topics']['indexer_admin_events']):
+def _reindex_ws_type(args):
+    """
+    Reindex all objects in the entire workspace server based on a type name.
+    """
+    if not re.match(r'^.+\..+-\d+\.\d+$', args.type):
+        sys.stderr.write('Enter the full type name, such as "KBaseGenomes.Genome-17.0"')
+        sys.exit(1)
+    # - Iterate over all workspaces
+    #   - For each workspace, list objects
+    #   - For each obj matching args.type, produce a reindex event
+    ws = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+    evtype = 'INDEX_NONEXISTENT'
+    if args.overwrite:
+        evtype = 'REINDEX'
+    for wsid in range(args.start, args.stop + 1):
+        try:
+            infos = ws.generate_all_ids_for_workspace(wsid, admin=True)
+        except WorkspaceResponseError as err:
+            print(err.resp_data['error']['message'])
+            continue
+        for obj_info in infos:
+            obj_type = obj_info[2]
+            if obj_type == args.type:
+                _produce({'evtype': evtype, 'wsid': wsid, 'objid': obj_info[0]})
+    print('..done!')
+
+
+def _produce(data, topic=config()['topics']['admin_events']):
     producer = Producer({'bootstrap.servers': config()['kafka_server']})
     producer.produce(topic, json.dumps(data), callback=_delivery_report)
     producer.poll(60)
@@ -161,8 +191,47 @@ if __name__ == '__main__':
         action='store_true'
     )
     reindex.set_defaults(func=_reindex)
+    # -- reindex type command
+    reindex_type = subparsers.add_parser(
+        'reindex_type',
+        help='Reindex all latest versions of objects with a specific type',
+    )
+    reindex_type.add_argument(
+        '--type',
+        '-t',
+        help='Full type name, such as "KBaseGenomes.Genome-17.0"',
+        required=True,
+        action='store'
+    )
+    reindex_type.add_argument(
+        '--overwrite',
+        help='Index and overwrite existing documents. Defaults to false.',
+        required=False,
+        default=False,
+        action='store_true'
+    )
+    reindex_type.add_argument(
+        '--start',
+        help='ID of workspace to start indexing.',
+        required=False,
+        default=1,
+        type=int,
+        action='store'
+    )
+    reindex_type.add_argument(
+        '--stop',
+        help='ID of workspace to stop indexing (inclusive).',
+        required=False,
+        type=int,
+        default=50000,
+        action='store'
+    )
+    reindex_type.set_defaults(func=_reindex_ws_type)
     # -- reindex range command
-    reindex_range = subparsers.add_parser('reindex_range', help='Reindex a range of workspace ids with a min and max.')
+    reindex_range = subparsers.add_parser(
+        'reindex_range',
+        help='Reindex a range of workspace ids with a min and max.'
+    )
     reindex_range.add_argument(
         '--min',
         help='Minimum workspace ID to start indexing on. Defaults to 1.',

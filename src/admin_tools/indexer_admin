@@ -1,4 +1,4 @@
 #!/bin/sh
 
-PYTHONPATH=/app
+export PYTHONPATH=/app/src
 python -m admin_tools.main "$@"
