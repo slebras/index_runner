@@ -51,7 +51,8 @@ class TestRelEngImportObject(unittest.TestCase):
                 "created": 0,
                 "expired": 9007199254740991,
                 "release_created": 0,
-                "release_expired": 9007199254740991
+                "release_expired": 9007199254740991,
+                "strain": False
             }])
 
         # add some go terms and merge edges
