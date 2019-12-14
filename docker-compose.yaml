@@ -22,6 +22,7 @@ services:
       - ${PWD}:/app
       - ${PWD}/scratch:/scratch
     environment:
+      - GLOBAL_CONFIG_URL=https://raw.githubusercontent.com/kbase/index_runner_spec/36780d4549e22b5f68bfac53cf6666a50c7c62c1/config.yaml
       - DEVELOPMENT=1
       - PYTHONUNBUFFERED=true
       - KBASE_ENDPOINT=http://mock_kbase_services:5000/
@@ -66,7 +67,7 @@ services:
       - ${PWD}/src/test/mock_kbase_services:/config
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:5.5.3
+    image: elasticsearch:7.5.0
     environment:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - bootstrap.memory_lock=true
@@ -93,7 +94,7 @@ services:
 
   # Arangodb server in cluster mode. Required for re_api.
   arangodb:
-    image: arangodb:3.5
+    image: arangodb:3.5.3
     ports:
       - "127.0.0.1:8529:8529"
     command: sh -c "arangodb --starter.local"

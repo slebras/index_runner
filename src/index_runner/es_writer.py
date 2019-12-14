@@ -199,9 +199,13 @@ def _put_mapping(index_name, mapping):
     """
     Create or update the type mapping for a given index.
     """
-    type_name = config()['global']['es_type_global_name']
-    url = f"{_ES_URL}/{index_name}/_mapping/{type_name}"
-    resp = requests.put(url, data=json.dumps({'properties': mapping}), headers=_HEADERS)
+    # type_name = config()['global']['es_type_global_name']
+    url = f"{_ES_URL}/{index_name}/_mapping"
+    resp = requests.put(
+        url,
+        data=json.dumps({'properties': mapping}),
+        headers=_HEADERS
+    )
     if not resp.ok:
         raise RuntimeError(f"Error updating mapping for index {index_name}:\n{resp.text}")
     return Status.UPDATED

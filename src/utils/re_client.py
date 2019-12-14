@@ -148,8 +148,8 @@ def save(coll_name, docs, on_duplicate='update', display_errors=False):
     # convert the docs into a string, where each obj is separated by a linebreak
     payload = '\n'.join([json.dumps(d) for d in docs])
     params = {'collection': coll_name, 'on_duplicate': on_duplicate}
-    if display_errors:
-        params['display_errors'] = '1'
+    # if display_errors:
+    params['display_errors'] = '1'
     resp = requests.put(
         url,
         data=payload,
