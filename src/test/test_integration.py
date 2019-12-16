@@ -208,6 +208,7 @@ def _get_es_aliases_blocking(timeout=180):
 def _get_es_doc(_id):
     """Fetch a document from elastic based on ID."""
     prefix = config()['elasticsearch_index_prefix']
+    print(f'Fetching {_id} from index {prefix}.*')
     url = f"{config()['elasticsearch_url']}/{prefix}.*/_search?size=1"
     resp = requests.post(
         url,
@@ -219,7 +220,7 @@ def _get_es_doc(_id):
     if not resp.ok:
         raise RuntimeError(resp.text)
     respj = resp.json()
-    if not respj['hits']['total']:
+    if not respj['hits']['total']['value']:
         return None
         # raise RuntimeError(f"Document {_id} not found.")
     return respj['hits']['hits'][0]
@@ -234,7 +235,7 @@ def _get_es_aliases():
     respj = resp.json()
     if len(respj) < 1:
         return None
-    aliases = {}
+    aliases = {}  # type: dict
     # we remove prefix from index and alias names (should all be "search2.")
     for index in respj:
         for al in respj[index]['aliases'].keys():

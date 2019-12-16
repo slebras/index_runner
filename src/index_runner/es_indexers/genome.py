@@ -4,8 +4,8 @@ from src.index_runner.es_indexers.indexer_utils import mean
 _NAMESPACE = "WS"
 _GENOME_INDEX_VERSION = 1
 _GENOME_FEATURE_INDEX_VERSION = 2
-_GENOME_INDEX_NAME = 'genome:' + str(_GENOME_INDEX_VERSION)
-_GENOME_FEATURE_INDEX_NAME = 'genome_features:' + str(_GENOME_FEATURE_INDEX_VERSION)
+_GENOME_INDEX_NAME = 'genome_' + str(_GENOME_INDEX_VERSION)
+_GENOME_FEATURE_INDEX_NAME = 'genome_features_' + str(_GENOME_FEATURE_INDEX_VERSION)
 
 
 def index_genome(obj_data, ws_info, obj_data_v1):
@@ -30,7 +30,6 @@ def index_genome(obj_data, ws_info, obj_data_v1):
         genome_workspace_id (upa)
     '''
     assembly_ref = ":".join(data.get('assembly_ref', data.get('contigset_ref', "")).split('/'))
-
     publication_titles = [pub[2] for pub in data.get('publications', [])]
     publication_authors = [pub[5] for pub in data.get('publications', [])]
     genome_scientific_name = data.get('scientific_name', None)
