@@ -133,8 +133,7 @@ docker push kbase/index_runner2:{VERSION}
 
 ## KBase Search Stack
 
-* [Index Runner](https://github.com/kbaseIncubator/index_runner_deluxe) - Kafka consumer to construct indexes and documents.
-* [Elasticsearch Writer](https://github.com/kbaseIncubator/elasticsearch_writer<Paste>) - Kafka consumer to bulk update documents in ES.
+* [Index Runner](https://github.com/kbaseIncubator/index_runner_deluxe) - Kafka worker to construct indexes and documents and save them to Elasticsearch and Arango.
 * [Search API](https://github.com/kbaseIncubator/search_api_deluxe) - HTTP API for performing search queries.
 * [Search Config](https://github.com/kbaseIncubator/search_config) - Global search configuration.
 

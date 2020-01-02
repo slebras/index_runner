@@ -100,7 +100,7 @@ _TEST_EVENTS = {
         'permusers': [],
         'user': "username"
     }
-}
+}  # type: dict
 
 _DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -122,7 +122,7 @@ class TestIndexers(unittest.TestCase):
     def test_from_sdk(self):
         check_against = [{
             '_action': 'index',
-            'index': "genomeset:1",
+            'index': "genomeset_1",
             'id': "WS::22385:82",
             'doc': {
                 "genomes": [
@@ -142,7 +142,7 @@ class TestIndexers(unittest.TestCase):
         check_against = [{
             '_action': 'index',
             'id': 'WS::15:44',
-            'index': 'reads:1',
+            'index': 'reads_1',
             'doc': {
                 'phred_type': None,
                 'gc_content': None,
@@ -160,7 +160,7 @@ class TestIndexers(unittest.TestCase):
         check_against = [{
             '_action': 'index',
             'id': 'WS::39794:4',
-            'index': 'assembly:1',
+            'index': 'assembly_1',
             'doc': {
                 'assembly_name': None,
                 'mean_contig_length': 50195.5,
@@ -219,7 +219,7 @@ class TestIndexers(unittest.TestCase):
     def test_tree_indexer(self):
         check_against = [{
             '_action': 'index',
-            'index': 'tree:1',
+            'index': 'tree_1',
             'id': 'WS::39794:10',
             'doc': {
                 "tree_name": None,
@@ -235,7 +235,7 @@ class TestIndexers(unittest.TestCase):
     def test_taxon_indexer(self):
         check_against = [{
             '_action': 'index',
-            'index': 'taxon:1',
+            'index': 'taxon_1',
             'id': 'WS::39794:9',
             'doc': {
                 "scientific_name": "Escherichia coli",

@@ -2,7 +2,7 @@ from src.index_runner.es_indexers.indexer_utils import mean
 
 _NAMESPACE = "WS"
 _ASSEMBLY_INDEX_VERSION = 1
-_ASSEMBLY_INDEX_NAME = 'assembly:' + str(_ASSEMBLY_INDEX_VERSION)
+_ASSEMBLY_INDEX_NAME = 'assembly_' + str(_ASSEMBLY_INDEX_VERSION)
 
 
 def index_assembly(obj_data, ws_info, obj_data_v1):

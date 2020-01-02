@@ -29,11 +29,11 @@ def get_config():
     re_api_url = os.environ.get('RE_URL', kbase_endpoint + '/relation_engine_api').strip('/')
     config_url = os.environ.get(
         'GLOBAL_CONFIG_URL',
-        'https://github.com/kbase/search_config/releases/latest/download/config.yaml'
+        'https://github.com/kbase/index_runner_spec/releases/latest/download/config.yaml'
     )
     github_release_url = os.environ.get(
         'GITHUB_RELEASE_URL',
-        'https://api.github.com/repos/kbase/search_config/releases/latest'
+        'https://api.github.com/repos/kbase/index_runner_spec/releases/latest'
     )
     # Load the global configuration release (non-environment specific, public config)
     if not config_url.startswith('http'):

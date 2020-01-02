@@ -8,7 +8,7 @@ from src.index_runner.es_indexers import indexer_utils
 _NAMESPACE = "WS"
 _MARKDOWNER = Markdown()
 _NARRATIVE_INDEX_VERSION = 1
-_NARRATIVE_INDEX_NAME = 'narrative:' + str(_NARRATIVE_INDEX_VERSION)
+_NARRATIVE_INDEX_NAME = 'narrative_' + str(_NARRATIVE_INDEX_VERSION)
 
 
 def index_narrative(obj_data, ws_info, obj_data_v1):

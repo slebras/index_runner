@@ -1,6 +1,6 @@
 _NAMESPACE = "WS"
 _TAXON_INDEX_VERSION = 1
-_TAXON_INDEX_NAME = 'taxon:' + str(_TAXON_INDEX_VERSION)
+_TAXON_INDEX_NAME = 'taxon_' + str(_TAXON_INDEX_VERSION)
 
 
 def index_taxon(obj_data, ws_info, obj_data_v1):

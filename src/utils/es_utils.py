@@ -20,5 +20,6 @@ def does_doc_exist(wsid, objid):
     )
     if not resp.ok:
         raise RuntimeError(f"Unexpected elasticsearch server error:\n{resp.text}")
-    total = resp.json()['hits']['total']
+    resp_json = resp.json()
+    total = resp_json['hits']['total']['value']
     return total > 0

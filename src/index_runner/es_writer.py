@@ -43,16 +43,19 @@ class ESWriter:
                 'name': index,
                 'props': {**mapping['properties'], **global_mappings}
             })
-        self.reload_aliases({'msg': "from initalization"})
+        self.reload_aliases({'msg': "from initialization"})
 
     def reload_aliases(self, data):
-        """Currently this function only adds new indexes to aliases
-        in future we want it to remove aliases that exist on elastic
-        but not in the config."""
+        """
+        Create aliases on elasticsearch from the index runner specs.
+        """
+        # FIXME Currently, this function only adds new indexes to aliases.
+        # In the future, we want to remove aliases that exist on elastic
+        # but not in the config.
         if config()['global'].get('aliases'):
             group_aliases = config()['global']['aliases']
             msg = data.get('msg', "manually")
-            logging.info(f"Resetting Elasticsearch aliases {msg}....")
+            logging.info(f"Resetting Elasticsearch aliases {msg}...")
             for alias_name in group_aliases:
                 try:
                     _create_alias(
@@ -63,6 +66,7 @@ class ESWriter:
                     names = group_aliases[alias_name]
                     raise RuntimeError(f"Failed creating alias name: {alias_name}, "
                                        f"for indices: {names}..\nerror: {err}")
+            logging.info(f"Done resetting aliases.")
 
     def on_queue_empty(self):
         """
@@ -122,9 +126,9 @@ class ESWriter:
         index_name = f"{_PREFIX}.{msg['name']}"
         status = _create_index(index_name)
         if status == Status.CREATED:
-            logging.info(f"es_writer Index {index_name} created.")
+            logging.info(f"es_writer index {index_name} created.")
         elif status == Status.EXISTS:
-            logging.info(f"es_writer Index {index_name} already exists.")
+            logging.info(f"es_writer index {index_name} already exists.")
         # Update the type mapping
         _put_mapping(index_name, msg['props'])
 
@@ -199,9 +203,13 @@ def _put_mapping(index_name, mapping):
     """
     Create or update the type mapping for a given index.
     """
-    type_name = config()['global']['es_type_global_name']
-    url = f"{_ES_URL}/{index_name}/_mapping/{type_name}"
-    resp = requests.put(url, data=json.dumps({'properties': mapping}), headers=_HEADERS)
+    # type_name = config()['global']['es_type_global_name']
+    url = f"{_ES_URL}/{index_name}/_mapping"
+    resp = requests.put(
+        url,
+        data=json.dumps({'properties': mapping}),
+        headers=_HEADERS
+    )
     if not resp.ok:
         raise RuntimeError(f"Error updating mapping for index {index_name}:\n{resp.text}")
     return Status.UPDATED
@@ -252,16 +260,14 @@ def _write_to_elastic(data):
         delete - bool (for delete events)
     """
     start = time.time()
-    es_type = config()['global']['es_type_global_name']
     # Construct the post body for the bulk index
     json_body = ''
     while data:
         datum = data.pop()
+        idx = f"{_PREFIX}.{datum['index']}"
         json_body += json.dumps({
             'index': {
-                # '_index': f"{_PREFIX}.{datum['namespace']}.{datum['index']}",
-                '_index': f"{_PREFIX}.{datum['index']}",
-                '_type': es_type,
+                '_index': idx,
                 '_id': datum['id']
             }
         })
