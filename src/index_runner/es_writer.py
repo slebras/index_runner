@@ -148,14 +148,14 @@ class ESWriter:
         """
         Initialize an index from a workspace object indexed by the generic indexer.
         For example, when the generic indexer gets a type like Module.Type-4.0,
-        then we create an index called "search2.type:0".
+        then we create an index called "search2.type_0".
         Message fields:
             full_type_name - string - eg. "Module.Type-X.Y"
         """
         (module_name, type_name, type_ver) = get_type_pieces(msg['full_type_name'])
         index_name = type_name.lower()
         self.init_index({
-            'name': index_name + ':0',
+            'name': index_name + '_0',
             'props': _GLOBAL_MAPPINGS['ws_object']
         })
 
