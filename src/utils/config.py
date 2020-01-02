@@ -56,6 +56,7 @@ def get_config():
         'kbase_endpoint': kbase_endpoint,
         'catalog_url': catalog_url,
         'workspace_url': workspace_url,
+        're_display_errs': os.environ.get('RE_DISPLAY_ERRS'),
         're_api_url': re_api_url,
         're_api_token': os.environ['RE_API_TOKEN'],
         'elasticsearch_host': es_host,
