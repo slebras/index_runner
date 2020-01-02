@@ -242,7 +242,7 @@ if __name__ == '__main__':
     )
     reindex_range.add_argument(
         '--max',
-        help='Max workspace ID to start indexing on.',
+        help='Max workspace ID to end indexing on. Inclusive.',
         type=int,
         required=True,
         action='store'
