@@ -28,7 +28,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
     # Get all the types and names of objects in the narrative's workspace.
     narrative_data_objects = indexer_utils.fetch_objects_in_workspace(ws_id)
     index_cells = []
-    cells = obj_data['data']['cells']
+    cells = obj_data['data'].get('cells', [])
     creator = obj_data['creator']
     for cell in cells:
         if cell.get('cell_type') == 'markdown':

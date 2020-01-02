@@ -3,6 +3,10 @@ import yaml
 import os
 import time
 import functools
+import logging
+import json
+
+logging.getLogger(__name__)
 
 
 def config():
@@ -42,7 +46,7 @@ def get_config():
         raise RuntimeError(f"Invalid global github release url: {github_release_url}")
     with urllib.request.urlopen(config_url) as res:  # nosec
         global_config = yaml.safe_load(res)  # type: ignore
-    return {
+    config = {
         # All worker-group subprocess configuration
         'workers': {
             'num_es_indexers': int(os.environ.get('NUM_ES_INDEXERS', 4)),
@@ -74,3 +78,5 @@ def get_config():
         'config_timeout': 600,  # 10 minutes in seconds.
         'last_config_reload': time.time(),
     }
+    logging.info(f'Config is: {json.dumps(config, indent=2)}')
+    return config
