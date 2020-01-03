@@ -6,7 +6,7 @@ import functools
 import logging
 import json
 
-logging.getLogger(__name__)
+logger = logging.getLogger('IR')
 
 
 def config():
@@ -78,5 +78,5 @@ def get_config():
         'config_timeout': 600,  # 10 minutes in seconds.
         'last_config_reload': time.time(),
     }
-    logging.info(f'Config is: {json.dumps(config, indent=2)}')
+    logger.info(f'Config is: {json.dumps(config, indent=2)}')
     return config

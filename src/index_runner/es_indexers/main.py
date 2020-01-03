@@ -18,7 +18,7 @@ from src.index_runner.es_indexers.pangenome import index_pangenome
 from src.index_runner.es_indexers.from_sdk import index_from_sdk
 from src.index_runner.es_indexers.annotated_metagenome_assembly import index_annotated_metagenome_assembly
 
-logging.getLogger(__name__)
+logger = logging.getLogger('IR')
 
 
 def index_obj(msg_data):
@@ -37,7 +37,7 @@ def index_obj(msg_data):
             'objects': [{'ref': upa}]
         })
     except WorkspaceResponseError as err:
-        logging.error('Workspace response error:', err.resp_data)
+        logger.error('Workspace response error:', err.resp_data)
         # Workspace is deleted; ignore the error
         if (err.resp_data and isinstance(err.resp_data, dict)
                 and err.resp_data['error'] and isinstance(err.resp_data['error'], dict)
@@ -56,7 +56,7 @@ def index_obj(msg_data):
             'id': msg_data['wsid']
         })
     except WorkspaceResponseError as err:
-        logging.error('Workspace response error:', err.resp_data)
+        logger.error('Workspace response error:', err.resp_data)
         raise err
 
     # check if this particular object has the tag "noindex"
@@ -73,7 +73,7 @@ def index_obj(msg_data):
             'no_data': 1
         })
     except WorkspaceResponseError as err:
-        logging.error('Workspace response error:', err.resp_data)
+        logger.error('Workspace response error:', err.resp_data)
         raise err
     obj_data_v1 = obj_data_v1['data'][0]
     # Dispatch to a specific type handler to produce the search document

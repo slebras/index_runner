@@ -21,6 +21,8 @@ from src.index_runner.es_indexer import ESIndexer
 from src.index_runner.releng_importer import RelengImporter
 from src.utils.service_utils import wait_for_dependencies
 
+logger = logging.getLogger('IR')
+
 
 def main():
     """
@@ -31,7 +33,7 @@ def main():
     """
     # Wait for dependency services (ES and RE) to be live
     wait_for_dependencies(timeout=180)
-    logging.info('Services started! Now starting the app..')
+    logger.info('Services started! Now starting the app..')
     # Initialize worker group of ESIndexer
     es_indexers = WorkerGroup(ESIndexer, (), count=config()['workers']['num_es_indexers'])
     # Initialize a worker group of RelengImporter
@@ -64,16 +66,16 @@ def main():
                 }))
         if msg.error():
             if msg.error().code() == KafkaError._PARTITION_EOF:
-                logging.info('End of stream.')
+                logger.info('End of stream.')
             else:
-                logging.error(f"Kafka message error: {msg.error()}")
+                logger.error(f"Kafka message error: {msg.error()}")
             continue
         val = msg.value().decode('utf-8')
         try:
             data = json.loads(val)
         except ValueError as err:
-            logging.error(f'JSON parsing error: {err}')
-            logging.error(f'Message content: {val}')
+            logger.error(f'JSON parsing error: {err}')
+            logger.error(f'Message content: {val}')
         for receiver in receivers:
             receiver.queue.put(('ws_event', data))
 
@@ -102,9 +104,9 @@ def _set_consumer():
         config()['topics']['workspace_events'],
         config()['topics']['admin_events']
     ]
-    logging.info(f"Subscribing to: {topics}")
-    logging.info(f"Client group: {config()['kafka_clientgroup']}")
-    logging.info(f"Kafka server: {config()['kafka_server']}")
+    logger.info(f"Subscribing to: {topics}")
+    logger.info(f"Client group: {config()['kafka_clientgroup']}")
+    logger.info(f"Kafka server: {config()['kafka_server']}")
     consumer.subscribe(topics)
     return consumer
 
@@ -116,5 +118,7 @@ if __name__ == '__main__':
     # Set out own log level from the env
     level = os.environ.get('LOGLEVEL', 'DEBUG').upper()
     logging.basicConfig(level=level)
+    logger.setLevel(level)
+    print(f'Log level: {level} {logger}')
     # Run the main thread
     main()

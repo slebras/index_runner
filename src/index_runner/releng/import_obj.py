@@ -16,7 +16,7 @@ from src.utils.config import config
 from src.utils.formatting import ts_to_epoch, get_method_key_from_prov, get_module_key_from_prov
 from kbase_workspace_client import WorkspaceClient
 
-logging.getLogger(__name__)
+logger = logging.getLogger('IR')
 
 # need version specific processors here? Or expect the processor to handle all versions?
 # could also have an includes field to reduce the amount of data fetched from the ws
@@ -72,7 +72,7 @@ def _save_ws_object(obj_info, ws_info):
     wsid = obj_info[6]
     objid = obj_info[0]
     key = f"{wsid}:{objid}"
-    logging.info(f'Saving ws_object with key {key}')
+    logger.info(f'Saving ws_object with key {key}')
     save('ws_object', [{
         '_key': key,
         'workspace_id': wsid,
@@ -85,7 +85,7 @@ def _save_ws_object(obj_info, ws_info):
 def _save_obj_hash(info_tup):
     obj_hash = info_tup[8]
     obj_hash_type = 'MD5'
-    logging.info(f'Saving ws_object_hash with key {obj_hash}')
+    logger.info(f'Saving ws_object_hash with key {obj_hash}')
     save('ws_object_hash', [{
         '_key': obj_hash,
         'type': obj_hash_type
@@ -99,7 +99,7 @@ def _save_obj_version(key, ver, info_tup, ws_info):
     hsh = info_tup[8]
     size = info_tup[9]
     epoch = ts_to_epoch(info_tup[3])
-    logging.info(f"Saving ws_object_version with key {key}")
+    logger.info(f"Saving ws_object_version with key {key}")
     save('ws_object_version', [{
         '_key': key,
         'workspace_id': wsid,
@@ -118,12 +118,12 @@ def _save_copy_edge(obj_ver_key, obj):
     """Save ws_copied_from document."""
     copy_ref = obj.get('copied')
     if not copy_ref:
-        logging.info('Not a copied object.')
+        logger.info('Not a copied object.')
         return
     copied_key = copy_ref.replace('/', ':')
     from_id = 'ws_object_version/' + obj_ver_key
     to_id = 'ws_object_version/' + copied_key
-    logging.info(f'Saving ws_copied_from edge from {from_id} to {to_id}')
+    logger.info(f'Saving ws_copied_from edge from {from_id} to {to_id}')
     # "The _from object is a copy of the _to object
     save('ws_copied_from', [{
         '_from': from_id,
@@ -136,7 +136,7 @@ def _save_obj_ver_edge(obj_ver_key, obj_key):
     # The _from is a version of the _to
     from_id = 'ws_object_version/' + obj_ver_key
     to_id = 'ws_object/' + obj_key
-    logging.info(f'Saving ws_version_of edge from {from_id} to {to_id}')
+    logger.info(f'Saving ws_version_of edge from {from_id} to {to_id}')
     save('ws_version_of', [{
         '_from': from_id,
         '_to': to_id
@@ -147,7 +147,7 @@ def _save_ws_contains_edge(obj_key, info_tup):
     """Save the ws_workspace_contains_obj edge."""
     from_id = 'ws_workspace/' + str(info_tup[6])
     to_id = 'ws_object/' + obj_key
-    logging.info(f'Saving ws_workspace_contains_obj edge from {from_id} to {to_id}')
+    logger.info(f'Saving ws_workspace_contains_obj edge from {from_id} to {to_id}')
     save('ws_workspace_contains_obj', {'_from': from_id, '_to': to_id})
 
 
@@ -158,7 +158,7 @@ def _save_workspace(ws_info):
     #    0  1    2     3       4        5          6          7        8
     #   [id,name,owner,moddate,maxobjid,user_perms,globalread,lockstat,metadata]
     metadata = ws_info[-1]
-    logging.info(f'Saving workspace vertex {wsid}')
+    logger.info(f'Saving workspace vertex {wsid}')
     save('ws_workspace', {
         '_key': str(wsid),
         'narr_name': metadata.get('narrative_nice_name', ''),
@@ -187,7 +187,7 @@ def _save_created_with_method_edge(obj_ver_key, prov):
     from_id = 'ws_object_version/' + obj_ver_key
     to_id = 'ws_method_version/' + method_key
     params = prov[0].get('method_params')
-    logging.info(f'Saving ws_obj_created_with_method edge from {from_id} to {to_id}')
+    logger.info(f'Saving ws_obj_created_with_method edge from {from_id} to {to_id}')
     save('ws_obj_created_with_method', [{
         '_from': from_id,
         '_to': to_id,
@@ -202,7 +202,7 @@ def _save_created_with_module_edge(obj_ver_key, prov):
     module_key = get_module_key_from_prov(prov)
     from_id = 'ws_object_version/' + obj_ver_key
     to_id = 'ws_module_version/' + module_key
-    logging.info(f'Saving ws_obj_created_with_module edge from {from_id} to {to_id}')
+    logger.info(f'Saving ws_obj_created_with_module edge from {from_id} to {to_id}')
     save('ws_obj_created_with_module', [{
         '_from': from_id,
         '_to': to_id
@@ -214,7 +214,7 @@ def _save_inst_of_type_edge(obj_ver_key, info_tup):
     from_id = 'ws_object_version/' + obj_ver_key
     obj_type = info_tup[2]
     to_id = 'ws_type_version/' + obj_type
-    logging.info(f'Saving ws_obj_instance_of_type edge from {from_id} to {to_id}')
+    logger.info(f'Saving ws_obj_instance_of_type edge from {from_id} to {to_id}')
     save('ws_obj_instance_of_type', [{
         '_from': from_id,
         '_to': to_id
@@ -226,7 +226,7 @@ def _save_type_vertices(obj_info):
     obj_type = obj_info[2]
     (type_module, type_name, type_ver) = get_type_pieces(obj_type)
     (maj_ver, min_ver) = [int(v) for v in type_ver.split('.')]
-    logging.info(f'Saving ws_type_version, ws_type, and ws_type_module for {obj_type}')
+    logger.info(f'Saving ws_type_version, ws_type, and ws_type_module for {obj_type}')
     save('ws_type_version', {
         '_key': obj_type,
         'type_name': type_name,
@@ -243,7 +243,7 @@ def _save_owner_edge(obj_ver_key, info_tup):
     username = info_tup[5]
     from_id = 'ws_user/' + username
     to_id = 'ws_object_version/' + obj_ver_key
-    logging.info(f'Saving ws_owner_of edge from {from_id} to {to_id}')
+    logger.info(f'Saving ws_owner_of edge from {from_id} to {to_id}')
     save('ws_owner_of', [{
         '_from': from_id,
         '_to': to_id
@@ -255,7 +255,7 @@ def _save_referral_edge(obj_ver_key, obj):
     from_id = 'ws_object_version/' + obj_ver_key
     for upa in obj.get('refs', []):
         to_id = 'ws_object_version/' + upa.replace('/', ':')
-        logging.info(f'Saving ws_refers_to edge from {from_id} to {to_id}')
+        logger.info(f'Saving ws_refers_to edge from {from_id} to {to_id}')
         save('ws_refers_to', [{
             '_from': from_id,
             '_to': to_id
@@ -271,7 +271,7 @@ def _save_prov_desc_edge(obj_ver_key, obj):
     from_id = 'ws_object_version/' + obj_ver_key
     for upa in input_objs:
         to_id = 'ws_object_version/' + upa.replace('/', ':')
-        logging.info(f'Saving ws_prov_descendant_of edge from {from_id} to {to_id}')
+        logger.info(f'Saving ws_prov_descendant_of edge from {from_id} to {to_id}')
         save('ws_prov_descendant_of', [{
             '_from': from_id,
             '_to': to_id

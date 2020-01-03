@@ -10,7 +10,7 @@ from configparser import ConfigParser
 from src.utils.config import config
 from src.utils import ws_utils
 
-logging.getLogger(__name__)
+logger = logging.getLogger('IR')
 
 _DOCKER = docker.from_env()
 _SCRATCH = "/scratch"
@@ -114,7 +114,7 @@ def _pull_docker_image(image):
             # id_ = im.id
             pulled = True
     if not pulled:
-        logging.info("Pulling %s" % image)
+        logger.info("Pulling %s" % image)
         _DOCKER.images.pull(image)
 
 
