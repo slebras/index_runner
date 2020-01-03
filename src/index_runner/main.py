@@ -9,10 +9,12 @@ Architecture:
     The index_runner and es_writer run in separate workers with message queues in between.
 """
 import logging
+import logging.handlers
 import os
 import json
 import time
 import requests
+import sys
 from confluent_kafka import Consumer, KafkaError
 
 from src.utils.config import config
@@ -116,14 +118,40 @@ def _set_consumer():
     return consumer
 
 
+def _init_logger():
+    """
+    Initialize log settings. Mutates the `logger` object.
+    Write to stdout and to a local rotating file.
+    Logs to tmp/app.log
+    """
+    # Set the log level
+    level = os.environ.get('LOGLEVEL', 'DEBUG').upper()
+    logger.setLevel(level)
+    logger.propagate = False  # Don't print duplicate messages
+    logging.basicConfig(level=level)
+    # Create the formatter
+    fmt = "%(asctime)s %(levelname)-8s %(message)s (%(filename)s:%(lineno)s)"
+    time_fmt = "%Y-%m-%d %H:%M:%S"
+    formatter = logging.Formatter(fmt, time_fmt)
+    # File handler
+    os.makedirs('tmp', exist_ok=True)
+    # 1mb max log file with 2 backups
+    log_path = 'tmp/app.log'
+    file_handler = logging.handlers.RotatingFileHandler(log_path, maxBytes=1048576, backupCount=2)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    # Stdout
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(formatter)
+    logger.addHandler(stdout_handler)
+    print(f'Logger and level: {logger}')
+    print(f'Logging to file: {log_path}')
+
+
 if __name__ == '__main__':
     # Set up the logger
     # Make the urllib debug logs less noisy
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    # Set out own log level from the env
-    level = os.environ.get('LOGLEVEL', 'DEBUG').upper()
-    logging.basicConfig(level=level)
-    logger.setLevel(level)
-    print(f'Log level: {level} {logger}')
+    _init_logger()
     # Run the main thread
     main()
