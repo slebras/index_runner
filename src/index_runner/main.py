@@ -84,10 +84,15 @@ def _query_for_config_tag():
     """using github release api (https://developer.github.com/v3/repos/releases/) find
     out if there is new version of the config."""
     github_release_url = config()['github_release_url']
-    resp = requests.get(url=github_release_url)
-    if not resp.ok:
+    try:
+        resp = requests.get(url=github_release_url)
+    except Exception as err:
+        logging.error(f"Unable to fetch indexer config from github: {err}")
+        # Ignore any error and continue; try the fetch again later
         return None
-        # raise RuntimeError("not able to get github config release")
+    if not resp.ok:
+        logging.error(f"Unable to fetch indexer config from github: {resp.text}")
+        return None
     data = resp.json()
     return data['tag_name']
 

@@ -4,7 +4,6 @@ import os
 import time
 import functools
 import logging
-import json
 
 logger = logging.getLogger('IR')
 
