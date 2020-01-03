@@ -108,7 +108,6 @@ class ESWriter:
         Perform all the batch deletes and empty the batch_deletes list.
         Runs after 5s of inactivity or if the batch ops reach a min length.
         """
-        # Only perform batch ops at most once every `self.batch_interval` seconds
         delete_len = len(self.batch_deletes)
         if delete_len >= min_length:
             _delete_from_elastic(self.batch_deletes)
