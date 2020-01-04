@@ -48,7 +48,7 @@ class ESIndexer:
             # TODO this logic and error message is weird
             logger.error(f'Invalid wsid in event: {ws_id}')
             return
-        logger.info(f'es_writer received {msg["evtype"]} for {ws_id}/{msg.get("objid", "?")}')
+        logger.info(f'Received {msg["evtype"]} for {ws_id}/{msg.get("objid", "?")}')
         try:
             if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
                 logger.info('Running indexer..')
@@ -125,7 +125,7 @@ class ESIndexer:
             # Object is not deleted
             logger.info(f'object {objid} in workspace {wsid} not deleted')
             return
-        self.children['es_writers'].put(('delete', {'object_id': f"{wsid}:{objid}"}))
+        self.children['es_writers'].put(('delete', {'object_id': str(objid), 'workspace_id': str(wsid)}))
 
     def _run_workspace_deleter(self, msg):
         """

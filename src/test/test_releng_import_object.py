@@ -8,6 +8,7 @@ import unittest
 import datetime
 from src.utils.re_client import save, get_doc, get_edge, clear_collection, get_all_documents
 from src.utils import re_client
+from src.test.helpers import assert_subset
 
 # TODO TEST more tests. Just tests very basic happy path for now
 
@@ -230,7 +231,7 @@ class TestRelEngImportObject(unittest.TestCase):
                        'is_temporary': 'false', 'narrative': '1',
                        'narrative_nice_name': 'narr6', 'searchtags':
                        'narrative'}
-        self.assertDictContainsSubset({
+        assert_subset(self, {
             '_key': str(wsid),
             'narr_name': 'narr' + str(wsid),
             'owner': 'username',
@@ -241,19 +242,19 @@ class TestRelEngImportObject(unittest.TestCase):
             'metadata': ws_metadata,
         }, get_re_doc('ws_workspace', str(wsid)))
         # Check for type vertices
-        self.assertDictContainsSubset({
+        assert_subset(self, {
             '_key': 'KBaseGenomes.Genome-15.1',
             'module_name': 'KBaseGenomes',
             'type_name': 'Genome',
             'maj_ver': 15,
             'min_ver': 1
         }, get_re_doc('ws_type_version', obj_type))
-        self.assertDictContainsSubset({
+        assert_subset(self, {
             '_key': 'KBaseGenomes.Genome',
             'module_name': 'KBaseGenomes',
             'type_name': 'Genome'
         }, get_re_doc('ws_type', f"{type_module}.{type_name}"))
-        self.assertDictContainsSubset({
+        assert_subset(self, {
             '_key': 'KBaseGenomes'
         }, get_re_doc('ws_type_module', type_module))
         self.assertTrue(type_edge)
@@ -296,7 +297,7 @@ class TestRelEngImportObject(unittest.TestCase):
             'ws_object_version/6:7:8',
             'ncbi_taxon/562_2018-11-01')
 
-        self.assertDictContainsSubset({
+        assert_subset(self, {
             '_from': 'ws_object_version/6:7:8',
             '_to': 'ncbi_taxon/562_2018-11-01',
             'assigned_by': '_system'
@@ -357,7 +358,7 @@ class TestRelEngImportObject(unittest.TestCase):
             if e['_to'] != 'GO_terms/GO:2_v1':
                 # check time is close to now
                 self.assertLess(created, now + 2000)
-                self.assertGreater(created, now - 2000)
+                self.assertGreater(created, now - 5000)
             else:
                 # check time wasn't overwritten
                 self.assertEqual(created, 678)

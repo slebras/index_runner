@@ -101,7 +101,7 @@ class ESWriter:
         if write_len >= min_length:
             _write_to_elastic(self.batch_writes)
             self.batch_writes = []
-            logger.info(f"es_writer wrote {write_len} documents to elasticsearch.")
+            logger.info(f"Wrote {write_len} documents to elasticsearch.")
 
     def _perform_batch_deletes(self, min_length=1):
         """
@@ -112,7 +112,7 @@ class ESWriter:
         if delete_len >= min_length:
             _delete_from_elastic(self.batch_deletes)
             self.batch_deletes = []
-            logger.info(f"es_writer deleted {delete_len} documents from elasticsearch.")
+            logger.info(f"Deleted {delete_len} documents from elasticsearch.")
 
     def init_index(self, msg):
         """
@@ -125,9 +125,9 @@ class ESWriter:
         index_name = f"{_PREFIX}.{msg['name']}"
         status = _create_index(index_name)
         if status == Status.CREATED:
-            logger.info(f"es_writer index {index_name} created.")
+            logger.info(f"index {index_name} created.")
         elif status == Status.EXISTS:
-            logger.info(f"es_writer index {index_name} already exists.")
+            logger.info(f"index {index_name} already exists.")
         # Update the type mapping
         _put_mapping(index_name, msg['props'])
 
@@ -222,20 +222,23 @@ def _delete_from_elastic(batch_deletes):
     """
     # Construct the post body for the bulk index
     should_body = []
-    # Make sure we don't use same id more than once.
-    id_set = set()
     while batch_deletes:
         msg = batch_deletes.pop()
-        if msg.get('workspace_id'):
-            wsid = msg['workspace_id']
-            # TODO: update to check/work for multiple versions.
-            # XXX versioned objects?
-            for (obj_id, ver) in _WS_CLIENT.generate_all_ids_for_workspace(wsid, admin=True):
-                id_set.add(f"WS::{wsid}:{obj_id}")
+        objid = msg.get('object_id')
+        wsid = msg.get('workspace_id')
+        if wsid and not objid:
+            # Delete everything entire workspace
+            should_body.append({'term': {'access_group': wsid}})
         else:
-            id_set.add(f"WS::{msg['object_id']}")
-    for _id in id_set:
-        should_body.append({'term': {'_id': _id}})
+            # Delete all versions of a specific obj
+            should_body.append({
+                'bool': {
+                    'must': [
+                        {'term': {'access_group': wsid}},
+                        {'term': {'obj_id': objid}}
+                    ]
+                }
+            })
     json_body = json.dumps({'query': {'bool': {'should': should_body}}})
     # Perform the delete_by_query using the elasticsearch http api.
     resp = requests.post(
