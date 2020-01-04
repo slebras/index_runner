@@ -135,7 +135,7 @@ class TestRelEngImportObject(unittest.TestCase):
              'created': 0,
              'expired': re_client.MAX_ADB_INTEGER,
              },
-        ], display_errors=True)
+        ])
 
         # add an edge that already exists and so should not be overwritten
         save('ws_feature_has_GO_annotation', [

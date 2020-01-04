@@ -131,7 +131,7 @@ def get_edge(coll, from_key, to_key):
     return resp.json()
 
 
-def save(coll_name, docs, on_duplicate='update', display_errors=False):
+def save(coll_name, docs, on_duplicate='update'):
     """
     Bulk-save documents to the relation engine database
     API docs: https://github.com/kbase/relation_engine_api
@@ -140,7 +140,6 @@ def save(coll_name, docs, on_duplicate='update', display_errors=False):
         docs - single dict or list of dicts to save into the collection as json documents
         on_duplicate - what to do on a unique key collision. One of 'update', 'replace' 'ignore',
             'error'.
-        display_errors - include error information if insert errors occur.
     """
     if isinstance(docs, dict):
         docs = [docs]
@@ -148,8 +147,7 @@ def save(coll_name, docs, on_duplicate='update', display_errors=False):
     # convert the docs into a string, where each obj is separated by a linebreak
     payload = '\n'.join([json.dumps(d) for d in docs])
     params = {'collection': coll_name, 'on_duplicate': on_duplicate}
-    if display_errors or config()['re_display_errs']:
-        params['display_errors'] = '1'
+    params['display_errors'] = '1'
     resp = requests.put(
         url,
         data=payload,
