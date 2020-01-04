@@ -118,7 +118,7 @@ def _set_consumer():
     return consumer
 
 
-def _init_logger():
+def init_logger():
     """
     Initialize log settings. Mutates the `logger` object.
     Write to stdout and to a local rotating file.
@@ -152,6 +152,6 @@ if __name__ == '__main__':
     # Set up the logger
     # Make the urllib debug logs less noisy
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    _init_logger()
+    init_logger()
     # Run the main thread
     main()
