@@ -15,6 +15,8 @@ import json
 import time
 import requests
 import sys
+import atexit
+import signal
 from confluent_kafka import Consumer, KafkaError
 
 from src.utils.config import config
@@ -24,6 +26,46 @@ from src.index_runner.releng_importer import RelengImporter
 from src.utils.service_utils import wait_for_dependencies
 
 logger = logging.getLogger('IR')
+
+
+def _init_consumer():
+    """
+    Initialize a Kafka consumer instance
+    """
+    consumer = Consumer({
+        'bootstrap.servers': config()['kafka_server'],
+        'group.id': config()['kafka_clientgroup'],
+        'auto.offset.reset': 'earliest',
+        'enable.auto.commit': True
+    })
+    topics = [
+        config()['topics']['workspace_events'],
+        config()['topics']['admin_events']
+    ]
+    logger.info(f"Subscribing to: {topics}")
+    logger.info(f"Client group: {config()['kafka_clientgroup']}")
+    logger.info(f"Kafka server: {config()['kafka_server']}")
+    consumer.subscribe(topics)
+    return consumer
+
+
+def _close_consumer(signum, stack_frame):
+    """
+    This will close the network connections and sockets. It will also trigger
+    a rebalance immediately rather than wait for the group coordinator to
+    discover that the consumer stopped sending heartbeats and is likely dead,
+    which will take longer and therefore result in a longer period of time in
+    which consumers can’t consume messages from a subset of the partitions.
+    """
+    logger.info("Closing the Kafka consumer")
+    consumer.close()
+
+
+# Initialize and run the Kafka consumer
+consumer = _init_consumer()
+atexit.register(_close_consumer)
+signal.signal(signal.SIGTERM, _close_consumer)
+signal.signal(signal.SIGINT, _close_consumer)
 
 
 def main():
@@ -46,9 +88,6 @@ def main():
     # used to check update every minute
     last_updated_minute = int(time.time()/60)
     _CONFIG_TAG = _query_for_config_tag()
-
-    # Initialize and run the Kafka consumer
-    consumer = _set_consumer()
 
     while True:
         msg = consumer.poll(timeout=0.5)
@@ -97,25 +136,6 @@ def _query_for_config_tag():
         return None
     data = resp.json()
     return data['tag_name']
-
-
-def _set_consumer():
-    """"""
-    consumer = Consumer({
-        'bootstrap.servers': config()['kafka_server'],
-        'group.id': config()['kafka_clientgroup'],
-        'auto.offset.reset': 'earliest',
-        'enable.auto.commit': True
-    })
-    topics = [
-        config()['topics']['workspace_events'],
-        config()['topics']['admin_events']
-    ]
-    logger.info(f"Subscribing to: {topics}")
-    logger.info(f"Client group: {config()['kafka_clientgroup']}")
-    logger.info(f"Kafka server: {config()['kafka_server']}")
-    consumer.subscribe(topics)
-    return consumer
 
 
 def init_logger():
