@@ -1,203 +1,313 @@
 """
 Takes workspace kafka event data and generates new Elasticsearch index upates
 (creations, updates, deletes, etc)
-Pushes work to es_writer.
 """
-import time
 import json
-import hashlib
-import traceback
+import requests
+import time
 import logging
-from confluent_kafka import Producer
-from kbase_workspace_client import WorkspaceClient
+from enum import Enum
 
-from src.utils.worker_group import WorkerGroup
-from src.index_runner.es_writer import ESWriter
 from src.utils.config import config
+from src.utils.ws_utils import get_type_pieces
 from src.utils import es_utils
 from src.index_runner.es_indexers.main import index_obj
 from src.index_runner.es_indexers.indexer_utils import (
     check_object_deleted,
     check_workspace_deleted,
-    fetch_objects_in_workspace,
     is_workspace_public
 )
+
+_PREFIX = config()['elasticsearch_index_prefix']
+_ES_URL = config()['elasticsearch_url']
+_IDX = _PREFIX + ".*"
+_GLOBAL_MAPPINGS = config()['global']['global_mappings']
+_HEADERS = {"Content-Type": "application/json"}
+_MAPPINGS = config()['global']['mappings']
 
 logger = logging.getLogger('IR')
 
 
-class ESIndexer:
+def init_indexes():
+    """
+    Initialize Elasticsearch indexes using the global configuration file.
+    """
+    for index, mapping in _MAPPINGS.items():
+        global_mappings = {}  # type: dict
+        if mapping.get('global_mappings'):
+            for g_map in mapping['global_mappings']:
+                global_mappings.update(_GLOBAL_MAPPINGS[g_map])
+        _init_index(index, {**mapping['properties'], **global_mappings})
 
-    @classmethod
-    def init_children(cls):
-        """Initialize a worker group of ESWriters, which we push work into."""
-        es_writers = WorkerGroup(ESWriter, (), count=config()['workers']['num_es_writers'])
-        return {'es_writers': es_writers}
 
-    def ws_event(self, msg):
-        """
-        Receive a workspace event from the kafka consumer.
-        msg will have fields described here: https://kbase.us/services/ws/docs/events.html
-        """
-        event_type = msg.get('evtype')
-        ws_id = msg.get('wsid')
-        if not event_type:
-            logger.info(f"Missing 'evtype' in event: {msg}")
-            return
-        if event_type != "RELOAD_ELASTIC_ALIASES" and not ws_id:
-            # TODO this logic and error message is weird
-            logger.error(f'Invalid wsid in event: {ws_id}')
-            return
-        logger.info(f'Received {msg["evtype"]} for {ws_id}/{msg.get("objid", "?")}')
-        try:
-            if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
-                logger.info('Running indexer..')
-                self._run_indexer(msg)
-                logger.info('Done running indexer..')
-            elif event_type == 'REINDEX_WS':
-                self._index_ws(msg)
-            elif event_type == 'INDEX_NONEXISTENT_WS':
-                self._index_nonexistent_ws(msg)
-            elif event_type == 'INDEX_NONEXISTENT':
-                self._index_nonexistent(msg)
-            elif event_type == 'OBJECT_DELETE_STATE_CHANGE':
-                self._run_obj_deleter(msg)
-            elif event_type == 'WORKSPACE_DELETE_STATE_CHANGE':
-                self._run_workspace_deleter(msg)
-            elif event_type == 'CLONE_WORKSPACE':
-                self._clone_workspace(msg)
-            elif event_type == 'SET_GLOBAL_PERMISSION':
-                self._set_global_permission(msg)
-            elif event_type == 'RELOAD_ELASTIC_ALIASES':
-                self._reload_aliases(msg)
-            else:
-                logger.info(f"Unrecognized event {event_type}.")
-                return
-        except Exception as err:
-            logger.error('Error indexing:\n'
-                         + '-' * 80 + '\n'
-                         + str(msg) + '\n'
-                         + str(err) + '\n'
-                         + '-' * 80 + '\n'
-                         + traceback.format_exc() + '\n'
-                         + '=' * 80)
-            _log_err_to_es(self.children['es_writers'], msg, err)
+def reload_aliases():
+    """
+    Create aliases on elasticsearch from the global configuration file.
+    """
+    # FIXME Currently, this function only adds new indexes to aliases.
+    # In the future, we want to remove aliases that exist on elastic
+    # but not in the config.
+    if config()['global'].get('aliases'):
+        group_aliases = config()['global']['aliases']
+        for alias_name in group_aliases:
+            try:
+                _create_alias(
+                    f"{_PREFIX}.{alias_name}",
+                    [f"{_PREFIX }.{name}" for name in group_aliases[alias_name]]
+                )
+            except RuntimeError as err:
+                names = group_aliases[alias_name]
+                raise RuntimeError(f"Failed creating alias name: {alias_name}, "
+                                   f"for indices: {names}..\nerror: {err}")
+        logger.info(f"Done resetting aliases.")
 
-    def _reload_aliases(self, msg):
-        """event handler for relading/resetting elasticsearch aliases."""
-        self.children['es_writers'].put(('reload_aliases', msg))
 
-    def _run_indexer(self, msg):
-        """
-        Run the indexer for a workspace event message and produce an event for it.
-        This will be threaded and backgrounded.
-        """
-        # index_obj returns a generator
+def index_worker(work_queue):
+    """
+    Run as a thread. Calls the indexer for a workspace event message and
+    writes index documents to elastic.
+    """
+    while True:
+        (obj, ws_info, msg) = work_queue.get()
         start = time.time()
-        for result in index_obj(msg):
-            if not result:
-                _log_err_to_es(self.children['es_writers'], result)
-                continue
-            # Push to the elasticsearch write queue
-            self.children['es_writers'].put((result['_action'], result))
-        logger.info(f'_run_indexer finished in {time.time() - start}s')
+        batch_writes = []
+        # index_obj returns a generator
+        for data in index_obj(obj, ws_info, msg):
+            action = data['_action']
+            if action == 'index':
+                batch_writes.append(data)
+            elif action == 'init_generic_index':
+                _init_generic_index(data)
+        count = len(batch_writes)
+        _write_to_elastic(batch_writes)
+        work_queue.task_done()
+        logger.info(f'Indexing of {count} docs on ES took {time.time() - start}s')
 
-    def _index_ws(self, msg):
-        """Index all objects in a workspace."""
-        ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-        for (objid, ver) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
-            _produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid})
 
-    def _index_nonexistent_ws(self, msg):
-        """Index all objects in a workspace that haven't already been indexed."""
-        ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-        for (objid, ver) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
-            _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid})
+def delete_obj(msg):
+    """
+    Checks that the received object is deleted, since the workspace object
+    delete event can refer to either delete or undelete state changes.
+    """
+    wsid = msg['wsid']
+    objid = msg['objid']
+    if not check_object_deleted(wsid, objid):
+        # Object is not deleted
+        logger.info(f'Object {objid} in workspace {wsid} not deleted')
+        return
+    # Perform the deletion
+    query = {
+        'bool': {
+            'must': [
+                {'term': {'access_group': wsid}},
+                {'term': {'obj_id': objid}}
+            ]
+        }
+    }
+    json_body = json.dumps({'query': query})
+    # Perform the delete_by_query using the elasticsearch http api.
+    resp = requests.post(
+        f"{_ES_URL}/{_IDX}/_delete_by_query",
+        params={'conflicts': 'proceed'},
+        data=json_body,
+        headers={"Content-Type": "application/json"}
+    )
+    if not resp.ok:
+        # Unsuccesful request to elasticsearch.
+        raise RuntimeError(f"Error deleting object on elasticsearch:\n{resp.text}")
 
-    def _run_obj_deleter(self, msg):
-        """
-        Checks that the received object is deleted, since the workspace object
-        delete event can refer to either delete or undelete state changes.
-        """
-        wsid = msg['wsid']
-        objid = msg['objid']
-        if not check_object_deleted(wsid, objid):
-            # Object is not deleted
-            logger.info(f'object {objid} in workspace {wsid} not deleted')
-            return
-        self.children['es_writers'].put(('delete', {'object_id': str(objid), 'workspace_id': str(wsid)}))
 
-    def _run_workspace_deleter(self, msg):
-        """
-        Checks that the received workspace is deleted because the
-        delete event can refer to both delete or undelete state changes.
-        """
-        # Verify that this workspace is actually deleted
-        wsid = msg['wsid']
-        if not check_workspace_deleted(wsid):
-            logger.info(f'Workspace {wsid} not deleted')
-            return
-        self.children['es_writers'].put(('delete', {'workspace_id': str(wsid)}))
+def delete_ws(msg):
+    """
+    Delete everything under a workspace.
+    First checks that the received workspace is deleted because the
+    delete event can refer to both delete or undelete state changes.
+    """
+    # Verify that this workspace is actually deleted
+    wsid = msg['wsid']
+    if not check_workspace_deleted(wsid):
+        logger.info(f'Workspace {wsid} not deleted')
+        return
+    # Delete everything with the given workspace ID
+    query = {'term': {'access_group': wsid}}
+    json_body = json.dumps({'query': query})
+    # Perform the delete_by_query using the elasticsearch http api.
+    resp = requests.post(
+        f"{_ES_URL}/{_IDX}/_delete_by_query",
+        params={'conflicts': 'proceed'},
+        data=json_body,
+        headers={"Content-Type": "application/json"}
+    )
+    if not resp.ok:
+        # Unsuccesful request to elasticsearch.
+        raise RuntimeError(f"Error deleting workspace on elasticsearch:\n{resp.text}")
 
-    def _clone_workspace(self, msg):
-        """
-        Handles the CLONE_WORKSPACE event.
-        Iterates over each object in a given workspace and indexes them.
-        """
-        workspace_data = fetch_objects_in_workspace(msg['wsid'], include_narrative=True)
-        for obj in workspace_data:
-            index_msg = {
-                "wsid": msg["wsid"],
-                "objid": obj["obj_id"],
+
+def set_perms(msg):
+    """
+    Set the `is_public` field for a workspace. Handles the SET_GLOBAL_PERMISSION event.
+    eg. this happens when making a narrative public.
+    """
+    # Fetch the permission for the workspace
+    wsid = msg['wsid']
+    is_public = is_workspace_public(wsid)
+    is_public_str = 'true' if is_public else 'false'
+    _update_by_query(
+        {'term': {'access_group': wsid}},
+        f"ctx._source.is_public={is_public_str}",
+        config()
+    )
+
+
+# -- Utils
+
+
+def _index_nonexistent(msg):
+    """
+    Handler for INDEX_NONEXISTENT.
+    Index a document on elasticsearch only if it does not already exist there.
+    Expects msg to have both 'wsid' and 'objid'.
+    """
+    exists = es_utils.does_doc_exist(msg['wsid'], msg['objid'])
+    if not exists:
+        logger.info('Doc does not exist')
+        # self._run_indexer(msg)
+
+
+def _init_generic_index(msg):
+    """
+    Initialize an index from a workspace object indexed by the generic indexer.
+    For example, when the generic indexer gets a type like Module.Type-4.0,
+    then we create an index called "search2.type_0".
+    Message fields:
+        full_type_name - string - eg. "Module.Type-X.Y"
+    """
+    (module_name, type_name, type_ver) = get_type_pieces(msg['full_type_name'])
+    index_name = type_name.lower()
+    _init_index(index_name + '_0', _GLOBAL_MAPPINGS['ws_object'])
+
+
+def _write_to_elastic(data):
+    """
+    Bulk save a list of documents to an index.
+    Each entry in the list has {doc, id, index}
+        doc - document data (for indexing events)
+        id - document id
+        index - index name
+        delete - bool (for delete events)
+    """
+    # Construct the post body for the bulk index
+    json_body = ''
+    while data:
+        datum = data.pop()
+        idx = f"{_PREFIX}.{datum['index']}"
+        json_body += json.dumps({
+            'index': {
+                '_index': idx,
+                '_id': datum['id']
             }
-            self._run_indexer(index_msg)
-
-    def _set_global_permission(self, msg):
-        """
-        Handles the SET_GLOBAL_PERMISSION event.
-        eg. this happens when making a narrative public.
-        """
-        # Check what the permission is on the workspace
-        workspace_id = msg['wsid']
-        is_public = is_workspace_public(workspace_id)
-        # Push the event to the elasticsearch writer queue
-        self.children['es_writers'].put(('set_global_perm', {
-            'workspace_id': workspace_id,
-            'is_public': is_public
-        }))
-
-    def _index_nonexistent(self, msg):
-        """
-        Handler for INDEX_NONEXISTENT.
-        Index a document on elasticsearch only if it does not already exist there.
-        Expects msg to have both 'wsid' and 'objid'.
-        """
-        exists = es_utils.does_doc_exist(msg['wsid'], msg['objid'])
-        if not exists:
-            logger.info('Doc does not exist')
-            self._run_indexer(msg)
+        })
+        json_body += '\n'
+        json_body += json.dumps(datum['doc'])
+        json_body += '\n'
+    # Save the documents using the elasticsearch http api
+    resp = requests.post(f"{_ES_URL}/_bulk", data=json_body, headers={"Content-Type": "application/json"})
+    if not resp.ok:
+        # Unsuccesful save to elasticsearch.
+        raise RuntimeError(f"Error saving to elasticsearch:\n{resp.text}")
 
 
-def _log_err_to_es(es_writers, msg, err=None):
-    """Log an indexing error in an elasticsearch index."""
-    # The key is a hash of the message data body
-    # The index document is the error string plus the message data itself
-    _id = hashlib.blake2b(json.dumps(msg).encode('utf-8')).hexdigest()
-    es_writers.put(('index', {
-        'index': config()['error_index_name'],
-        'id': _id,
-        'doc': {'error': str(err), **msg}
-    }))
+def _update_by_query(query, script, config):
+    url = f"{_ES_URL}/{_IDX}/_update_by_query"
+    resp = requests.post(
+        url,
+        params={
+            'conflicts': 'proceed',
+            'wait_for_completion': True,
+            'refresh': True
+        },
+        data=json.dumps({
+            'query': query,
+            'script': {'inline': script, 'lang': 'painless'}
+        }),
+        headers={'Content-Type': 'application/json'}
+    )
+    if not resp.ok:
+        raise RuntimeError(f'Error updating by query:\n{resp.text}')
 
 
-def _produce(data, topic=config()['topics']['admin_events']):
-    producer = Producer({'bootstrap.servers': config()['kafka_server']})
-    producer.produce(topic, json.dumps(data), callback=_delivery_report)
-    producer.poll(60)
+def _create_alias(alias_name, index_names):
+    """
+    Create an alias from `alias_name` to the  `index_names`.
+    NOTE: index_names can be a string or list of strings
+    """
+    body = {'actions': [{'add': {'indices': index_names, 'alias': alias_name}}]}
+    url = _ES_URL + '/_aliases'
+    resp = requests.post(url, data=json.dumps(body), headers=_HEADERS)
+    if not resp.ok:
+        raise RuntimeError(f"Error creating alias '{alias_name}':\n{resp.text}")
+    return Status.CREATED
 
 
-def _delivery_report(err, msg):
-    if err is not None:
-        logger.error(f'Message delivery failed:\n{err}')
+def _create_index(index_name):
+    """
+    Create an index on Elasticsearch with a given name.
+    """
+    request_body = {
+        "settings": {
+            "index": {
+                "number_of_shards": 10,
+                "number_of_replicas": 2
+            }
+        }
+    }
+    url = _ES_URL + '/' + index_name
+    resp = requests.put(url, data=json.dumps(request_body), headers=_HEADERS)
+    if not resp.ok:
+        err_type = resp.json()['error']['type']
+        if err_type == 'resource_already_exists_exception':
+            return Status.EXISTS
+        else:
+            raise RuntimeError(f"Error while creating new index {index_name}:\n{resp.text}")
     else:
-        logger.info(f'Message delivered to {msg.topic()}')
+        return Status.CREATED  # created
+
+
+def _put_mapping(index_name, mapping):
+    """
+    Create or update the type mapping for a given index.
+    """
+    # type_name = config()['global']['es_type_global_name']
+    url = f"{_ES_URL}/{index_name}/_mapping"
+    resp = requests.put(
+        url,
+        data=json.dumps({'properties': mapping}),
+        headers=_HEADERS
+    )
+    if not resp.ok:
+        raise RuntimeError(f"Error updating mapping for index {index_name}:\n{resp.text}")
+    return Status.UPDATED
+
+
+def _init_index(name, props):
+    """
+    Initialize an index on elasticsearch if it doesn't already exist.
+    Message fields:
+        name - index name
+        props - property type mappings
+    """
+    index_name = f"{_PREFIX}.{name}"
+    status = _create_index(index_name)
+    if status == Status.CREATED:
+        logger.info(f"index {index_name} created.")
+    elif status == Status.EXISTS:
+        logger.info(f"index {index_name} already exists.")
+    # Update the type mapping
+    _put_mapping(index_name, props)
+
+
+class Status(Enum):
+    """Simple enum for ES update statuses."""
+    UPDATED = 0
+    CREATED = 1
+    EXISTS = 2

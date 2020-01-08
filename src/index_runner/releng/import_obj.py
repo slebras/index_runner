@@ -25,7 +25,7 @@ _TYPE_PROCESSOR_MAP = {
 }
 
 
-def import_object(obj):
+def import_object(obj, ws_info):
     """
     Import all the edges and vertices for a workspace object into RE.
     """
@@ -34,11 +34,9 @@ def import_object(obj):
     obj_info = obj['info']
     wsid = obj_info[6]
     objid = obj_info[0]
-    ws_info = _get_ws_info(wsid)
     obj_key = f'{wsid}:{objid}'
     obj_ver = obj_info[4]
     obj_ver_key = f'{obj_key}:{obj_ver}'
-
     _save_ws_object(obj_info, ws_info)
     _save_obj_hash(obj_info)
     _save_obj_version(obj_ver_key, obj_ver, obj_info, ws_info)
@@ -171,12 +169,6 @@ def _save_workspace(ws_info):
         'is_deleted': False,
         'metadata': metadata
     })
-
-
-def _get_ws_info(wsid):
-    """Fetch the workspace info tuple."""
-    workspace_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-    return workspace_client.admin_req('getWorkspaceInfo', {"id": wsid})
 
 
 def _save_created_with_method_edge(obj_ver_key, prov):

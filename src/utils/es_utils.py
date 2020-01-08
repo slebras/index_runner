@@ -9,7 +9,7 @@ _PREFIX = config()['elasticsearch_index_prefix']
 _ES_URL = "http://" + config()['elasticsearch_host'] + ":" + str(config()['elasticsearch_port'])
 
 
-def does_doc_exist(wsid, objid):
+def check_doc_existence(wsid, objid):
     """Check if a document exists on elasticsearch based on workspace and object id."""
     _id = f"WS::{wsid}:{objid}"
     resp = requests.post(

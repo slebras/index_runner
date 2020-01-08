@@ -1,6 +1,4 @@
-"""
-Test importing objects into the RE directly, without going through the higher layers of code.
-"""
+""" Test importing objects into the RE directly, without going through the higher layers of code. """
 
 from src.index_runner.releng.import_obj import import_object
 from src.utils.service_utils import wait_for_dependencies
@@ -151,6 +149,10 @@ class TestRelEngImportObject(unittest.TestCase):
         obj_type = f"{type_module}.{type_name}-{maj_ver}.{min_ver}"
         # trigger the import
         wsid = 6
+        ws_info = [
+                8, "workspacename", "someuser", "2020-01-01T07:07:07+0000",
+                7, "n", "r", "unlocked", {}
+        ]
         import_object({
             "info": [
                 7,
@@ -165,7 +167,7 @@ class TestRelEngImportObject(unittest.TestCase):
                 351,
                 {}
             ]
-        })
+        }, ws_info)
         # check results
         obj_doc = get_re_doc('ws_object', '6:7')
         self.assertEqual(obj_doc['workspace_id'], 6)
@@ -403,6 +405,10 @@ class TestRelEngImportObject(unittest.TestCase):
     def _genome_no_features(self, objid, objname):
         clear_collections()
 
+        ws_info = [
+                6, "workspacename", "someuser", "2020-01-01T07:07:07+0000",
+                objid, "n", "r", "unlocked", {}
+        ]
         # trigger the import
         import_object({
             "info": [
@@ -418,7 +424,7 @@ class TestRelEngImportObject(unittest.TestCase):
                 351,
                 {}
             ]
-            })
+            }, ws_info)
 
         # only check one collection, since we already checked this stuff in previous tests
         # Check for ws_object_version

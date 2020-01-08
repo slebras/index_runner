@@ -7,7 +7,7 @@
     "method": "Workspace.administer",
     "params": [{
       "command": "getObjects",
-      "params": {"objects": [{"ref": "41347/6/1"}], "no_data": 1}
+      "params": {"objects": [{"ref": "41347/6/1"}]}
     }]
   },
   "response": {

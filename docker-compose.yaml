@@ -22,12 +22,13 @@ services:
       - ${PWD}:/app
       - ${PWD}/scratch:/scratch
     environment:
+      # - KBASE_ENDPOINT=http://mock_kbase_services:5000/
+      - KBASE_ENDPOINT=https://ci.kbase.us/services/
       - GLOBAL_CONFIG_URL=https://raw.githubusercontent.com/kbase/index_runner_spec/36780d4549e22b5f68bfac53cf6666a50c7c62c1/config.yaml
       - DEVELOPMENT=1
       - PYTHONUNBUFFERED=true
-      - KBASE_ENDPOINT=http://mock_kbase_services:5000/
       - RE_URL=http://re_api:5000
-      - WORKSPACE_TOKEN=valid_admin_token
+      - WORKSPACE_TOKEN=O5CCOIF5QGTFINDBKIDEOQRPHYKJ7B7T
       - RE_API_TOKEN=valid_admin_token
       - MOUNT_DIR=${PWD}
 
