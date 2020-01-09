@@ -59,7 +59,7 @@ services:
 
   # Mock server for various kbase endpoints (workspace, auth, catalog)
   mock_kbase_services:
-    image: mockservices/mock_json_service:1.2
+    image: mockservices/mock_json_service:1.3
     ports:
       - "127.0.0.1:5001:5000"
     volumes:

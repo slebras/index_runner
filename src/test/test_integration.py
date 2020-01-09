@@ -9,12 +9,12 @@ from src.utils.re_client import get_doc
 
 _TEST_EVENT = {
    "wsid": 33192,
-   "ver": 1,
+   "ver": 2,
    "perm": None,
    "evtype": "NEW_VERSION",
-   "objid": 21,
+   "objid": 23,
    "time": 1578439639664,
-   "objtype": "KBaseFBA.FBAModel-14.0",
+   "objtype": "KBaseGenomeAnnotations.Assembly-6.0",
    "permusers": [],
    "user": "jayrbolton"
 }  # type: dict
@@ -103,7 +103,6 @@ def _get_es_aliases_blocking(timeout=180):
 def _get_es_doc(_id):
     """Fetch a document from elastic based on ID."""
     prefix = config()['elasticsearch_index_prefix']
-    print(f'Waiting for doc {_id} from index {prefix}.*')
     url = f"{config()['elasticsearch_url']}/{prefix}.*/_search?size=1"
     resp = requests.post(
         url,

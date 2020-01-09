@@ -7,7 +7,7 @@
     "method": "Workspace.administer",
     "params": [{
       "command": "getPermissionsMass",
-      "params": {"workspaces": [{"id": 41347}]}
+      "params": {"workspaces": [{"id": 33192}]}
     }]
   },
   "response": {
@@ -15,12 +15,9 @@
     "body": {
       "version": "1.1",
       "result": [{
-        "perms": [
-          {"username": "a"},
-          {"username2": "w"},
-          {"*": "r"}
-        ]
+        "perms": [{"username": "a"}]
       }]
     }
   }
 }
+
