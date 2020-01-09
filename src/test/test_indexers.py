@@ -118,7 +118,7 @@ class TestIndexers(unittest.TestCase):
         for (idx, msg_data) in enumerate(indexer(test_data['obj'], test_data['ws_info'], test_data['obj'])):
             self.assertEqual(msg_data, check_against[idx])
 
-    @unittest.skip('Incompatible with travis.ci')
+    @unittest.skip('TODO')
     def test_from_sdk(self):
         check_against = [{
             '_action': 'index',

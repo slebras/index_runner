@@ -88,9 +88,10 @@ def get_doc(coll, key):
     return resp.json()
 
 
-def check_doc_existence(_id):
+def check_doc_existence(wsid, objid):
     """Check if a doc exists in RE already by full ID."""
-    (coll, key) = _id.split('/')
+    coll = 'ws_object'
+    key = f"{wsid}:{objid}"
     query = """
     for d in @@coll filter d._key == @key limit 1 return 1
     """
