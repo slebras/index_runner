@@ -166,8 +166,6 @@ def _handle_msg(msg, es_queue, releng_queue):
             if not exists_in_es:
                 logger.info("Indexing object {obj_ref} in ES.")
                 es_queue.put((obj, ws_info, msg))
-        else:
-            logger.info("Object {obj_ref} already exists in ES and RE.")
     elif event_type == 'OBJECT_DELETE_STATE_CHANGE':
         # Delete the object on RE and ES. Synchronous for now.
         es_indexer.delete_obj(msg)
