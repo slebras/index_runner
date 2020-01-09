@@ -60,22 +60,6 @@ def _produce(data, topic=config()['topics']['workspace_events']):
     print(f"Produced {data}")
 
 
-def _check_deleted_es_doc_blocking(_id, timeout=180):
-    """
-    Helper for testing deletion. Inverse function of _get_es_doc_blocking
-    Try to fetch a doc on ES, returning successfully once the doc does not exist.
-    """
-    start_time = int(time.time())
-    while True:
-        result = _get_es_doc(_id)
-        if not result:
-            return None
-        if (int(time.time()) - start_time) > timeout:
-            raise RuntimeError(f"Document {_id} was not deleted in {timeout}s.")
-        print(f'Waiting for document {_id} to be deleted')
-        time.sleep(5)
-
-
 def _get_es_doc_blocking(_id, timeout=180):
     """Fetch a doc on ES, waiting for it to become available, with a timeout."""
     start_time = int(time.time())
@@ -86,17 +70,6 @@ def _get_es_doc_blocking(_id, timeout=180):
             return result
         if (int(time.time()) - start_time) > timeout:
             raise RuntimeError(f"Document {_id} not found in {timeout}s.")
-        time.sleep(5)
-
-
-def _get_es_aliases_blocking(timeout=180):
-    start_time = int(time.time())
-    while True:
-        result = _get_es_aliases()
-        if result:
-            return result
-        if (int(time.time()) - start_time) > timeout:
-            raise RuntimeError(f"Aliases not found in {timeout}s.")
         time.sleep(5)
 
 

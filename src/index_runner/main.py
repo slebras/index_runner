@@ -148,11 +148,11 @@ def _handle_msg(msg, es_queue, releng_queue):
         releng_queue.join()
     elif event_type == 'REINDEX_WS' or event_type == 'CLONE_WORKSPACE':
         # Reindex all objects in a workspace, overwriting existing data
-        for (objid, ver) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
+        for (objid, _) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
             _produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid})
     elif event_type == 'INDEX_NONEXISTENT_WS':
         # Reindex all objects in a workspace without overwriting any existing data
-        for (objid, ver) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
+        for (objid, _) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
             _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid})
     elif event_type == 'INDEX_NONEXISTENT':
         exists_in_releng = re_client.check_doc_existence(msg['wsid'], msg['objid'])

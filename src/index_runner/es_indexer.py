@@ -10,7 +10,6 @@ from enum import Enum
 
 from src.utils.config import config
 from src.utils.ws_utils import get_type_pieces
-from src.utils import es_utils
 from src.index_runner.es_indexers.main import index_obj
 from src.index_runner.es_indexers.indexer_utils import (
     check_object_deleted,
@@ -161,19 +160,6 @@ def set_perms(msg):
 
 # -- Utils
 
-
-def _index_nonexistent(msg):
-    """
-    Handler for INDEX_NONEXISTENT.
-    Index a document on elasticsearch only if it does not already exist there.
-    Expects msg to have both 'wsid' and 'objid'.
-    """
-    exists = es_utils.does_doc_exist(msg['wsid'], msg['objid'])
-    if not exists:
-        logger.info('Doc does not exist')
-        # self._run_indexer(msg)
-
-
 def _init_generic_index(msg):
     """
     Initialize an index from a workspace object indexed by the generic indexer.
@@ -182,7 +168,7 @@ def _init_generic_index(msg):
     Message fields:
         full_type_name - string - eg. "Module.Type-X.Y"
     """
-    (module_name, type_name, type_ver) = get_type_pieces(msg['full_type_name'])
+    (_, type_name, type_ver) = get_type_pieces(msg['full_type_name'])
     index_name = type_name.lower()
     _init_index(index_name + '_0', _GLOBAL_MAPPINGS['ws_object'])
 

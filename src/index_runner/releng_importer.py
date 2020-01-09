@@ -22,16 +22,6 @@ def import_worker(work_queue):
         work_queue.task_done()
 
 
-# TODO
-# def _import_nonexistent(msg):
-#     """Import an object only if it does not exist in RE already."""
-#     upa = _get_ref(msg, delim=':')
-#     _id = 'ws_object_version/' + upa
-#     exists = check_doc_existence(_id)
-#     if not exists:
-#         _import_obj(msg)
-
-
 def delete_obj(msg):
     """Handle an object deletion event (OBJECT_DELETE_STATE_CHANGE)"""
     logger.info('_delete_obj TODO')  # TODO
@@ -44,18 +34,7 @@ def delete_ws(msg):
     # raise NotImplementedError()
 
 
-def _import_ws(msg):
-    """Import all data for an entire workspace."""
-    pass
-
-
 def set_perms(msg):
     """Set permissions for an entire workspace (SET_GLOBAL_PERMISSION)."""
     logger.info('_set_global_perms TODO')  # TODO
     # raise NotImplementedError()
-
-
-def _get_ref(msg, delim='/'):
-    """Get the workspace object reference from a kafka event."""
-    parts = [msg['wsid'], msg['objid'], msg.get('ver')]
-    return delim.join([str(_id) for _id in parts if _id])
