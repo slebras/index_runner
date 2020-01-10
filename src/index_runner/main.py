@@ -158,13 +158,14 @@ def _handle_msg(msg, es_queue, releng_queue):
         exists_in_releng = re_client.check_doc_existence(msg['wsid'], msg['objid'])
         exists_in_es = es_utils.check_doc_existence(msg['wsid'], msg['objid'])
         if not exists_in_releng or not exists_in_es:
+            obj_ref = f"{msg['wsid']}/{msg['objid']}/{msg.get('ver', '?')}"
             obj = _fetch_obj_data(msg)
             ws_info = _fetch_ws_info(msg)
             if not exists_in_releng:
-                logger.info("Importing object {obj_ref} into RE.")
+                logger.info(f"Importing object {obj_ref} into RE.")
                 releng_queue.put((obj, ws_info, msg))
             if not exists_in_es:
-                logger.info("Indexing object {obj_ref} in ES.")
+                logger.info(f"Indexing object {obj_ref} in ES.")
                 es_queue.put((obj, ws_info, msg))
     elif event_type == 'OBJECT_DELETE_STATE_CHANGE':
         # Delete the object on RE and ES. Synchronous for now.
@@ -249,7 +250,7 @@ def _produce(data, topic=config()['topics']['admin_events']):
     """
     producer = Producer({'bootstrap.servers': config()['kafka_server']})
     producer.produce(topic, json.dumps(data), callback=_delivery_report)
-    producer.poll()
+    producer.poll(0.1)
 
 
 def _log_err_to_es(es_queue, msg, err=None):
