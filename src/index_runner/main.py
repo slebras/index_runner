@@ -142,10 +142,12 @@ def _handle_msg(msg, es_queue, releng_queue):
     if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
         obj = _fetch_obj_data(msg)
         ws_info = _fetch_ws_info(msg)
-        es_queue.put((obj, ws_info, msg))
-        releng_queue.put((obj, ws_info, msg))
-        es_queue.join()
-        releng_queue.join()
+        releng_importer.run_importer(obj, ws_info, msg)
+        es_indexer.run_indexer(obj, ws_info, msg)
+        # es_queue.put((obj, ws_info, msg))
+        # releng_queue.put((obj, ws_info, msg))
+        # es_queue.join()
+        # releng_queue.join()
     elif event_type == 'REINDEX_WS' or event_type == 'CLONE_WORKSPACE':
         # Reindex all objects in a workspace, overwriting existing data
         for (objid, _) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
