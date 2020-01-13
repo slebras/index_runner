@@ -12,8 +12,6 @@ import requests
 import sys
 import atexit
 import signal
-import multiprocessing
-import threading
 import traceback
 import hashlib
 from confluent_kafka import Consumer, KafkaError, Producer
@@ -85,18 +83,6 @@ def main():
     es_indexer.init_indexes()
     es_indexer.reload_aliases()
 
-    # Queues for sending work to search and releng
-    es_queue: multiprocessing.JoinableQueue = multiprocessing.JoinableQueue()
-    releng_queue: multiprocessing.JoinableQueue = multiprocessing.JoinableQueue()
-
-    # Run the ES indexer thread
-    es_worker = threading.Thread(target=es_indexer.index_worker, args=(es_queue,), daemon=True)
-    es_worker.start()
-
-    # Run the RE importer thread
-    re_worker = threading.Thread(target=releng_importer.import_worker, args=(releng_queue,), daemon=True)
-    re_worker.start()
-
     while True:
         msg = consumer.poll(timeout=0.5)
         if msg is None:
@@ -123,7 +109,7 @@ def main():
             logger.error(f'Message content: {val}')
         start = time.time()
         try:
-            _handle_msg(msg, es_queue, releng_queue)
+            _handle_msg(msg)
             # Move the offset for our partition
             consumer.commit()
             logger.info(f"Handled {msg['evtype']} message in {time.time() - start}s")
@@ -131,10 +117,10 @@ def main():
             logger.error(f'Error processing message: {err.__class__.__name__} {err}')
             logger.error(traceback.format_exc())
             # Save this error and message to a topic in Elasticsearch
-            _log_err_to_es(es_queue, msg, err=err)
+            _log_err_to_es(msg, err=err)
 
 
-def _handle_msg(msg, es_queue, releng_queue):
+def _handle_msg(msg):
     event_type = msg.get('evtype')
     if not event_type:
         logger.warning(f"Missing 'evtype' in event: {msg}")
@@ -144,10 +130,6 @@ def _handle_msg(msg, es_queue, releng_queue):
         ws_info = _fetch_ws_info(msg)
         releng_importer.run_importer(obj, ws_info, msg)
         es_indexer.run_indexer(obj, ws_info, msg)
-        # es_queue.put((obj, ws_info, msg))
-        # releng_queue.put((obj, ws_info, msg))
-        # es_queue.join()
-        # releng_queue.join()
     elif event_type == 'REINDEX_WS' or event_type == 'CLONE_WORKSPACE':
         # Reindex all objects in a workspace, overwriting existing data
         for (objid, _) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
@@ -165,10 +147,10 @@ def _handle_msg(msg, es_queue, releng_queue):
             ws_info = _fetch_ws_info(msg)
             if not exists_in_releng:
                 logger.info(f"Importing object {obj_ref} into RE.")
-                releng_queue.put((obj, ws_info, msg))
+                releng_importer.run_importer(obj, ws_info, msg)
             if not exists_in_es:
                 logger.info(f"Indexing object {obj_ref} in ES.")
-                es_queue.put((obj, ws_info, msg))
+                es_indexer.run_indexer(obj, ws_info, msg)
     elif event_type == 'OBJECT_DELETE_STATE_CHANGE':
         # Delete the object on RE and ES. Synchronous for now.
         es_indexer.delete_obj(msg)
@@ -255,7 +237,7 @@ def _produce(data, topic=config()['topics']['admin_events']):
     producer.poll(0.1)
 
 
-def _log_err_to_es(es_queue, msg, err=None):
+def _log_err_to_es(msg, err=None):
     """Log an indexing error in an elasticsearch index."""
     # The key is a hash of the message data body
     # The index document is the error string plus the message data itself
