@@ -54,6 +54,7 @@ def get_config():
         },
         'global': global_config,
         'github_release_url': github_release_url,
+        'github_token': os.environ.get('GITHUB_TOKEN'),
         'ws_token': os.environ['WORKSPACE_TOKEN'],
         'mount_dir': os.environ['MOUNT_DIR'],
         'kbase_endpoint': kbase_endpoint,

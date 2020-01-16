@@ -50,7 +50,7 @@ def _init_consumer():
     return consumer
 
 
-def _close_consumer(signum, stack_frame):
+def _close_consumer(signum=None, stack_frame=None):
     """
     This will close the network connections and sockets. It will also trigger
     a rebalance immediately rather than wait for the group coordinator to
@@ -215,8 +215,12 @@ def _fetch_config_tag():
     """using github release api (https://developer.github.com/v3/repos/releases/) find
     out if there is new version of the config."""
     github_release_url = config()['github_release_url']
+    if config()['github_token']:
+        headers = {'Authorization': f"token {config()['github_token']}"}
+    else:
+        headers = {}
     try:
-        resp = requests.get(url=github_release_url)
+        resp = requests.get(url=github_release_url, headers=headers)
     except Exception as err:
         logging.error(f"Unable to fetch indexer config from github: {err}")
         # Ignore any error and continue; try the fetch again later
