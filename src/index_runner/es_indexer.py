@@ -61,26 +61,18 @@ def reload_aliases():
         logger.info(f"Done resetting aliases.")
 
 
-def index_worker(work_queue):
-    """
-    Run as a thread. Calls the indexer for a workspace event message and
-    writes index documents to elastic.
-    """
-    while True:
-        (obj, ws_info, msg) = work_queue.get()
-        start = time.time()
-        batch_writes = []
-        # index_obj returns a generator
-        for data in index_obj(obj, ws_info, msg):
-            action = data['_action']
-            if action == 'index':
-                batch_writes.append(data)
-            elif action == 'init_generic_index':
-                _init_generic_index(data)
-        count = len(batch_writes)
-        _write_to_elastic(batch_writes)
-        work_queue.task_done()
-        logger.info(f'Indexing of {count} docs on ES took {time.time() - start}s')
+def run_indexer(obj, ws_info, msg):
+    start = time.time()
+    batch_writes = []
+    for data in index_obj(obj, ws_info, msg):
+        action = data['_action']
+        if action == 'index':
+            batch_writes.append(data)
+        elif action == 'init_generic_index':
+            _init_generic_index(data)
+    count = len(batch_writes)
+    _write_to_elastic(batch_writes)
+    logger.info(f'Indexing of {count} docs on ES took {time.time() - start}s')
 
 
 def delete_obj(msg):

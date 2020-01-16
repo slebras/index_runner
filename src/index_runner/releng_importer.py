@@ -13,13 +13,10 @@ logger = logging.getLogger('IR')
 # Initialize configuration data
 
 
-def import_worker(work_queue):
-    while True:
-        (obj, ws_info, msg) = work_queue.get()
-        start = time.time()
-        import_object(obj, ws_info)
-        logger.info(f"Imported an object into RE in {time.time() - start}s.")
-        work_queue.task_done()
+def run_importer(obj, ws_info, msg):
+    start = time.time()
+    import_object(obj, ws_info)
+    logger.info(f"Imported an object into RE in {time.time() - start}s.")
 
 
 def delete_obj(msg):
