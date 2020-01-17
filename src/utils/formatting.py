@@ -2,6 +2,7 @@
 Data formatting utilities.
 """
 import time
+import re
 
 
 def ts_to_epoch(ts):
@@ -39,7 +40,7 @@ def get_method_key_from_prov(prov):
     serv = prov[0]['service']
     commit = _get_module_ver_hash(prov)
     meth = prov[0].get('method', 'UNKNOWN')
-    return f"{serv}:{commit}:{meth}"
+    return sanitize_arangodb_key(f"{serv}:{commit}:{meth}")
 
 
 def get_module_key_from_prov(prov):
@@ -49,4 +50,10 @@ def get_module_key_from_prov(prov):
     """
     serv = prov[0]['service']
     commit = _get_module_ver_hash(prov)
-    return f"{serv}:{commit}"
+    return sanitize_arangodb_key(f"{serv}:{commit}")
+
+
+def sanitize_arangodb_key(string):
+    """Remove any characters that cannot go into an Arangodb document key."""
+    regex = r"[^0-9A-Za-z_\-:.+]"  # Valid characters
+    return re.sub(regex, "", string)
