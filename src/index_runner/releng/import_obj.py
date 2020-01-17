@@ -8,13 +8,18 @@ ws_object (unversioned)
     _key: wsid/objid
 """
 import logging
+from kbase_workspace_client import WorkspaceClient
 
 from src.index_runner.releng import genome
 from src.utils.ws_utils import get_type_pieces
 from src.utils.re_client import save
 from src.utils.config import config
-from src.utils.formatting import ts_to_epoch, get_method_key_from_prov, get_module_key_from_prov
-from kbase_workspace_client import WorkspaceClient
+from src.utils.formatting import (
+    ts_to_epoch,
+    get_method_key_from_prov,
+    get_module_key_from_prov,
+    sanitize_arangodb_key
+)
 
 logger = logging.getLogger('IR')
 
@@ -215,7 +220,7 @@ def _save_inst_of_type_edge(obj_ver_key, info_tup):
 
 def _save_type_vertices(obj_info):
     """Save associated vertices for an object type."""
-    obj_type = obj_info[2]
+    obj_type = sanitize_arangodb_key(obj_info[2])
     (type_module, type_name, type_ver) = get_type_pieces(obj_type)
     (maj_ver, min_ver) = [int(v) for v in type_ver.split('.')]
     logger.info(f'Saving ws_type_version, ws_type, and ws_type_module for {obj_type}')
@@ -233,7 +238,7 @@ def _save_type_vertices(obj_info):
 def _save_owner_edge(obj_ver_key, info_tup):
     """Save the ws_owner_of edge."""
     username = info_tup[5]
-    from_id = 'ws_user/' + username
+    from_id = 'ws_user/' + sanitize_arangodb_key(username)
     to_id = 'ws_object_version/' + obj_ver_key
     logger.info(f'Saving ws_owner_of edge from {from_id} to {to_id}')
     save('ws_owner_of', [{
