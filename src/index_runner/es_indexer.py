@@ -174,6 +174,8 @@ def _write_to_elastic(data):
         index - index name
         delete - bool (for delete events)
     """
+    if not data:
+        return
     # Construct the post body for the bulk index
     json_body = ''
     while data:
