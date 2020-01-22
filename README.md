@@ -1,32 +1,12 @@
 # KBase Index Runner / Knowledge Engine
 
-This is a background service that listens to events from the KBase Workspace and automatically generates graph data and search indexes to enrich the workspace object data.
+This is a background service that listens to events from the KBase Workspace
+and automatically generates graph data and search indexes to enrich the
+workspace object data.
 
-## Architecture
-
-The index runner uses a hierarchy of parallel processes:
-
-```
-ParentProcess
-KafkaConsumer------------+
-|                        |
-|                        |
-v                        v
-ElasticsearchIndexer     RelationEngineImporter
-|
-|
-v
-ElasticsearchWriter
-```
-
-* The parent process for the app runs a Kafka event consumer
-* The parent process spawns child workers -- ElasticsearchIndexer and RelationEngineImporter
-  * The ElasticsearchIndexer receives workspace events and generates index documents for ES
-  * The ElasticsearchIndexer spawns a child worker called ElasticsearchWriter
-    * ElasticsearchWriter receives index documents from ElasticsearchIndexer and saves them in bulk to ES
-  * The RelationEngineImporter receives workspace events and saves vertices and edges in ArangoDB via the RE API
-
-Each of the above modules (ElasticsearchIndexer, ElasticsearchWriter, and RelationEngineImporter) represents a "worker group", or a collection of processes that receive work from a fair-share queue. The number of workers in each group can be scaled up and down individually using environment variables.
+It consumes event from a Kafka topic and sends data into ArangoDB and
+Elasticsearch. It is designed to have the service replicated in Rancher. Be
+sure to partition the topic to at least the number of running workers.
 
 ## Development
 
@@ -41,6 +21,13 @@ Run the tests (servers need not be running, and will be shut down if they are):
 ```sh
 make test
 ```
+
+## Config
+
+You can set the following env vars:
+
+* `SKIP_RELENG` - skip imports into the relation engine (ArangoDB)
+* `SKIP_FEATURES` - skip any importing or indexing of genome features
 
 ## Admininstration
 

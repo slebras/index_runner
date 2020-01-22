@@ -46,12 +46,8 @@ def get_config():
     with urllib.request.urlopen(config_url) as res:  # nosec
         global_config = yaml.safe_load(res)  # type: ignore
     return {
-        # All worker-group subprocess configuration
-        'workers': {
-            'num_es_indexers': int(os.environ.get('NUM_ES_INDEXERS', 4)),
-            'num_es_writers': int(os.environ.get('NUM_ES_WRITERS', 1)),
-            'num_re_importers': int(os.environ.get('NUM_RE_IMPORTERS', 4)),
-        },
+        'skip_releng': os.environ.get('SKIP_RELENG'),
+        'skip_features': os.environ.get('SKIP_FEATURES'),
         'global': global_config,
         'github_release_url': github_release_url,
         'github_token': os.environ.get('GITHUB_TOKEN'),
