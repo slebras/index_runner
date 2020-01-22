@@ -45,8 +45,9 @@ def process_genome(obj_ver_key, obj_data):
     # obj_ver_key and obj_info_tup are kind of redundant
     # Check if the object is a compatible type
     _generate_taxon_edge(obj_ver_key, obj_data)
-    _generate_features(obj_ver_key, obj_data)
-    _generate_GO_links(obj_ver_key, obj_data)
+    if not config()['skip_features']:
+        _generate_features(obj_ver_key, obj_data)
+        _generate_GO_links(obj_ver_key, obj_data)
 
 
 def _generate_taxon_edge(obj_ver_key, obj_data):
