@@ -42,13 +42,15 @@ def get_config():
         raise RuntimeError(f"Invalid global config url: {config_url}")
     if not github_release_url.startswith('http'):
         raise RuntimeError(f"Invalid global github release url: {github_release_url}")
-    global_config = _fetch_global_config(config_url, github_release_url)
+    gh_token = os.environ.get('GITHUB_TOKEN')
+    global_config = _fetch_global_config(config_url, github_release_url, gh_token)
     return {
         'skip_releng': os.environ.get('SKIP_RELENG'),
         'skip_features': os.environ.get('SKIP_FEATURES'),
         'global': global_config,
         'github_release_url': github_release_url,
-        'github_token': os.environ.get('GITHUB_TOKEN'),
+        'github_token': gh_token,
+        'global_config_url': config_url,
         'ws_token': os.environ['WORKSPACE_TOKEN'],
         'mount_dir': os.environ.get('MOUNT_DIR', os.getcwd()),
         'kbase_endpoint': kbase_endpoint,
@@ -72,7 +74,12 @@ def get_config():
     }
 
 
-def _fetch_global_config(config_url, github_release_url):
+def _fetch_global_config(config_url, github_release_url, gh_token):
+    """
+    Fetch the index_runner_spec configuration file from the Github release
+    using either the direct URL to the file or by querying the repo's release
+    info using the GITHUB API.
+    """
     if config_url:
         print('Fetching config from the direct url')
         # Fetch the config directly from config_url
@@ -81,7 +88,11 @@ def _fetch_global_config(config_url, github_release_url):
     else:
         print('Fetching config from the release info')
         # Fetch the config url from the release info
-        release_info = requests.get(github_release_url).json()
+        if gh_token:
+            headers = {'Authorization': f'token {gh_token}'}
+        else:
+            headers = {}
+        release_info = requests.get(github_release_url, headers=headers).json()
         for asset in release_info['assets']:
             if asset['name'] == 'config.yaml':
                 download_url = asset['browser_download_url']

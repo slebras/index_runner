@@ -77,7 +77,8 @@ def main():
     wait_for_dependencies(timeout=180)
     # Used for re-fetching the configuration with a throttle
     last_updated_minute = int(time.time() / 60)
-    _CONFIG_TAG = _fetch_latest_config_tag()
+    if not config()['global_config_url']:
+        config_tag = _fetch_latest_config_tag()
 
     # Database initialization
     es_indexer.init_indexes()
@@ -88,13 +89,13 @@ def main():
         if msg is None:
             continue
         curr_min = int(time.time() / 60)
-        if curr_min > last_updated_minute:
+        if not config()['global_config_url'] and curr_min > last_updated_minute:
             # Check for configuration updates
-            config_tag = _fetch_latest_config_tag()
+            latest_config_tag = _fetch_latest_config_tag()
             last_updated_minute = curr_min
-            if config_tag is not None and config_tag != _CONFIG_TAG:
+            if config_tag is not None and latest_config_tag != config_tag:
                 config(force_reload=True)
-                _CONFIG_TAG = config_tag
+                config_tag = latest_config_tag
                 es_indexer.reload_aliases()
         if msg.error():
             if msg.error().code() == KafkaError._PARTITION_EOF:
