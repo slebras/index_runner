@@ -4,14 +4,16 @@ import os
 import time
 import functools
 import logging
+import requests
 
 logger = logging.getLogger('IR')
 
 
-def config():
+def config(force_reload=False):
     """wrapper for get config that reloads config every 'config_timeout' seconds"""
     config = get_config()
-    if (time.time() - config['last_config_reload']) > config['config_timeout']:
+    expired = (time.time() - config['last_config_reload']) > config['config_timeout']
+    if force_reload or expired:
         get_config.cache_clear()
         config = get_config()
     return config
@@ -20,7 +22,7 @@ def config():
 @functools.lru_cache(maxsize=1)
 def get_config():
     """Initialize configuration data from the environment."""
-    reqs = ['WORKSPACE_TOKEN', 'RE_API_TOKEN', 'MOUNT_DIR']
+    reqs = ['WORKSPACE_TOKEN', 'RE_API_TOKEN']
     for req in reqs:
         if not os.environ.get(req):
             raise RuntimeError(f'{req} env var is not set.')
@@ -30,21 +32,17 @@ def get_config():
     workspace_url = os.environ.get('WS_URL', kbase_endpoint + '/ws')
     catalog_url = os.environ.get('CATALOG_URL', kbase_endpoint + '/catalog')
     re_api_url = os.environ.get('RE_URL', kbase_endpoint + '/relation_engine_api').strip('/')
-    config_url = os.environ.get(
-        'GLOBAL_CONFIG_URL',
-        'https://github.com/kbase/index_runner_spec/releases/latest/download/config.yaml'
-    )
+    config_url = os.environ.get('GLOBAL_CONFIG_URL')
     github_release_url = os.environ.get(
         'GITHUB_RELEASE_URL',
         'https://api.github.com/repos/kbase/index_runner_spec/releases/latest'
     )
     # Load the global configuration release (non-environment specific, public config)
-    if not config_url.startswith('http'):
+    if config_url and not config_url.startswith('http'):
         raise RuntimeError(f"Invalid global config url: {config_url}")
     if not github_release_url.startswith('http'):
         raise RuntimeError(f"Invalid global github release url: {github_release_url}")
-    with urllib.request.urlopen(config_url) as res:  # nosec
-        global_config = yaml.safe_load(res)  # type: ignore
+    global_config = _fetch_global_config(config_url, github_release_url)
     return {
         'skip_releng': os.environ.get('SKIP_RELENG'),
         'skip_features': os.environ.get('SKIP_FEATURES'),
@@ -52,7 +50,7 @@ def get_config():
         'github_release_url': github_release_url,
         'github_token': os.environ.get('GITHUB_TOKEN'),
         'ws_token': os.environ['WORKSPACE_TOKEN'],
-        'mount_dir': os.environ['MOUNT_DIR'],
+        'mount_dir': os.environ.get('MOUNT_DIR', os.getcwd()),
         'kbase_endpoint': kbase_endpoint,
         'catalog_url': catalog_url,
         'workspace_url': workspace_url,
@@ -67,9 +65,26 @@ def get_config():
         'elasticsearch_index_prefix': os.environ.get('ELASTICSEARCH_INDEX_PREFIX', 'search2'),
         'topics': {
             'workspace_events': os.environ.get('KAFKA_WORKSPACE_TOPIC', 'workspaceevents'),
-            'admin_events': os.environ.get('KAFKA_ADMIN_TOPIC', 'indexeradminevents'),
-            'elasticsearch_updates': os.environ.get('KAFKA_ES_UPDATE_TOPIC', 'elasticsearch_updates')
+            'admin_events': os.environ.get('KAFKA_ADMIN_TOPIC', 'indexeradminevents')
         },
         'config_timeout': 600,  # 10 minutes in seconds.
         'last_config_reload': time.time(),
     }
+
+
+def _fetch_global_config(config_url, github_release_url):
+    if config_url:
+        print('Fetching config from the direct url')
+        # Fetch the config directly from config_url
+        with urllib.request.urlopen(config_url) as res:  # nosec
+            return yaml.safe_load(res)  # type: ignore
+    else:
+        print('Fetching config from the release info')
+        # Fetch the config url from the release info
+        release_info = requests.get(github_release_url).json()
+        for asset in release_info['assets']:
+            if asset['name'] == 'config.yaml':
+                download_url = asset['browser_download_url']
+                with urllib.request.urlopen(download_url) as res:  # nosec
+                    return yaml.safe_load(res)
+        raise RuntimeError("Unable to load the config.yaml file from index_runner_spec")

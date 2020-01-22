@@ -28,7 +28,6 @@ services:
       - RE_URL=http://re_api:5000
       - WORKSPACE_TOKEN=valid_admin_token
       - RE_API_TOKEN=valid_admin_token
-      - MOUNT_DIR=${PWD}
 
   kafka:
     image: confluentinc/cp-kafka:5.0.0

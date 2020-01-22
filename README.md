@@ -28,6 +28,24 @@ You can set the following env vars:
 
 * `SKIP_RELENG` - skip imports into the relation engine (ArangoDB)
 * `SKIP_FEATURES` - skip any importing or indexing of genome features
+* `ELASTICSEARCH_HOST` - host name of the elasticsearch server to use (do not prepend protocol)
+* `ELASTICSEARCH_PORT` - port to use for the elasticsearch server
+* `KBASE_ENDPOINT` - URL of kbase API services (default is "https://ci.kbase.us/services")
+* `WS_URL` - URL of the workspace API (default is to append "/ws" to KBASE_ENDPOINT)
+* `CATALOG_URL` - URL of the catalog API (default is to append "/catalog" to KBASE_ENDPOINT)
+* `RE_URL` - URL of the relation engine API (default is to append "/relation_engine_api" to KBASE_ENDPOINT)
+* `GLOBAL_CONFIG_URL` - Optional URL of a specific index_runner_spec configuration file to use. Set this to use a specific config release that will not automatically update.
+* `GITHUB_RELEASE_URL` - Optional URL of the latest release information for the index_runner_spec. Defaults to "https://api.github.com/repos/kbase/index_runner_spec/releases/latest". Use this setting to have the config file automatically keep up-to-date with the latest config changes. Ignored if GLOBAL_CONFIG_URL is provided.
+* `GITHUB_TOKEN` - Optional Github token (https://github.com/settings/tokens) to use when fetching config updates. Avoids any Github API usage limit errors.
+* `WORKSPACE_TOKEN` - Required KBase authentication token for accessing the workspace API
+* `MOUNT_DIR` - Directory that can be used for local files when running SDK indexer apps (defaults to current working directory).
+* `RE_API_TOKEN` - Required KBase auth token for accessing the relation engine API
+* `KAFKA_SERVER` - URL of the Kafka server
+* `KAFKA_CLIENTGROUP` - Name of the Kafka client group that the consumer will join
+* `ERROR_INDEX_NAME` - Name of the index in which we store errors (defaults to "indexing_errors")
+* `ELASTICSEARCH_INDEX_PREFIX` - Name of the prefix to use for all indexes (defaults to "search2")
+* `KAFKA_WORKSPACE_TOPIC` - Name of the topic to consume workspace events from (defaults to "workspaceevents")
+* `KAFKA_ADMIN_TOPIC` - Name of the topic to consume indexer admin events from (defaults to "indexeradminevents")
 
 ## Admininstration
 

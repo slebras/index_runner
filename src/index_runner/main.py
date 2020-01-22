@@ -77,7 +77,7 @@ def main():
     wait_for_dependencies(timeout=180)
     # Used for re-fetching the configuration with a throttle
     last_updated_minute = int(time.time() / 60)
-    _CONFIG_TAG = _fetch_config_tag()
+    _CONFIG_TAG = _fetch_latest_config_tag()
 
     # Database initialization
     es_indexer.init_indexes()
@@ -89,10 +89,11 @@ def main():
             continue
         curr_min = int(time.time() / 60)
         if curr_min > last_updated_minute:
-            config_tag = _fetch_config_tag()
             # Check for configuration updates
+            config_tag = _fetch_latest_config_tag()
             last_updated_minute = curr_min
             if config_tag is not None and config_tag != _CONFIG_TAG:
+                config(force_reload=True)
                 _CONFIG_TAG = config_tag
                 es_indexer.reload_aliases()
         if msg.error():
@@ -215,9 +216,11 @@ def _fetch_ws_info(msg):
     return ws_info
 
 
-def _fetch_config_tag():
-    """using github release api (https://developer.github.com/v3/repos/releases/) find
-    out if there is new version of the config."""
+def _fetch_latest_config_tag():
+    """
+    Using the Github release API, check for a new version of the config.
+    https://developer.github.com/v3/repos/releases/
+    """
     github_release_url = config()['github_release_url']
     if config()['github_token']:
         headers = {'Authorization': f"token {config()['github_token']}"}
