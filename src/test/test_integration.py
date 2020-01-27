@@ -4,10 +4,10 @@ import time
 import requests
 from multiprocessing import Process
 from confluent_kafka import Producer
-from utils.config import get_config
-from index_runner.main import main
 
-_CONFIG = get_config()
+from src.utils.config import config
+from src.index_runner.main import main
+from src.utils.re_client import get_doc, get_edge
 
 _TEST_EVENT = {
    "wsid": 41347,
@@ -19,10 +19,9 @@ _TEST_EVENT = {
    "objtype": "KBaseNarrative.Narrative-4.0",
    "permusers": [],
    "user": "username"
-}
+}  # type: dict
 
 
-@unittest.skip('skap')
 class TestIntegration(unittest.TestCase):
     """
     Integration test to confirm that the pieces of the system are successfully interconnected.
@@ -48,12 +47,126 @@ class TestIntegration(unittest.TestCase):
         _produce(_TEST_EVENT)
         _id = f"WS::{_TEST_EVENT['wsid']}:{_TEST_EVENT['objid']}"
         # Fetch the doc from Elasticsearch
-        doc = _get_doc_blocking(_id)
+        doc = _get_es_doc_blocking(_id)
         self.assertEqual(doc['_id'], _id)
+        # Relation engine tests...
+        # Check for ws_object
+        obj_doc = _wait_for_re_doc('ws_object', '41347:5')
+        self.assertEqual(obj_doc['workspace_id'], 41347)
+        self.assertEqual(obj_doc['object_id'], 5)
+        self.assertEqual(obj_doc['deleted'], False)
+        hsh = "0e8d1a5090be7c4e9ccf6d37c09d0eab"
+        # Check for ws_object_hash
+        hash_doc = _wait_for_re_doc('ws_object_hash', hsh)
+        self.assertEqual(hash_doc['type'], 'MD5')
+        # Check for ws_object_version
+        ver_doc = _wait_for_re_doc('ws_object_version', '41347:5:1')
+        self.assertEqual(ver_doc['workspace_id'], 41347)
+        self.assertEqual(ver_doc['object_id'], 5)
+        self.assertEqual(ver_doc['version'], 1)
+        self.assertEqual(ver_doc['name'], "Narrative.1553621013004")
+        self.assertEqual(ver_doc['hash'], "0e8d1a5090be7c4e9ccf6d37c09d0eab")
+        self.assertEqual(ver_doc['size'], 26938)
+        self.assertEqual(ver_doc['epoch'], 1554408999000)
+        self.assertEqual(ver_doc['deleted'], False)
+        # Check for ws_copied_from
+        copy_edge = _wait_for_re_edge(
+            'ws_copied_from',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object_version/1:2:3'  # to
+        )
+        self.assertTrue(copy_edge)
+        # Check for ws_version_of
+        ver_edge = _wait_for_re_edge(
+            'ws_version_of',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object/41347:5'  # to
+        )
+        self.assertTrue(ver_edge)
+        # Check for ws_workspace_contains_obj
+        contains_edge = _wait_for_re_edge(
+            'ws_workspace_contains_obj',  # collection
+            'ws_workspace/41347',  # from
+            'ws_object/41347:5'  # to
+        )
+        self.assertTrue(contains_edge)
+        # Check for ws_obj_created_with_method edge
+        created_with_edge = _wait_for_re_edge(
+            'ws_obj_created_with_method',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_method_version/narrative:3.10.0:UNKNOWN'  # to
+        )
+        self.assertEqual(created_with_edge['method_params'], None)
+        # Check for ws_obj_created_with_module edge
+        module_edge = _wait_for_re_edge(
+            'ws_obj_created_with_module',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_module_version/narrative:3.10.0'  # to
+        )
+        self.assertTrue(module_edge)
+        # Check for ws_obj_instance_of_type
+        type_edge = _wait_for_re_edge(
+            'ws_obj_instance_of_type',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_type_version/KBaseNarrative.Narrative-4.0'  # to
+        )
+        self.assertTrue(type_edge)
+        # Check for the ws_owner_of edge
+        owner_edge = _wait_for_re_edge(
+            'ws_owner_of',  # collection
+            'ws_user/username',  # from
+            'ws_object_version/41347:5:1',  # to
+        )
+        self.assertTrue(owner_edge)
+        # Check for the ws_refers_to edges
+        referral_edge1 = _wait_for_re_edge(
+            'ws_refers_to',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object_version/1:1:1',  # to
+        )
+        self.assertTrue(referral_edge1)
+        referral_edge2 = _wait_for_re_edge(
+            'ws_refers_to',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object_version/2:2:2',  # to
+        )
+        self.assertTrue(referral_edge2)
+        # Check for the ws_prov_descendant_of edges
+        prov_edge1 = _wait_for_re_edge(
+            'ws_prov_descendant_of',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object_version/1:1:1',  # to
+        )
+        self.assertTrue(prov_edge1)
+        prov_edge2 = _wait_for_re_edge(
+            'ws_prov_descendant_of',  # collection
+            'ws_object_version/41347:5:1',  # from
+            'ws_object_version/2:2:2',  # to
+        )
+        self.assertTrue(prov_edge2)
+
+    def test_import_nonexistent_existing(self):
+        """Test an IMPORT_NONEXISTENT event."""
+        _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': 41347, 'objid': 6, 'ver': 1})
+        admin_topic = config()['topics']['admin_events']
+        obj_doc1 = _wait_for_re_doc('ws_object', '41347:6')
+        self.assertEqual(obj_doc1['object_id'], 6)
+        _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': 41347, 'objid': 5, 'ver': 1}, admin_topic)
+        obj_doc2 = _wait_for_re_doc('ws_object', '41347:6')
+        self.assertEqual(obj_doc1['_rev'], obj_doc2['_rev'])
+
+    def test_reload_aliases(self):
+        """test the RELOAD_ELASTIC_ALIASES event. TODO: fill out test."""
+        _produce({'evtype': "RELOAD_ELASTIC_ALIASES", 'wsid': 1, 'objid': 1, 'ver': 1})
+        es_aliases = _get_es_aliases_blocking()
+        config_aliases = config()['global']['aliases']
+        for alias in config_aliases:
+            self.assertTrue(alias in es_aliases)
+            for index in config_aliases[alias]:
+                self.assertTrue(index in es_aliases[alias])
 
 
 # -- Test utils
-
 
 def _delivery_report(err, msg):
     if err is not None:
@@ -62,17 +175,17 @@ def _delivery_report(err, msg):
         print('Message delivered to', msg.topic())
 
 
-def _produce(data, topic=_CONFIG['topics']['workspace_events']):
-    producer = Producer({'bootstrap.servers': _CONFIG['kafka_server']})
+def _produce(data, topic=config()['topics']['workspace_events']):
+    producer = Producer({'bootstrap.servers': config()['kafka_server']})
     producer.produce(topic, json.dumps(data), callback=_delivery_report)
     producer.poll(60)
 
 
-def _get_doc_blocking(_id, timeout=60):
+def _get_es_doc_blocking(_id, timeout=180):
     """Fetch a doc on ES, waiting for it to become available, with a timeout."""
     start_time = int(time.time())
     while True:
-        result = _get_doc(_id)
+        result = _get_es_doc(_id)
         if result:
             return result
         if (int(time.time()) - start_time) > timeout:
@@ -80,10 +193,22 @@ def _get_doc_blocking(_id, timeout=60):
         time.sleep(5)
 
 
-def _get_doc(_id):
+def _get_es_aliases_blocking(timeout=180):
+    """"""
+    start_time = int(time.time())
+    while True:
+        result = _get_es_aliases()
+        if result:
+            return result
+        if (int(time.time()) - start_time) > timeout:
+            raise RuntimeError(f"Aliases not found in {timeout}s.")
+        time.sleep(5)
+
+
+def _get_es_doc(_id):
     """Fetch a document from elastic based on ID."""
-    prefix = _CONFIG['elasticsearch_index_prefix']
-    url = f"{_CONFIG['elasticsearch_url']}/{prefix}.*/_search?size=1"
+    prefix = config()['elasticsearch_index_prefix']
+    url = f"{config()['elasticsearch_url']}/{prefix}.*/_search?size=1"
     resp = requests.post(
         url,
         data=json.dumps({
@@ -98,6 +223,55 @@ def _get_doc(_id):
         return None
         # raise RuntimeError(f"Document {_id} not found.")
     return respj['hits']['hits'][0]
+
+
+def _get_es_aliases():
+    """fetch aliases from elasticsearch"""
+    url = f"{config()['elasticsearch_url']}/_aliases"
+    resp = requests.get(url)
+    if not resp.ok:
+        raise RuntimeError(resp.text)
+    respj = resp.json()
+    if len(respj) < 1:
+        return None
+    aliases = {}
+    # we remove prefix from index and alias names (should all be "search2.")
+    for index in respj:
+        for al in respj[index]['aliases'].keys():
+            al = al.split('.')[1]
+            if al in aliases:
+                aliases[al].append(index.split('.')[1])
+            else:
+                aliases[al] = [index.split('.')[1]]
+    return aliases
+
+
+def _wait_for_re_edge(coll, from_key, to_key):
+    """Fetch an edge with the RE API, waiting for it to become available with 30s timeout."""
+    timeout = int(time.time()) + 30
+    while True:
+        results = get_edge(coll, from_key, to_key)
+        if results['count'] > 0:
+            break
+        else:
+            if int(time.time()) > timeout:
+                raise RuntimeError('Timed out trying to fetch', from_key, to_key)
+            time.sleep(1)
+    return results['results'][0]
+
+
+def _wait_for_re_doc(coll, key, timeout=180):
+    """Fetch a doc with the RE API, waiting for it to become available with a 30s timeout."""
+    start_time = time.time()
+    while True:
+        results = get_doc(coll, key)
+        if results['count'] > 0:
+            break
+        else:
+            if int(time.time() - start_time) > timeout:
+                raise RuntimeError('Timed out trying to fetch', key)
+            time.sleep(1)
+    return results['results'][0]
 
 # _HEADERS = {"Content-Type": "application/json"}
 # _TEST_EVENTS = {
@@ -148,12 +322,12 @@ def _get_doc(_id):
 #         """
 #         Test a NEW_VERSION event plus an OBJECT_DELETE_STATE_CHANGE.
 #         """
-#         print(f"Producing NEW_VERSION event to {_CONFIG['topics']['workspace_events']}")
+#         print(f"Producing NEW_VERSION event to {config()['topics']['workspace_events']}")
 #         _produce(_TEST_EVENTS['narrative_save_nonexistent'])
 #         # _id = 'WS::41347:5'
 #         # doc = _get_doc(_id)
 #         # self.assertEqual(doc['_id'], _id)
-#         print(f"Producing OBJECT_DELETE_STATE_CHANGE event to {_CONFIG['topics']['workspace_events']}")
+#         print(f"Producing OBJECT_DELETE_STATE_CHANGE event to {config()['topics']['workspace_events']}")
 #         _produce(_TEST_EVENTS['deleted_object'])
 #         # time.sleep(30)
 #         # with self.assertRaises(RuntimeError):
@@ -191,7 +365,7 @@ def _get_doc(_id):
 # def _consume_last(topic, key, timeout=120):
 #     """Consume the most recent message from the topic stream."""
 #     consumer = Consumer({
-#         'bootstrap.servers': _CONFIG['kafka_server'],
+#         'bootstrap.servers': config()['kafka_server'],
 #         'group.id': 'test_only',
 #         'auto.offset.reset': 'earliest'
 #     })

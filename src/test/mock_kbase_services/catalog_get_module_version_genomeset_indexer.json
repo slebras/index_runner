@@ -1,0 +1,22 @@
+{
+  "methods": ["POST"],
+  "path": "/catalog",
+  "headers": {},
+  "body": {
+    "method": "Catalog.get_module_version",
+    "version": "1.1",
+    "id": "id",
+    "params": [{
+      "module_name": "genomeset_indexer"
+    }]
+  },
+  "response": {
+    "status": "200",
+    "body": {
+      "version": "1.1",
+      "result": [{
+        "docker_img_name": "slebras/mock_genomeset_indexer"
+      }]
+    }
+  }
+}

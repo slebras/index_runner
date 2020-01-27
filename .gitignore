@@ -4,6 +4,7 @@
 /*.cfg
 
 # Caches and temp dirs
+/scratch
 /build/
 /dist/
 *.pyc

@@ -1,26 +1,31 @@
-import os
 import requests
 import sys
 import json
+import argparse
+from confluent_kafka import Producer
 
-_ES_URL = os.environ.get('ES_URL', 'http://localhost:9200')
-_IDX_NAME = os.environ.get('IDX_NAME', 'search2.indexing_errors:1')
-_SEARCH_URL = f'{_ES_URL}/{_IDX_NAME}/_search'
+from src.utils.config import config
+
+_ES_URL = config()['elasticsearch_url']
+_ERR_IDX_NAME = config()['elasticsearch_index_prefix'] + '.' + config()['error_index_name']
+_ERR_SEARCH_URL = f'{_ES_URL}/{_ERR_IDX_NAME}/_search'
 
 
-def _get_count():
+def _get_count(args):
     """Get total count of documents in search2.indexing_errors."""
-    resp = requests.get(_SEARCH_URL, params={'size': 0})
+    if args.by_type:
+        return _get_count_by_type(args)
+    resp = requests.get(_ERR_SEARCH_URL, params={'size': 0})
     rj = resp.json()
     if not resp.ok:
         raise RuntimeError(json.dumps(rj, indent=2))
     print('Total errors:', rj['hits']['total'])
 
 
-def _get_count_by_type():
+def _get_count_by_type(args):
     """Get count of errors by evtype."""
     resp = requests.post(
-        _SEARCH_URL,
+        _ERR_SEARCH_URL,
         data=json.dumps({
             'size': 0,
             'aggs': {
@@ -35,9 +40,9 @@ def _get_count_by_type():
         print(_pad(count_doc['key'], count_doc['doc_count'], amount=30))
 
 
-def _get_upas():
+def _get_upas(args):
     resp = requests.post(
-        _SEARCH_URL,
+        _ERR_SEARCH_URL,
         params={'scroll': '1m'},
         data=json.dumps({
             'size': 100,
@@ -73,39 +78,116 @@ def _print_upas(doc):
         print(f'{s["wsid"]} {s["objid"]} "{s["error"]}"')
 
 
-def _show_help():
-    print('Valid commands:')
-    for cmd_name in _CMD_HANDLERS:
-        print(_pad(cmd_name, _CMD_HANDLERS[cmd_name]['help']))
-
-
 def _pad(left, right, amount=17):
     """Left pad a key/val string."""
     pad = ' ' * (amount - len(left))
-    return f"{left} {pad} - {right}"
+    return f"{left} {pad} {right}"
 
 
-# All valid commands below
-_CMD_HANDLERS = {
-    'err_count': {'fn': _get_count, 'help': 'Get total count of indexing errors.'},
-    'err_count_by_type': {'fn': _get_count_by_type, 'help': 'Get count of errors by evtype.'},
-    'err_upas': {'fn': _get_upas, 'help': 'Prints (to stdout) a linebreaked list of UPAs for all errors.'},
-    'help': {'fn': _show_help, 'help': 'Show help for this CLI'},
-    '--help': {'fn': _show_help, 'help': 'Show help for this CLI'},
-    '-h': {'fn': _show_help, 'help': 'Show help for this CLI'}
-}
+def _reindex(args):
+    id_pieces = args.ref.split('/')
+    if len(id_pieces) > 2:
+        raise ValueError("--ref value should be in the format '1/2' or '1'")
+    reindexing_obj = len(id_pieces) == 2
+    if reindexing_obj:
+        ev = {'evtype': 'INDEX_NONEXISTENT', 'wsid': id_pieces[0], 'objid': id_pieces[1]}
+        if args.overwrite:
+            ev['evtype'] = 'REINDEX'
+    else:
+        ev = {'evtype': 'INDEX_NONEXISTENT_WS', 'wsid': id_pieces[0]}
+        if args.overwrite:
+            ev['evtype'] = 'REINDEX_WS'
+    print('Producing...')
+    _produce(ev)
+
+
+def _reindex_ws_range(args):
+    evtype = 'INDEX_NONEXISTENT_WS'
+    if args.overwrite:
+        evtype = 'REINDEX_WS'
+    count = 0
+    for wsid in range(args.min, args.max + 1):
+        _produce({'evtype': evtype, 'wsid': wsid})
+        count += 1
+    print(f'Produced {count} total events.')
+
+
+def _produce(data, topic=config()['topics']['indexer_admin_events']):
+    producer = Producer({'bootstrap.servers': config()['kafka_server']})
+    producer.produce(topic, json.dumps(data), callback=_delivery_report)
+    producer.poll(60)
+
+
+def _delivery_report(err, msg):
+    if err is not None:
+        print('Message delivery failed:', err)
+    else:
+        print(f"Message delivered to topic '{msg.topic()}': {msg.value()}")
+
 
 if __name__ == '__main__':
     resp = requests.get(_ES_URL)
     if not resp.ok:
         print(resp.text)
         raise RuntimeError('Elasticsearch is not responding.')
+    parser = argparse.ArgumentParser(prog='indexer_admin', description='Admin utilities for the index runner.')
+    subparsers = parser.add_subparsers()
+    # -- err_count command
+    err_count = subparsers.add_parser('err_count')
+    err_count.add_argument(
+        '--by-type',
+        help='Get a count of errors by workspace type.',
+        action='store_true',
+        default=False
+    )
+    err_count.set_defaults(func=_get_count)
+    # err_upas command
+    err_upas = subparsers.add_parser('err_upas', help='Print the UPAs of all logged errors to stdout.')
+    err_upas.set_defaults(func=_get_upas)
+    # -- reindex command
+    reindex = subparsers.add_parser('reindex', help='Reindex an object or workspace.')
+    reindex.add_argument(
+        '--ref',
+        '-r',
+        help='Workspace ID or "ws_id/obj_id" to reindex (eg. "1", "1/2")',
+        required=True,
+        type=str
+    )
+    reindex.add_argument(
+        '--overwrite',
+        help='Index and overwrite existing documents. Defaults to false.',
+        required=False,
+        default=False,
+        action='store_true'
+    )
+    reindex.set_defaults(func=_reindex)
+    # -- reindex range command
+    reindex_range = subparsers.add_parser('reindex_range', help='Reindex a range of workspace ids with a min and max.')
+    reindex_range.add_argument(
+        '--min',
+        help='Minimum workspace ID to start indexing on. Defaults to 1.',
+        default=1,
+        type=int,
+        required=False,
+        action='store'
+    )
+    reindex_range.add_argument(
+        '--max',
+        help='Max workspace ID to start indexing on.',
+        type=int,
+        required=True,
+        action='store'
+    )
+    reindex_range.add_argument(
+        '--overwrite',
+        help='Index and overwrite existing documents. Defaults to false.',
+        required=False,
+        default=False,
+        action='store_true'
+    )
+    reindex_range.set_defaults(func=_reindex_ws_range)
+    args = parser.parse_args()
     if len(sys.argv) == 1:
-        _show_help()
-        sys.exit(0)
-    cmd = sys.argv[1]
-    if cmd not in _CMD_HANDLERS:
-        sys.stderr.write('Invalid command.')
-        _show_help()
-        sys.exit(1)
-    _CMD_HANDLERS[cmd]['fn']()  # type: ignore
+        parser.print_help()
+    else:
+        args.func(args)

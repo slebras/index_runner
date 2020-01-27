@@ -1,0 +1,58 @@
+{
+  "methods": ["POST"],
+  "path": "/ws",
+  "headers": {"Authorization": "valid_admin_token"},
+  "body": {
+    "version": "1.1",
+    "method": "Workspace.administer",
+    "params": [{
+      "command": "getObjects",
+      "params": {"objects": [{"ref": "6/8/1"}]}
+    }]
+  },
+  "response": {
+    "status": "200",
+    "body": {
+          "version": "1.1",
+          "result": [
+              {
+                  "data": [
+                      {
+                          "data": {
+                          },
+                          "info": [
+                              8,
+                              "my_genome2",
+                              "KBaseGenomes.Genome-15.1",
+                              "2016-10-05T17:11:32+0000",
+                              1,
+                              "someuser",
+                              6,
+                              "godilovebacillus",
+                              "31b40bb1004929f69cd4acfe247ea46d",
+                              351,
+                              {}
+                          ],
+                          "path": [
+                              "6/8/1"
+                          ],
+                          "provenance": [
+                              {
+                                  "time": "2016-10-05T17:11:32+0000",
+                                  "epoch": 1475687492000
+                              }
+                          ],
+                          "creator": "someuser",
+                          "orig_wsid": 6,
+                          "created": "2016-10-05T17:11:32+0000",
+                          "epoch": 1475687492000,
+                          "refs": [],
+                          "copy_source_inaccessible": 0,
+                          "extracted_ids": {}
+                      }
+                  ]
+              }
+          ]
+      } 
+  }
+}

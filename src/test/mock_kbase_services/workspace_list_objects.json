@@ -1,0 +1,114 @@
+{
+  "methods": ["POST"],
+  "path": "/ws",
+  "headers": {"Authorization": "valid_admin_token"},
+  "body": {
+    "version": "1.1",
+    "method": "Workspace.administer",
+    "params": [{
+      "command": "listObjects",
+      "params": {"ids": [41347]}
+    }]
+  },    
+  "response": {
+    "status": "200",
+    "body": {
+      "version": "1.1",
+      "result": [
+        [
+          [
+            1,
+            "Narrative.1553621013004",
+            "KBaseNarrative.Narrative-4.0",
+            "2019-04-05T22:17:00+0000",
+            17,
+            "jayrbolton",
+            41347,
+            "jayrbolton:narrative_1553621013004",
+            "04c7f5a49dacaaf4e778f7326fc928be",
+            31242,
+            null
+          ],
+          [
+            4,
+            "Rhodobacter_CACIA_14H1",
+            "KBaseGenomes.Genome-7.0",
+            "2019-03-27T23:01:16+0000",
+            1,
+            "jayrbolton",
+            41347,
+            "jayrbolton:narrative_1553621013004",
+            "53af8071b814a1db43f81eb490a35491",
+            3110399,
+            null
+          ],
+          [
+            6,
+            "_Nostoc_azollae__0708",
+            "KBaseGenomes.Genome-14.2",
+            "2019-04-04T18:57:57+0000",
+            1,
+            "jayrbolton",
+            41347,
+            "jayrbolton:narrative_1553621013004",
+            "a2b9e8f8a6251f599f67661b958e0085",
+            16075516,
+            null
+          ],
+          [
+            7,
+            "Acetobacter_aceti_NBRC_14818",
+            "KBaseGenomes.Genome-14.1",
+            "2019-04-04T19:54:35+0000",
+            1,
+            "jayrbolton",
+            41347,
+            "jayrbolton:narrative_1553621013004",
+            "0d39204085725b2b601c1a9517a7f8df",
+            11969259,
+            null
+          ],
+          [
+            9,
+            "_H9",
+            "KBaseBiochem.Media-1.0",
+            "2019-04-04T20:01:59+0000",
+            1,
+            "jayrbolton",
+            41347,
+            "jayrbolton:narrative_1553621013004",
+            "2fc62897b85aff3dd828f77ac4567b07",
+            2586,
+            null
+          ],
+          [
+            10,
+            "KBase_derived_Rhodobacter_CACIA_14H1.gff_genome.assembly",
+            "KBaseGenomeAnnotations.Assembly-6.0",
+            "2019-04-04T20:17:27+0000",
+            1,
+            "jayrbolton",
+            41347,
+            "jayrbolton:narrative_1553621013004",
+            "93e3a0f83785adc0fd2c5562752404f2",
+            75669,
+            null
+          ],
+          [
+            11,
+            "KBase_derived_Rhodobacter_CACIA_14H1.gff_genome",
+            "KBaseGenomes.Genome-15.1",
+            "2019-04-04T20:17:56+0000",
+            1,
+            "jayrbolton",
+            41347,
+            "jayrbolton:narrative_1553621013004",
+            "829ba2d2bbb15181447c4bfa43303068",
+            12648645,
+            null
+          ]
+        ]
+      ]
+    }
+  }
+}

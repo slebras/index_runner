@@ -2,16 +2,14 @@ import os
 import json
 import unittest
 
-from utils.config import get_config
-from index_runner.indexers.reads import index_reads
-from index_runner.indexers.genome import index_genome
-from index_runner.indexers.assembly import index_assembly
-from index_runner.indexers.pangenome import index_pangenome
-from index_runner.indexers.taxon import index_taxon
-from index_runner.indexers.tree import index_tree
-from index_runner.indexers.from_sdk import index_from_sdk
-
-_CONFIG = get_config()
+from src.index_runner.es_indexers.reads import index_reads
+from src.index_runner.es_indexers.genome import index_genome
+from src.index_runner.es_indexers.assembly import index_assembly
+from src.index_runner.es_indexers.pangenome import index_pangenome
+from src.index_runner.es_indexers.taxon import index_taxon
+from src.index_runner.es_indexers.tree import index_tree
+from src.index_runner.es_indexers.annotated_metagenome_assembly import _index_ama
+from src.index_runner.es_indexers.from_sdk import index_from_sdk
 
 _TEST_EVENTS = {
     'reads_save': {
@@ -90,6 +88,17 @@ _TEST_EVENTS = {
         'objtype': "KBaseSets.GenomeSet-2.1",
         'permusers': [],
         'user': "username"
+    },
+    'annotated_metagenome_assembly_save': {
+        'wsid': 39794,
+        'ver': 1,
+        'perm': None,
+        'evtype': "NEW_VERSION",
+        'objid': 22,
+        'time': 1554408311320,
+        'objtype': "KBaseMetagenomes.AnnotatedMetagenomeAssembly-1.0",
+        'permusers': [],
+        'user': "username"
     }
 }
 
@@ -109,7 +118,7 @@ class TestIndexers(unittest.TestCase):
         for (idx, msg_data) in enumerate(indexer(test_data['obj'], test_data['ws_info'], test_data['obj'])):
             self.assertEqual(msg_data, check_against[idx])
 
-    # @unittest.skip('x')
+    @unittest.skip('Incompatible with travis.ci')
     def test_from_sdk(self):
         check_against = [{
             '_action': 'index',
@@ -129,7 +138,6 @@ class TestIndexers(unittest.TestCase):
         }]
         self._default_obj_test('genomeset_save', index_from_sdk, check_against)
 
-    # @unittest.skip('x')
     def test_reads_indexer(self):
         check_against = [{
             '_action': 'index',
@@ -148,7 +156,6 @@ class TestIndexers(unittest.TestCase):
         }]
         self._default_obj_test('reads_save', index_reads, check_against)
 
-    # @unittest.skip('x')
     def test_assembly_indexer(self):
         check_against = [{
             '_action': 'index',
@@ -171,21 +178,44 @@ class TestIndexers(unittest.TestCase):
         }]
         self._default_obj_test('assembly_save', index_assembly, check_against)
 
-    # @unittest.skip('x')
+    def test_annotated_metagenome_assembly_indexer(self):
+        # the annotated_meganome_assembly 'check_against' data is really big, so we keep it in an external file
+        event_data_str = "annotated_metagenome_assembly_save"
+        with open(os.path.join(_DIR, 'test_data/annotated_metagenome_assembly_check_against.json')) as fd:
+            check_against = json.load(fd)
+        print(f'Testing {event_data_str} indexer...')
+        event_data = _TEST_EVENTS[event_data_str]
+        json_data_path = f"{event_data_str}_{event_data['wsid']}_{event_data['objid']}.json"
+        with open(os.path.join(_DIR, 'test_data', json_data_path)) as fd:
+            test_data = json.load(fd)
+
+        features_test_file = os.path.join(_DIR, "test_data", "features.json.gz")
+
+        info = test_data['obj']['info']
+        workspace_id = info[6]
+        object_id = info[0]
+        version = info[4]
+        ama_index = f"WS::{workspace_id}:{object_id}"
+        ver_ama_index = f"WSVER::{workspace_id}:{object_id}:{version}"
+        # print('[')
+        for (idx, msg_data) in enumerate(_index_ama(features_test_file, test_data['obj']['data'],
+                                                    ama_index, ver_ama_index)):
+            # print(json.dumps(msg_data), ',')
+            self.assertEqual(msg_data, check_against[idx])
+        # print(']')
+
     def test_genome_indexer(self):
         # The genome `check_against` data is really big, so we keep it in an external file
         with open(os.path.join(_DIR, 'test_data/genome_check_against.json')) as fd:
             check_against = json.load(fd)
         self._default_obj_test('genome_save', index_genome, check_against)
 
-    # @unittest.skip('x')
     def test_pangenome_indexer(self):
         # The pangenome `check_against` data is really big, so we keep it in an external file
         with open(os.path.join(_DIR, 'test_data/pangenome_check_against.json')) as fd:
             check_against = json.load(fd)
         self._default_obj_test('pangenome_save', index_pangenome, check_against)
 
-    # @unittest.skip('x')
     def test_tree_indexer(self):
         check_against = [{
             '_action': 'index',
@@ -202,7 +232,6 @@ class TestIndexers(unittest.TestCase):
         }]
         self._default_obj_test('tree_save', index_tree, check_against)
 
-    # @unittest.skip('x')
     def test_taxon_indexer(self):
         check_against = [{
             '_action': 'index',

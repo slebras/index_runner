@@ -13,33 +13,22 @@ services:
     depends_on:
       - kafka
       - elasticsearch
-      - workspace
-      - catalog
+      - mock_kbase_services
+      - re_api
     ports:
       - "127.0.0.1:5000:5000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${PWD}/src:/app
+      - ${PWD}:/app
       - ${PWD}/scratch:/scratch
     environment:
       - DEVELOPMENT=1
       - PYTHONUNBUFFERED=true
-      - KBASE_WORKSPACE_URL=http://workspace:5000
-      - KBASE_CATALOG_URL=http://catalog:5000
+      - KBASE_ENDPOINT=http://mock_kbase_services:5000/
+      - RE_URL=http://re_api:5000
       - WORKSPACE_TOKEN=valid_admin_token
+      - RE_API_TOKEN=valid_admin_token
       - MOUNT_DIR=${PWD}
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    ports:
-      - "127.0.0.1:2181:2181"
-    environment:
-      ZOOKEEPER_SERVER_ID: 1
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-      ZOOKEEPER_INIT_LIMIT: 5
-      ZOOKEEPER_SYNC_LIMIT: 2
-      ZOOKEEPER_SERVERS: zookeeper:12888:13888
 
   kafka:
     image: confluentinc/cp-kafka:5.0.0
@@ -55,17 +44,26 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_HEAP_OPTS: -Xmx512m -Xms512m
 
-  # Mock workspace server (see src/test/mock_workspace/endpoints.json)
-  workspace:
-    image: mockservices/mock_json_service:1.1
-    volumes:
-      - ${PWD}/src/test/mock_workspace:/config
+  # Required for kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    ports:
+      - "127.0.0.1:2181:2181"
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper:12888:13888
 
-  # Mock catalog server (see src/test/mock_catalog)
-  catalog:
-    image: mockservices/mock_json_service:1.1
+  # Mock server for various kbase endpoints (workspace, auth, catalog)
+  mock_kbase_services:
+    image: mockservices/mock_json_service:1.2
+    ports:
+      - "127.0.0.1:5001:5000"
     volumes:
-      - ${PWD}/src/test/mock_catalog:/config
+      - ${PWD}/src/test/mock_kbase_services:/config
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:5.5.3
@@ -77,3 +75,25 @@ services:
     ports:
       - "127.0.0.1:9200:9200"
       - "127.0.0.1:9300:9300"
+
+  # Relation Engine API
+  re_api:
+    image: kbase/relation_engine_api:develop
+    depends_on:
+      - arangodb
+      - mock_kbase_services
+    environment:
+      - WORKERS=2
+      - KBASE_AUTH_URL=http://mock_kbase_services:5000/auth
+      - KBASE_WORKSPACE_URL=http://mock_kbase_services:5000/ws
+      - PYTHONUNBUFFERED=true
+      - SPEC_RELEASE_PATH=/app/src/test/spec_release/spec.tar.gz
+      - DB_URL=http://arangodb:8529
+      - DB_USER=root
+
+  # Arangodb server in cluster mode. Required for re_api.
+  arangodb:
+    image: arangodb:3.5
+    ports:
+      - "127.0.0.1:8529:8529"
+    command: sh -c "arangodb --starter.local"
