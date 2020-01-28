@@ -23,6 +23,7 @@ _IDX = _PREFIX + ".*"
 _GLOBAL_MAPPINGS = config()['global']['global_mappings']
 _HEADERS = {"Content-Type": "application/json"}
 _MAPPINGS = config()['global']['mappings']
+_BATCH_WRITE_MAX = 1000
 
 logger = logging.getLogger('IR')
 
@@ -68,6 +69,9 @@ def run_indexer(obj, ws_info, msg):
         action = data['_action']
         if action == 'index':
             batch_writes.append(data)
+            if len(batch_writes) >= _BATCH_WRITE_MAX:
+                _write_to_elastic(batch_writes)
+                batch_writes = []
         elif action == 'init_generic_index':
             _init_generic_index(data)
     count = len(batch_writes)
