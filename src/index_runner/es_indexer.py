@@ -59,7 +59,7 @@ def reload_aliases():
                 names = group_aliases[alias_name]
                 raise RuntimeError(f"Failed creating alias name: {alias_name}, "
                                    f"for indices: {names}..\nerror: {err}")
-        logger.info(f"Done resetting aliases.")
+        logger.info(f"Reloaded elasticsearch aliases")
 
 
 def run_indexer(obj, ws_info, msg):
@@ -74,9 +74,9 @@ def run_indexer(obj, ws_info, msg):
                 batch_writes = []
         elif action == 'init_generic_index':
             _init_generic_index(data)
-    count = len(batch_writes)
-    _write_to_elastic(batch_writes)
-    logger.info(f'Indexing of {count} docs on ES took {time.time() - start}s')
+    if batch_writes:
+        _write_to_elastic(batch_writes)
+        logger.info(f'Indexing of {len(batch_writes)} docs on ES took {time.time() - start}s')
 
 
 def delete_obj(msg):
@@ -88,7 +88,7 @@ def delete_obj(msg):
     objid = msg['objid']
     if not check_object_deleted(wsid, objid):
         # Object is not deleted
-        logger.info(f'Object {objid} in workspace {wsid} not deleted')
+        logger.info(f'Object {objid} in workspace {wsid} is not deleted')
         return
     # Perform the deletion
     query = {
@@ -178,8 +178,6 @@ def _write_to_elastic(data):
         index - index name
         delete - bool (for delete events)
     """
-    if not data:
-        return
     # Construct the post body for the bulk index
     json_body = ''
     while data:

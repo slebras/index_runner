@@ -109,6 +109,7 @@ def main():
         except ValueError as err:
             logger.error(f'JSON parsing error: {err}')
             logger.error(f'Message content: {val}')
+        logger.info(f'Received event: {msg}')
         start = time.time()
         try:
             _handle_msg(msg)
@@ -145,14 +146,11 @@ def _handle_msg(msg):
         exists_in_releng = re_client.check_doc_existence(msg['wsid'], msg['objid'])
         exists_in_es = es_utils.check_doc_existence(msg['wsid'], msg['objid'])
         if not exists_in_releng or not exists_in_es:
-            obj_ref = f"{msg['wsid']}/{msg['objid']}/{msg.get('ver', '?')}"
             obj = _fetch_obj_data(msg)
             ws_info = _fetch_ws_info(msg)
             if not exists_in_releng and not config()['skip_releng']:
-                logger.info(f"Importing object {obj_ref} into RE.")
                 releng_importer.run_importer(obj, ws_info, msg)
             if not exists_in_es:
-                logger.info(f"Indexing object {obj_ref} in ES.")
                 es_indexer.run_indexer(obj, ws_info, msg)
     elif event_type == 'OBJECT_DELETE_STATE_CHANGE':
         # Delete the object on RE and ES. Synchronous for now.
@@ -183,7 +181,6 @@ def _fetch_obj_data(msg):
     obj_ref = f"{msg['wsid']}/{msg['objid']}"
     if msg.get('ver'):
         obj_ref += f"/{msg['ver']}"
-    logger.debug(f'obj_ref is {obj_ref}')
     try:
         obj_data = ws_client.admin_req('getObjects', {
             'objects': [{'ref': obj_ref}]
@@ -212,7 +209,7 @@ def _fetch_ws_info(msg):
             'id': msg['wsid']
         })
     except WorkspaceResponseError as err:
-        logger.error('Workspace response error:', err.resp_data)
+        logger.error(f'Workspace response error: {err.resp_data}')
         raise err
     return ws_info
 
