@@ -1,6 +1,7 @@
 # KBaseMetagenomes.AnnotatedMetagenomeAssembly indexer
 from src.index_runner.es_indexers.indexer_utils import mean, handle_id_to_file
 
+from src.utils.config import config
 import json
 import gzip
 import shutil
@@ -18,7 +19,10 @@ _VER_AMA_FEATURES_INDEX_VERSION = 1
 _VER_AMA_INDEX_NAME = "annotated_metagenome_assembly_version_" + str(_VER_AMA_INDEX_VERSION)
 _VER_AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features_version_" + str(_VER_AMA_FEATURES_INDEX_VERSION)
 
-_DIR = os.path.dirname(os.path.realpath(__file__))
+_AMA_DIR = config()['scratch'] + "/ama_files"
+
+if not os.path.isdir(_AMA_DIR):
+    os.mkdir(_AMA_DIR)
 
 
 def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
@@ -58,7 +62,7 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
     yield ama_index
 
     # unzip gzip file.
-    features_file_path = _DIR + "/features.json"
+    features_file_path = _AMA_DIR + "/" + ver_ama_id.replace(':', "_") + ".json"
     with gzip.open(features_file_gz_path, "rb") as f_in:
         with open(features_file_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
@@ -141,7 +145,7 @@ def index_annotated_metagenome_assembly(obj_data, ws_info, obj_data_v1):
 
     # Download features file
     features_handle_ref = data.get('features_handle_ref')
-    features_file_gz_path = _DIR + "/features.json.gz"
+    features_file_gz_path = _AMA_DIR + "/" + ver_ama_id.replace(':', "_") + ".json.gz"
     handle_id_to_file(features_handle_ref, features_file_gz_path)
 
     for doc in _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
