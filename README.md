@@ -28,6 +28,7 @@ You can set the following env vars:
 
 * `SKIP_RELENG` - skip imports into the relation engine (ArangoDB)
 * `SKIP_FEATURES` - skip any importing or indexing of genome features
+* `SKIP_INDICES` - comma-separated list of index names that the service will not write into.
 * `ELASTICSEARCH_HOST` - host name of the elasticsearch server to use (do not prepend protocol)
 * `ELASTICSEARCH_PORT` - port to use for the elasticsearch server
 * `KBASE_ENDPOINT` - URL of kbase API services (default is "https://ci.kbase.us/services")

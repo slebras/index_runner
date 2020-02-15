@@ -1,5 +1,6 @@
 # KBaseMetagenomes.AnnotatedMetagenomeAssembly indexer
 from src.index_runner.es_indexers.indexer_utils import mean, handle_id_to_file
+from src.utils.config import config
 
 import tempfile
 import json
@@ -56,6 +57,10 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
     ver_ama_index['id'] = ver_ama_id
     ver_ama_index['index'] = _VER_AMA_INDEX_NAME
     yield ver_ama_index
+
+    if config()['skip_features']:
+        # Indexing of AMA features is turned off in the env
+        return
 
     # unzip gzip file.
     features_file_path = tmp_dir + "/" + ver_ama_id.replace(':', "_") + ".json"
