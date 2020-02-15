@@ -65,6 +65,9 @@ def index_obj(obj_data, ws_info, msg_data):
                 indexer_ret['doc'].update(defaults)
             # if not indexer_ret.get('namespace'):
             #     indexer_ret['namespace'] = "WS"
+        if indexer_ret['index'] in config()['skip_indices']:
+            logger.debug(f"Index '{indexer_ret['index']}' is in SKIP_INDICES, skipping")
+            continue
         yield indexer_ret
 
 
