@@ -53,7 +53,6 @@ def get_config():
         'global_config_url': config_url,
         'ws_token': os.environ['WORKSPACE_TOKEN'],
         'mount_dir': os.environ.get('MOUNT_DIR', os.getcwd()),
-        'scratch': os.environ.get('SCRATCH', '/scratch'),
         'kbase_endpoint': kbase_endpoint,
         'catalog_url': catalog_url,
         'workspace_url': workspace_url,
