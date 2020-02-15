@@ -63,7 +63,7 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
         return
 
     # unzip gzip file.
-    features_file_path = tmp_dir + "/" + ver_ama_id.replace(':', "_") + ".json"
+    features_file_path = os.path.join(tmp_dir, ver_ama_id.replace(':', "_") + ".json")
     with gzip.open(features_file_gz_path, "rb") as f_in:
         with open(features_file_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
@@ -148,7 +148,7 @@ def index_annotated_metagenome_assembly(obj_data, ws_info, obj_data_v1):
         # Download features file
         features_handle_ref = data.get('features_handle_ref')
         tmp_dir = tempfile.mkdtemp()
-        features_file_gz_path = tmp_dir + "/" + ver_ama_id.replace(':', "_") + ".json.gz"
+        features_file_gz_path = os.path.join(tmp_dir, ver_ama_id.replace(':', "_") + ".json.gz")
         handle_id_to_file(features_handle_ref, features_file_gz_path)
 
         for doc in _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
