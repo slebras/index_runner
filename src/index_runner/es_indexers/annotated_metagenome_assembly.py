@@ -144,9 +144,9 @@ def index_annotated_metagenome_assembly(obj_data, ws_info, obj_data_v1):
         raise Exception("AnnotatedMetagenomeAssembly object does not have features_handle_ref"
                         " field. Can not index features to ElasticSearch.")
 
+    features_handle_ref = data.get('features_handle_ref')
     try:
         # Download features file
-        features_handle_ref = data.get('features_handle_ref')
         tmp_dir = tempfile.mkdtemp()
         features_file_gz_path = os.path.join(tmp_dir, ver_ama_id.replace(':', "_") + ".json.gz")
         handle_id_to_file(features_handle_ref, features_file_gz_path)
