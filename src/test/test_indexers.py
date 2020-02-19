@@ -1,6 +1,8 @@
 import os
 import json
 import unittest
+import tempfile
+import shutil
 
 from src.index_runner.es_indexers.reads import index_reads
 from src.index_runner.es_indexers.genome import index_genome
@@ -190,19 +192,23 @@ class TestIndexers(unittest.TestCase):
             test_data = json.load(fd)
 
         features_test_file = os.path.join(_DIR, "test_data", "features.json.gz")
-
         info = test_data['obj']['info']
         workspace_id = info[6]
         object_id = info[0]
         version = info[4]
         ama_index = f"WS::{workspace_id}:{object_id}"
         ver_ama_index = f"WSVER::{workspace_id}:{object_id}:{version}"
-        # print('[')
-        for (idx, msg_data) in enumerate(_index_ama(features_test_file, test_data['obj']['data'],
-                                                    ama_index, ver_ama_index)):
-            # print(json.dumps(msg_data), ',')
-            self.assertEqual(msg_data, check_against[idx])
-        # print(']')
+
+        try:
+            tmp_dir = tempfile.mkdtemp()
+            features_test_file_copy_path = os.path.join(tmp_dir, "features.json.gz")
+            shutil.copy(features_test_file, features_test_file_copy_path)
+            for (idx, msg_data) in enumerate(_index_ama(features_test_file_copy_path, test_data['obj']['data'],
+                                                        ama_index, ver_ama_index, tmp_dir)):
+                self.assertEqual(msg_data, check_against[idx])
+
+        finally:
+            shutil.rmtree(tmp_dir)
 
     def test_genome_indexer(self):
         # The genome `check_against` data is really big, so we keep it in an external file
