@@ -68,6 +68,7 @@ def get_config():
         'kafka_server': os.environ.get('KAFKA_SERVER', 'kafka'),
         'kafka_clientgroup': os.environ.get('KAFKA_CLIENTGROUP', 'search_indexer'),
         'error_index_name': os.environ.get('ERROR_INDEX_NAME', 'indexing_errors'),
+        'msg_log_index_name': os.environ.get('MSG_LOG_INDEX_NAME', 'indexer_messages'),
         'elasticsearch_index_prefix': os.environ.get('ELASTICSEARCH_INDEX_PREFIX', 'search2'),
         'topics': {
             'workspace_events': os.environ.get('KAFKA_WORKSPACE_TOPIC', 'workspaceevents'),
