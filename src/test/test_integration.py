@@ -6,6 +6,7 @@ from confluent_kafka import Producer
 
 from src.utils.config import config
 from src.utils.re_client import get_doc
+from src.utils.service_utils import wait_for_dependencies
 
 _TEST_EVENT = {
    "wsid": 33192,
@@ -29,6 +30,10 @@ class TestIntegration(unittest.TestCase):
     unit tests. Including them here will be too slow.
     """
     maxDiff = None
+
+    @classmethod
+    def setUpClass(cls):
+        wait_for_dependencies()
 
     def test_integration(self):
         # Produce an event on Kafka

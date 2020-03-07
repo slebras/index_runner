@@ -31,6 +31,7 @@ def _wait_for_service(url, name, start_time, timeout, params=None):
         try:
             logger.info(f'Waiting for {name} service...')
             requests.get(url, params=params).raise_for_status()
+            logger.info(f'{name} is up!')
             break
         except Exception:
             time.sleep(5)
