@@ -13,6 +13,7 @@ from kbase_workspace_client import WorkspaceClient
 from src.utils.config import config
 from src.utils.re_client import stored_query as _stored_query
 from src.utils.re_client import save as _save
+from src.utils.re_client import delete_docs, execute_query
 # may want to html encode vs replace with _ to avoid collisions? Seems really improbable
 from src.utils.re_client import clean_key as _clean_key
 from src.utils.re_client import MAX_ADB_INTEGER as _MAX_ADB_INTEGER
@@ -50,6 +51,40 @@ def process_genome(obj_ver_key, obj_data):
         _generate_GO_links(obj_ver_key, obj_data)
 
 
+def delete_genome(obj_ver_key, obj_info):
+    _del_taxon_edge(obj_info)
+    wsid = obj_info[6]
+    objid = obj_info[0]
+    objver = obj_info[4]
+    obj_key = f'{wsid}:{objid}'
+    obj_ver_key = f'{obj_key}:{objver}'
+    _del_features(obj_ver_key, wsid, objid, objver)
+    _del_GO_links(obj_ver_key)
+
+
+def _del_taxon_edge(obj_ver_key):
+    from_id = f"{_OBJ_VER_COLL}/{obj_ver_key}"
+    logger.debug(f"Deleting all {_TAX_EDGE_COLL} edges with from_id: {from_id}")
+    delete_docs(_TAX_EDGE_COLL, {'_from': from_id})
+
+
+def _del_features(obj_ver_key, wsid, objid, objver):
+    pass
+    from_id = f'{_OBJ_VER_COLL}/{obj_ver_key}'
+    logger.debug(f"Deleting all feature vertices and edges for {obj_ver_key}")
+    delete_docs(_WS_FEAT_COLL, {'workspace_id': wsid, 'object_id': objid, 'version': objver})
+    delete_docs(_WS_FEAT_EDGE_COLL, {'_from': from_id})
+
+
+def _del_GO_links(obj_ver_key):
+    query = f"""
+    FOR edge IN {_WS_FEAT_TO_GO_COLL}
+        FILTER LIKE(edge._from, "{_WS_FEAT_COLL}/{obj_ver_key}%")
+        REMOVE edge IN {_WS_FEAT_TO_GO_COLL}
+    """
+    execute_query(query)
+
+
 def _generate_taxon_edge(obj_ver_key, obj_data):
     if 'taxon_ref' not in obj_data['data']:
         logger.info('No taxon ref in object; skipping..')
@@ -80,7 +115,6 @@ def _generate_features(obj_ver_key, obj_data):
     if not d.get('features'):
         logger.info(f'Genome {obj_ver_key} has no features')
         return
-
     verts = []
     edges = []
     wsid = obj_data['info'][6]
@@ -101,7 +135,6 @@ def _generate_features(obj_ver_key, obj_data):
             '_from': f'{_OBJ_VER_COLL}/{obj_ver_key}',
             '_to': f'{_WS_FEAT_COLL}/{feature_key}'
         })
-
     logger.info(f'Saving {len(verts)} features for genome {obj_ver_key}')
     # hmm, this could leave the db in a corrupt state... options are 1) rollback 2) retry 3) leave
     # rollback is kind of impossible as an error here implies the re api isn't reachable
@@ -117,13 +150,11 @@ def _generate_GO_links(obj_ver_key, obj_data):
     if not d.get('features'):
         # no features logged already in _generate_features
         return
-
     f_to_go = {}
     for f in d['features']:
         # this works for Genome-8.2 to 10.0 in production
         if _ONTOLOGY_TERMS in f and _ONTOLOGY_GO_KEY in f[_ONTOLOGY_TERMS]:
             f_to_go[f['id']] = f[_ONTOLOGY_TERMS][_ONTOLOGY_GO_KEY].keys()
-
     terms_set = {i for items in f_to_go.values() for i in items}  # flatten
     query_time = _now_epoch_ms()
     # might want to do this in smaller batches if memory pressure is an issue
@@ -139,6 +170,7 @@ def _generate_GO_links(obj_ver_key, obj_data):
                     '_key': f'{featurekey}::{resolved_terms[g]}::kbase_RE_indexer',
                     '_from': f'{_WS_FEAT_COLL}/{featurekey}',
                     '_to': f'{_GO_TERM_COLL}/{resolved_terms[g]}',
+                    'kbase_id': obj_ver_key,
                     'source': 'kbase_RE_indexer',
                     'expired': _MAX_ADB_INTEGER
                 })
