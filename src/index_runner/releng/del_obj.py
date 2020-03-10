@@ -27,11 +27,11 @@ def delete_object(obj_info):
     obj_key = f'{wsid}:{objid}'
     obj_ver_key = f'{obj_key}:{objver}'
     _del_ws_object(obj_key)
-    _del_obj_hash(obj_ver_key)
+    _del_obj_hash(obj_info)
     _del_obj_version(obj_ver_key)
     _del_copy_edge(obj_ver_key)
     _del_obj_ver_edge(obj_key)
-    _del_ws_contains_edge(obj_key, obj_info)
+    _del_ws_contains_edge(obj_key)
     _del_workspace(wsid)
     _del_type_vertices(obj_info)
     _del_created_with_method_edge(obj_ver_key)
@@ -129,7 +129,7 @@ def _del_referral_edge(obj_ver_key):
     delete_docs('ws_refers_to', {'_from': from_id})
 
 
-def _del_prov_desc_edge(obj_ver_key, obj):
+def _del_prov_desc_edge(obj_ver_key):
     from_id = 'ws_object_version/' + obj_ver_key
     logger.debug(f'Deleting all ws_prov_descendant_of edges with from_id: {from_id}')
     delete_docs('ws_prov_descendant_of', {'_from': from_id})

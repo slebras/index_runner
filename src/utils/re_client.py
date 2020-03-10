@@ -170,10 +170,12 @@ def delete_docs(coll_name, fields):
     if not fields:
         raise RuntimeError('Provide some fields to match on')
     url = config()['re_api_url'] + '/api/v1/query_results'
+    print(f'xyz deleting {fields} in {coll_name} in arango')
     query = """
     FOR doc IN @@coll
         FILTER MATCHES(doc, @fields)
         REMOVE doc IN @@coll
+        RETURN OLD._key
     """
     resp = requests.post(
         url,
@@ -184,6 +186,7 @@ def delete_docs(coll_name, fields):
         }),
         headers={'Authorization': config()['re_api_token']}
     )
+    print('xyz arango delete resp', resp.text)
     if not resp.ok:
         raise RuntimeError(resp.text)
     return resp.json()

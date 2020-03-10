@@ -32,11 +32,10 @@ def delete_obj(msg):
     obj_ref = f"{msg['wsid']}/{msg['objid']}"
     if msg.get("ver"):
         obj_ref += f"/{msg['ver']}"
-    obj_info = ws_client.admin_req('get_object_info3', {
+    obj_info = ws_client.admin_req('getObjectInfo', {
         'objects': [{'ref': obj_ref}]
-    })
+    })['infos'][0]
     delete_object(obj_info)
-    logger.info('_delete_obj TODO')  # TODO
 
 
 def delete_ws(msg):
