@@ -60,7 +60,7 @@
             "GCF_000762265.1_assembly",
             "KBaseGenomeAnnotations.Assembly-6.0",
             "2020-01-09T19:04:59+0000",
-            1,
+            2,
             "jayrbolton",
             33192,
             "jayrbolton:narrative_1528306445083",
@@ -74,7 +74,7 @@
             }
           ],
           "path": [
-            "33192/23/1"
+            "33192/23/2"
               ],
               "provenance": [
                 {

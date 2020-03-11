@@ -27,7 +27,6 @@ _TEST_DEL_EVENT = {
 }
 
 
-@unittest.skip('TODO remove')
 class TestIntegration(unittest.TestCase):
     """
     Integration test to confirm that the pieces of the system are successfully interconnected.

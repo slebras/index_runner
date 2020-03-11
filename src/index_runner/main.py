@@ -308,8 +308,8 @@ def init_logger():
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(formatter)
     logger.addHandler(stdout_handler)
-    print(f'Logger and level: {logger}')
-    print(f'Logging to file: {log_path}')
+    logger.info(f'Logger and level: {logger}')
+    logger.info(f'Logging to file: {log_path}')
 
 
 if __name__ == '__main__':

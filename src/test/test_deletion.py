@@ -5,9 +5,46 @@ import src.index_runner.releng_importer as releng_importer
 import src.utils.re_client as re_client
 import src.test.helpers as helpers
 
-# Some basic test data
 
-# TODO make this a json file
+class TestDeletion(unittest.TestCase):
+    """
+    Test deletion actions for both elasticsearch and arangodb
+    """
+
+    def test_es_deletion(self):
+        wsid = _NEW_MSG['wsid']
+        objid = _NEW_MSG['objid']
+        es_id = f"WS::{wsid}:{objid}"  # type: ignore
+        print(f"WS::33192:23 vs {es_id}")
+        es_indexer.run_indexer(_OBJ, _WS_INFO, _NEW_MSG)
+        es_doc = helpers.get_es_doc_blocking(es_id)
+        self.assertTrue(es_doc)
+        es_indexer.delete_obj(_DEL_MSG)
+        start = time.time()
+        while True:
+            es_doc = helpers.get_es_doc(es_id)
+            if not es_doc:
+                return
+            if time.time() > (start + 120):
+                raise RuntimeError("Doc never deleted")
+            print('Waiting for es doc to be deleted..')
+            time.sleep(3)
+
+    def test_arango_deletion(self):
+        wsid = _NEW_MSG['wsid']
+        objid = _NEW_MSG['objid']
+        re_key = f"{wsid}:{objid}"
+        releng_importer.run_importer(_OBJ, _WS_INFO, _NEW_MSG)
+        re_doc = re_client.get_doc('ws_object', re_key)
+        self.assertTrue(re_doc)
+        releng_importer.delete_obj(_DEL_MSG)
+        re_doc = re_client.get_doc('ws_object', re_key)['results'][0]
+        print('re_doc', re_doc)
+        self.assertTrue(re_doc['deleted'])
+
+
+# -- Test data
+
 _OBJ = {
     "data": {
         "assembly_id": "GCF_000762265.1_assembly",
@@ -48,7 +85,7 @@ _OBJ = {
         "GCF_000762265.1_assembly",
         "KBaseGenomeAnnotations.Assembly-6.0",
         "2020-01-09T19:04:59+0000",
-        1,
+        2,
         "jayrbolton",
         33192,
         "jayrbolton:narrative_1528306445083",
@@ -61,7 +98,7 @@ _OBJ = {
             "MD5": "3113b0e9d69510c2f02d223d053b14d5"
         }
     ],
-    "path": ["33192/23/1"],
+    "path": ["33192/23/2"],
     "provenance": [],
     "creator": "jayrbolton",
     "orig_wsid": 45320,
@@ -108,48 +145,3 @@ _DEL_MSG = {
    "permusers": [],
    "user": "jayrbolton"
 }
-
-
-class TestDeletion(unittest.TestCase):
-    """
-    Test deletion actions for both elasticsearch and arangodb
-    """
-
-    def test_es_deletion(self):
-        wsid = _NEW_MSG['wsid']
-        objid = _NEW_MSG['objid']
-        es_id = f"WS::{wsid}:{objid}"  # type: ignore
-        print(f"WS::33192:23 vs {es_id}")
-        es_indexer.run_indexer(_OBJ, _WS_INFO, _NEW_MSG)
-        es_doc = helpers.get_es_doc_blocking(es_id)
-        print('xyz es_doc', es_doc)
-        self.assertTrue(es_doc)
-        es_indexer.delete_obj(_DEL_MSG)
-        start = time.time()
-        while True:
-            es_doc = helpers.get_es_doc(es_id)
-            if not es_doc:
-                return
-            if time.time() > (start + 120):
-                raise RuntimeError("Doc never deleted")
-            print('Waiting for es doc to be deleted..')
-            time.sleep(3)
-
-    def test_arango_deletion(self):
-        wsid = _NEW_MSG['wsid']
-        objid = _NEW_MSG['objid']
-        re_key = f"{wsid}:{objid}"
-        releng_importer.run_importer(_OBJ, _WS_INFO, _NEW_MSG)
-        re_doc = re_client.get_doc('ws_object', re_key)
-        print('xyz re_doc', re_doc)
-        self.assertTrue(re_doc)
-        releng_importer.delete_obj(_DEL_MSG)
-        start = time.time()
-        while True:
-            re_doc = re_client.get_doc('ws_object', re_key)
-            if not re_doc:
-                return
-            if time.time() > (start + 120):
-                raise RuntimeError("Doc never deleted")
-            print('Waiting for re doc to be deleted..')
-            time.sleep(3)
