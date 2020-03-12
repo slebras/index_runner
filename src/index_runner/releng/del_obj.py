@@ -3,17 +3,12 @@ Take object info from the workspace and delete all associated vertices and edges
 """
 import logging
 
-from src.index_runner.releng import genome
 import src.utils.re_client as re_client
 
 logger = logging.getLogger('IR')
 
 _OBJ_COLL_NAME = 'ws_object'
-
-# Special deletion handlers for KBase types
-_TYPE_PROCESSOR_MAP = {
-    'KBaseGenomes.Genome': genome.delete_genome
-}
+_OBJ_VER_COLL_NAME = 'ws_object_version'
 
 
 def delete_object(obj_info):
@@ -32,4 +27,12 @@ def delete_object(obj_info):
     for key in ['updated_at', '_id', '_rev']:
         del obj_doc[key]
     obj_doc['deleted'] = True
+    # Delete the unversioned object
     re_client.save(_OBJ_COLL_NAME, obj_doc)
+    # Delete all versioned objects
+    query = f"""
+    FOR doc IN ws_object_version
+        FILTER doc.workspace_id == @wsid AND doc.object_id == @objid
+        REMOVE doc IN {_OBJ_VER_COLL_NAME}
+    """
+    re_client.execute_query(query, {'wsid': wsid, 'objid': objid})

@@ -163,35 +163,6 @@ def save(coll_name, docs, on_duplicate='update'):
     return resp.json()
 
 
-def delete_docs(coll_name, fields):
-    """
-    Delete a document from a collection by a filter on fields.
-    """
-    if not fields:
-        raise RuntimeError('Provide some fields to match on')
-    url = config()['re_api_url'] + '/api/v1/query_results'
-    print(f'xyz deleting {fields} in {coll_name} in arango')
-    query = """
-    FOR doc IN @@coll
-        FILTER MATCHES(doc, @fields)
-        REMOVE doc IN @@coll
-        RETURN OLD._key
-    """
-    resp = requests.post(
-        url,
-        data=json.dumps({
-            'query': query,
-            '@coll': coll_name,
-            'fields': fields,
-        }),
-        headers={'Authorization': config()['re_api_token']}
-    )
-    print('xyz arango delete resp', resp.text)
-    if not resp.ok:
-        raise RuntimeError(resp.text)
-    return resp.json()
-
-
 def execute_query(query, params=None):
     """
     Execute an arbitrary query in the database.

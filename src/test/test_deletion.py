@@ -1,9 +1,12 @@
 import unittest
 import time
+import logging
 import src.index_runner.es_indexer as es_indexer
 import src.index_runner.releng_importer as releng_importer
 import src.utils.re_client as re_client
 import src.test.helpers as helpers
+
+logger = logging.getLogger('IR')
 
 
 class TestDeletion(unittest.TestCase):
@@ -15,7 +18,6 @@ class TestDeletion(unittest.TestCase):
         wsid = _NEW_MSG['wsid']
         objid = _NEW_MSG['objid']
         es_id = f"WS::{wsid}:{objid}"  # type: ignore
-        print(f"WS::33192:23 vs {es_id}")
         es_indexer.run_indexer(_OBJ, _WS_INFO, _NEW_MSG)
         es_doc = helpers.get_es_doc_blocking(es_id)
         self.assertTrue(es_doc)
@@ -27,7 +29,7 @@ class TestDeletion(unittest.TestCase):
                 return
             if time.time() > (start + 120):
                 raise RuntimeError("Doc never deleted")
-            print('Waiting for es doc to be deleted..')
+            logger.debug('Waiting for es doc to be deleted..')
             time.sleep(3)
 
     def test_arango_deletion(self):
@@ -39,8 +41,14 @@ class TestDeletion(unittest.TestCase):
         self.assertTrue(re_doc)
         releng_importer.delete_obj(_DEL_MSG)
         re_doc = re_client.get_doc('ws_object', re_key)['results'][0]
-        print('re_doc', re_doc)
         self.assertTrue(re_doc['deleted'])
+        ver = _NEW_MSG['ver']
+        re_ver_key = f"{re_key}:{ver}"
+        logger.debug('xyz re_ver_key', re_ver_key)
+        resp = re_client.get_doc('ws_object_version', re_ver_key)
+        logger.debug('xyz resp', resp)
+        re_ver2_doc = resp['results'][0]
+        self.assertTrue(re_ver2_doc['deleted'])
 
 
 # -- Test data
