@@ -46,6 +46,8 @@ def get_config():
     global_config = _fetch_global_config(config_url, github_release_url, gh_token)
     skip_indices = _get_comma_delimited_env('SKIP_INDICES')
     allow_indices = _get_comma_delimited_env('ALLOW_INDICES')
+    # Use a tempfile to indicate that the service is done booting up
+    proc_ready_path = '/tmp/IR_READY'  # nosec
     return {
         'skip_releng': os.environ.get('SKIP_RELENG'),
         'skip_features': os.environ.get('SKIP_FEATURES'),
@@ -76,6 +78,7 @@ def get_config():
         },
         'config_timeout': 600,  # 10 minutes in seconds.
         'last_config_reload': time.time(),
+        'proc_ready_path': proc_ready_path,  # File indicating the daemon is booted and ready
     }
 
 

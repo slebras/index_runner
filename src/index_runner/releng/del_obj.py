@@ -33,6 +33,6 @@ def delete_object(obj_info):
     query = f"""
     FOR doc IN ws_object_version
         FILTER doc.workspace_id == @wsid AND doc.object_id == @objid
-        REMOVE doc IN {_OBJ_VER_COLL_NAME}
+        UPDATE {{deleted: true, _key: doc._key}} IN {_OBJ_VER_COLL_NAME}
     """
     re_client.execute_query(query, {'wsid': wsid, 'objid': objid})
