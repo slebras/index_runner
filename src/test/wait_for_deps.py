@@ -1,6 +1,6 @@
 """
-Used in run_tests.sh to wait for various service dependencies (arango, elastic)
-to come online before we start the tests.
+Wait for the daemon to finish booting before running the tests.
+Called by scripts/run_tests.sh
 """
 import time
 import os
