@@ -30,8 +30,6 @@ def import_object(obj, ws_info):
     """
     # TODO handle the ws_latest_version_of edge -- some tricky considerations here
     # Save the ws_object document
-    # NOTE: if you add document or edge creation functions here, be sure to add
-    #       the corresponding deleter in `del_obj.py`
     obj_info = obj['info']
     wsid = obj_info[6]
     objid = obj_info[0]
