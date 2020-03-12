@@ -14,18 +14,6 @@ _TEST_EVENT = {
    "user": "jayrbolton"
 }
 
-_TEST_DEL_EVENT = {
-   "wsid": 33192,
-   "ver": 2,
-   "perm": None,
-   "evtype": 'OBJECT_DELETE_STATE_CHANGE',
-   "objid": 23,
-   "time": 1578439639664,
-   "objtype": "KBaseGenomeAnnotations.Assembly-6.0",
-   "permusers": [],
-   "user": "jayrbolton"
-}
-
 
 class TestIntegration(unittest.TestCase):
     """
