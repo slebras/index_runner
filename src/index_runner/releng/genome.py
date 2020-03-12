@@ -135,7 +135,6 @@ def _generate_GO_links(obj_ver_key, obj_data):
                     '_key': f'{featurekey}::{resolved_terms[g]}::kbase_RE_indexer',
                     '_from': f'{_WS_FEAT_COLL}/{featurekey}',
                     '_to': f'{_GO_TERM_COLL}/{resolved_terms[g]}',
-                    'kbase_id': obj_ver_key,
                     'source': 'kbase_RE_indexer',
                     'expired': _MAX_ADB_INTEGER
                 })
