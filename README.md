@@ -134,14 +134,18 @@ docker push kbase/index_runner2:{VERSION}
 ### Project anatomy
 
 * The main process and entrypoint for the app lives in `./src/index_runner/main.py`
-* The workspace events consumer is in `./src/index_runner/workspace_consumer.py`
-* The elasticsearch updates consumer is in `./src/index_runner/elasticsearch_consumer.py`
+* The entrypoint for ES indexing is in `./src/index_runner/es_indexer.py`
+  * Local elasticsearch indexers live in `./src/index_runner/es_indexers`
+* The entrypoint for Arango imports is in `./src/index_runner/releng_importer.py`
+  * Type-specific RE importers are found in `./src/index_runner/releng`
 
-## KBase Search Stack
+## KBase Relation Engine/Knowledge Engine Stack
 
 * [Index Runner](https://github.com/kbaseIncubator/index_runner_deluxe) - Kafka worker to construct indexes and documents and save them to Elasticsearch and Arango.
 * [Search API](https://github.com/kbaseIncubator/search_api_deluxe) - HTTP API for performing search queries.
 * [Search Config](https://github.com/kbaseIncubator/search_config) - Global search configuration.
+* [Relation Engine API](https://github.com/kbase/relation_engine_api) - HTTP API for querying the relation engine
+* [Relation Engine Spec](https://github.com/kbase/relation_engine_spec) -  specifications for types, queries, views, etc in the graph database
 
 ## Creating an SDK indexer application
 
