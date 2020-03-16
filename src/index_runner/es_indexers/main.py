@@ -65,10 +65,10 @@ def index_obj(obj_data, ws_info, msg_data):
                 indexer_ret['doc'].update(defaults)
             # if not indexer_ret.get('namespace'):
             #     indexer_ret['namespace'] = "WS"
-        if config()['allow_indices'] and indexer_ret['index'] not in config()['allow_indices']:
+        if config()['allow_indices'] and indexer_ret.get('index') not in config()['allow_indices']:
             logger.debug(f"Index '{indexer_ret['index']}' is not in ALLOW_INDICES, skipping")
             continue
-        if indexer_ret['index'] in config()['skip_indices']:
+        if indexer_ret.get('index') in config()['skip_indices']:
             logger.debug(f"Index '{indexer_ret['index']}' is in SKIP_INDICES, skipping")
             continue
         yield indexer_ret
