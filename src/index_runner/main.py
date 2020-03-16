@@ -1,12 +1,7 @@
 """
-This is the entrypoint for running the app. A parent supervisor process that
-launches and monitors child processes.
-
-Architecture:
-    Nodes:
-        - index_runner -- consumes workspace and admin indexing events from kafka, runs indexers.
-        - es_writer -- receives updates from index_runner and bulk-updates elasticsearch.
-    The index_runner and es_writer run in separate workers with message queues in between.
+Main entrypoint for the app and the Kafka topic consumer.
+Sends work to the es_indexer or the releng_importer.
+Generally handles every message synchronously. Duplicate the service to get more parallelism.
 """
 import logging
 import logging.handlers
@@ -15,57 +10,93 @@ import json
 import time
 import requests
 import sys
-from confluent_kafka import Consumer, KafkaError
+import atexit
+import signal
+import traceback
+import hashlib
+from confluent_kafka import Consumer, KafkaError, Producer
+from kbase_workspace_client import WorkspaceClient
+from kbase_workspace_client.exceptions import WorkspaceResponseError
 
+import src.utils.es_utils as es_utils
+import src.utils.re_client as re_client
+import src.index_runner.es_indexer as es_indexer
+import src.index_runner.releng_importer as releng_importer
 from src.utils.config import config
-from src.utils.worker_group import WorkerGroup
-from src.index_runner.es_indexer import ESIndexer
-from src.index_runner.releng_importer import RelengImporter
 from src.utils.service_utils import wait_for_dependencies
 
 logger = logging.getLogger('IR')
+ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+
+
+def _init_consumer():
+    """
+    Initialize a Kafka consumer instance
+    """
+    consumer = Consumer({
+        'bootstrap.servers': config()['kafka_server'],
+        'group.id': config()['kafka_clientgroup'],
+        'auto.offset.reset': 'earliest',
+        'enable.auto.commit': False
+    })
+    topics = [
+        config()['topics']['workspace_events'],
+        config()['topics']['admin_events']
+    ]
+    logger.info(f"Subscribing to: {topics}")
+    logger.info(f"Client group: {config()['kafka_clientgroup']}")
+    logger.info(f"Kafka server: {config()['kafka_server']}")
+    consumer.subscribe(topics)
+    return consumer
+
+
+def _close_consumer(signum=None, stack_frame=None):
+    """
+    This will close the network connections and sockets. It will also trigger
+    a rebalance immediately rather than wait for the group coordinator to
+    discover that the consumer stopped sending heartbeats and is likely dead,
+    which will take longer and therefore result in a longer period of time in
+    which consumers can’t consume messages from a subset of the partitions.
+    """
+    consumer.close()
+    logger.info("Closed the Kafka consumer")
+
+
+# Initialize and run the Kafka consumer
+consumer = _init_consumer()
+atexit.register(_close_consumer)
+signal.signal(signal.SIGTERM, _close_consumer)
+signal.signal(signal.SIGINT, _close_consumer)
 
 
 def main():
     """
-    - Multiple processes run Kafka consumers under the same topic and client group
-    - Each Kafka consumer pushes work to one or more es_indexers or releng_importers
-
-    Work is sent from the Kafka consumer to the es_writer or releng_importer via ZMQ sockets.
+    Run the the Kafka consumer and two threads for the releng_importer and es_indexer
     """
     # Wait for dependency services (ES and RE) to be live
     wait_for_dependencies(timeout=180)
-    logger.info('Services started! Now starting the app..')
-    # Initialize worker group of ESIndexer
-    es_indexers = WorkerGroup(ESIndexer, (), count=config()['workers']['num_es_indexers'])
-    # Initialize a worker group of RelengImporter
-    releng_importers = WorkerGroup(RelengImporter, (), count=config()['workers']['num_re_importers'])
-    # All worker groups to send kafka messages to
-    receivers = [es_indexers, releng_importers]
+    # Used for re-fetching the configuration with a throttle
+    last_updated_minute = int(time.time() / 60)
+    if not config()['global_config_url']:
+        config_tag = _fetch_latest_config_tag()
 
-    # used to check update every minute
-    last_updated_minute = int(time.time()/60)
-    _CONFIG_TAG = _query_for_config_tag()
-
-    # Initialize and run the Kafka consumer
-    consumer = _set_consumer()
+    # Database initialization
+    es_indexer.init_indexes()
+    es_indexer.reload_aliases()
 
     while True:
         msg = consumer.poll(timeout=0.5)
         if msg is None:
             continue
-        curr_min = int(time.time()/60)
-        if curr_min > last_updated_minute:
-            config_tag = _query_for_config_tag()
-            # update minute here
+        curr_min = int(time.time() / 60)
+        if not config()['global_config_url'] and curr_min > last_updated_minute:
+            # Check for configuration updates
+            latest_config_tag = _fetch_latest_config_tag()
             last_updated_minute = curr_min
-            if config_tag is not None and config_tag != _CONFIG_TAG:
-                _CONFIG_TAG = config_tag
-                # send message to es_indexers to update config.
-                es_indexers.queue.put(('ws_event', {
-                    'evtype': "RELOAD_ELASTIC_ALIASES",
-                    "msg": f"updating to tag {_CONFIG_TAG}"
-                }))
+            if config_tag is not None and latest_config_tag != config_tag:
+                config(force_reload=True)
+                config_tag = latest_config_tag
+                es_indexer.reload_aliases()
         if msg.error():
             if msg.error().code() == KafkaError._PARTITION_EOF:
                 logger.info('End of stream.')
@@ -74,20 +105,127 @@ def main():
             continue
         val = msg.value().decode('utf-8')
         try:
-            data = json.loads(val)
+            msg = json.loads(val)
         except ValueError as err:
             logger.error(f'JSON parsing error: {err}')
             logger.error(f'Message content: {val}')
-        for receiver in receivers:
-            receiver.queue.put(('ws_event', data))
+        logger.info(f'Received event: {msg}')
+        start = time.time()
+        try:
+            _handle_msg(msg)
+            # Move the offset for our partition
+            consumer.commit()
+            logger.info(f"Handled {msg['evtype']} message in {time.time() - start}s")
+        except Exception as err:
+            logger.error(f'Error processing message: {err.__class__.__name__} {err}')
+            logger.error(traceback.format_exc())
+            # Save this error and message to a topic in Elasticsearch
+            _log_err_to_es(msg, err=err)
 
 
-def _query_for_config_tag():
-    """using github release api (https://developer.github.com/v3/repos/releases/) find
-    out if there is new version of the config."""
-    github_release_url = config()['github_release_url']
+def _handle_msg(msg):
+    event_type = msg.get('evtype')
+    if not event_type:
+        logger.warning(f"Missing 'evtype' in event: {msg}")
+        return
+    if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
+        obj = _fetch_obj_data(msg)
+        ws_info = _fetch_ws_info(msg)
+        if not config()['skip_releng']:
+            releng_importer.run_importer(obj, ws_info, msg)
+        es_indexer.run_indexer(obj, ws_info, msg)
+    elif event_type == 'REINDEX_WS' or event_type == 'CLONE_WORKSPACE':
+        # Reindex all objects in a workspace, overwriting existing data
+        for (objid, _) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
+            _produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid})
+    elif event_type == 'INDEX_NONEXISTENT_WS':
+        # Reindex all objects in a workspace without overwriting any existing data
+        for (objid, _) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
+            _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid})
+    elif event_type == 'INDEX_NONEXISTENT':
+        exists_in_releng = re_client.check_doc_existence(msg['wsid'], msg['objid'])
+        exists_in_es = es_utils.check_doc_existence(msg['wsid'], msg['objid'])
+        if not exists_in_releng or not exists_in_es:
+            obj = _fetch_obj_data(msg)
+            ws_info = _fetch_ws_info(msg)
+            if not exists_in_releng and not config()['skip_releng']:
+                releng_importer.run_importer(obj, ws_info, msg)
+            if not exists_in_es:
+                es_indexer.run_indexer(obj, ws_info, msg)
+    elif event_type == 'OBJECT_DELETE_STATE_CHANGE':
+        # Delete the object on RE and ES. Synchronous for now.
+        es_indexer.delete_obj(msg)
+        if not config()['skip_releng']:
+            releng_importer.delete_obj(msg)
+    elif event_type == 'WORKSPACE_DELETE_STATE_CHANGE':
+        # Delete everything in RE and ES under this workspace
+        es_indexer.delete_ws(msg)
+        if not config()['skip_releng']:
+            releng_importer.delete_ws(msg)
+    elif event_type == 'SET_GLOBAL_PERMISSION':
+        # Set the `is_public` permissions for a workspace
+        es_indexer.set_perms(msg)
+        if not config()['skip_releng']:
+            releng_importer.set_perms(msg)
+    elif event_type == 'RELOAD_ELASTIC_ALIASES':
+        # Reload aliases on ES from the global config file
+        es_indexer.reload_aliases()
+    else:
+        logger.warning(f"Unrecognized event {event_type}.")
+        return
+
+
+def _fetch_obj_data(msg):
+    if not msg.get('wsid') or not msg.get('objid'):
+        raise RuntimeError(f'Cannot get object ref from msg: {msg}')
+    obj_ref = f"{msg['wsid']}/{msg['objid']}"
+    if msg.get('ver'):
+        obj_ref += f"/{msg['ver']}"
     try:
-        resp = requests.get(url=github_release_url)
+        obj_data = ws_client.admin_req('getObjects', {
+            'objects': [{'ref': obj_ref}]
+        })
+    except WorkspaceResponseError as err:
+        logger.error(f'Workspace response error: {err.resp_data}')
+        # Workspace is deleted; ignore the error
+        if (err.resp_data and isinstance(err.resp_data, dict)
+                and err.resp_data['error'] and isinstance(err.resp_data['error'], dict)
+                and err.resp_data['error'].get('code') == -32500):
+            return
+        else:
+            raise err
+    result = obj_data['data'][0]
+    if not obj_data or not obj_data['data'] or not obj_data['data'][0]:
+        logger.error(obj_data)
+        raise RuntimeError("Invalid object result from the workspace")
+    return result
+
+
+def _fetch_ws_info(msg):
+    if not msg.get('wsid'):
+        raise RuntimeError(f'Cannot get workspace info from msg: {msg}')
+    try:
+        ws_info = ws_client.admin_req('getWorkspaceInfo', {
+            'id': msg['wsid']
+        })
+    except WorkspaceResponseError as err:
+        logger.error(f'Workspace response error: {err.resp_data}')
+        raise err
+    return ws_info
+
+
+def _fetch_latest_config_tag():
+    """
+    Using the Github release API, check for a new version of the config.
+    https://developer.github.com/v3/repos/releases/
+    """
+    github_release_url = config()['github_release_url']
+    if config()['github_token']:
+        headers = {'Authorization': f"token {config()['github_token']}"}
+    else:
+        headers = {}
+    try:
+        resp = requests.get(url=github_release_url, headers=headers)
     except Exception as err:
         logging.error(f"Unable to fetch indexer config from github: {err}")
         # Ignore any error and continue; try the fetch again later
@@ -99,23 +237,34 @@ def _query_for_config_tag():
     return data['tag_name']
 
 
-def _set_consumer():
-    """"""
-    consumer = Consumer({
-        'bootstrap.servers': config()['kafka_server'],
-        'group.id': config()['kafka_clientgroup'],
-        'auto.offset.reset': 'earliest',
-        'enable.auto.commit': True
-    })
-    topics = [
-        config()['topics']['workspace_events'],
-        config()['topics']['admin_events']
-    ]
-    logger.info(f"Subscribing to: {topics}")
-    logger.info(f"Client group: {config()['kafka_clientgroup']}")
-    logger.info(f"Kafka server: {config()['kafka_server']}")
-    consumer.subscribe(topics)
-    return consumer
+def _produce(data, topic=config()['topics']['admin_events']):
+    """
+    Produce a new event messagew on a Kafka topic and block at most 60s for it to get published.
+    """
+    producer = Producer({'bootstrap.servers': config()['kafka_server']})
+    producer.produce(topic, json.dumps(data), callback=_delivery_report)
+    producer.poll(0.1)
+
+
+def _log_err_to_es(msg, err=None):
+    """Log an indexing error in an elasticsearch index."""
+    # The key is a hash of the message data body
+    # The index document is the error string plus the message data itself
+    _id = hashlib.blake2b(json.dumps(msg).encode('utf-8')).hexdigest()
+    es_indexer._write_to_elastic([
+        {
+            'index': config()['error_index_name'],
+            'id': _id,
+            'doc': {'error': str(err), **msg}
+        }
+    ])
+
+
+def _delivery_report(err, msg):
+    if err is not None:
+        logger.error(f'Message delivery failed:\n{err}')
+    else:
+        logger.info(f'Message delivered to {msg.topic()}')
 
 
 def init_logger():

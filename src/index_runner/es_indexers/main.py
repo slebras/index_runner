@@ -17,56 +17,34 @@ from src.index_runner.es_indexers.taxon import index_taxon
 from src.index_runner.es_indexers.pangenome import index_pangenome
 from src.index_runner.es_indexers.from_sdk import index_from_sdk
 from src.index_runner.es_indexers.annotated_metagenome_assembly import index_annotated_metagenome_assembly
+from src.utils.get_upa_from_msg import get_upa_from_msg_data
 
 logger = logging.getLogger('IR')
+ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
 
 
-def index_obj(msg_data):
+def index_obj(obj_data, ws_info, msg_data):
     """
     For a newly created object, generate the index document for it and push to
     the elasticsearch topic on Kafka.
     Args:
+        obj_data - in-memory parsed data from the workspace object
         msg_data - json event data received from the kafka workspace events
-        stream. Must have keys for `wsid` and `objid`
+            stream. Must have keys for `wsid` and `objid`
     """
-    upa = indexer_utils.get_upa_from_msg_data(msg_data)
-    # Fetch the object data from the workspace API
-    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-    try:
-        obj_data = ws_client.admin_req('getObjects', {
-            'objects': [{'ref': upa}]
-        })
-    except WorkspaceResponseError as err:
-        logger.error('Workspace response error:', err.resp_data)
-        # Workspace is deleted; ignore the error
-        if (err.resp_data and isinstance(err.resp_data, dict)
-                and err.resp_data['error'] and isinstance(err.resp_data['error'], dict)
-                and err.resp_data['error'].get('code') == -32500):
-            return
-        else:
-            raise err
-    obj_data = obj_data['data'][0]
     obj_type = obj_data['info'][2]
     (type_module, type_name, type_version) = ws_utils.get_type_pieces(obj_type)
     if (type_module + '.' + type_name) in _TYPE_BLACKLIST:
         # Blacklisted type, so we don't index it
         return
-    try:
-        ws_info = ws_client.admin_req('getWorkspaceInfo', {
-            'id': msg_data['wsid']
-        })
-    except WorkspaceResponseError as err:
-        logger.error('Workspace response error:', err.resp_data)
-        raise err
-
     # check if this particular object has the tag "noindex"
     metadata = ws_info[-1]
+    # If the workspace's object metadata contains a "nosearch" tag, skip it
     if metadata.get('searchtags'):
         if 'noindex' in metadata['searchtags']:
             return
-
-    # Get the info of the first object to get the origin creation date of the
-    # object.
+    # Get the info of the first object to get the creation date of the object.
+    upa = get_upa_from_msg_data(msg_data)
     try:
         obj_data_v1 = ws_client.admin_req('getObjects', {
             'objects': [{'ref': upa + '/1'}],
@@ -87,6 +65,12 @@ def index_obj(msg_data):
                 indexer_ret['doc'].update(defaults)
             # if not indexer_ret.get('namespace'):
             #     indexer_ret['namespace'] = "WS"
+        if config()['allow_indices'] and indexer_ret['index'] not in config()['allow_indices']:
+            logger.debug(f"Index '{indexer_ret['index']}' is not in ALLOW_INDICES, skipping")
+            continue
+        if indexer_ret['index'] in config()['skip_indices']:
+            logger.debug(f"Index '{indexer_ret['index']}' is in SKIP_INDICES, skipping")
+            continue
         yield indexer_ret
 
 
@@ -94,13 +78,15 @@ def _find_indexer(type_module, type_name, type_version):
     """
     Find the indexer function for the given object type within the indexer_directory list.
     """
-    # TODO iterate over the whole indexer directory list and return the *last* match
+    last_match = None
     for entry in _INDEXER_DIRECTORY:
         module_match = ('module' not in entry) or entry['module'] == type_module
         name_match = ('type' not in entry) or entry['type'] == type_name
         ver_match = ('version' not in entry) or entry['version'] == type_version
         if module_match and name_match and ver_match:
-            return entry.get('indexer', generic_indexer())
+            last_match = entry.get('indexer', generic_indexer())
+    if last_match:
+        return last_match
     # No indexer found for this type, check if there is a sdk indexer app
     if type_module + '.' + type_name in config()['global']['sdk_indexer_apps']:
         return index_from_sdk
@@ -108,6 +94,9 @@ def _find_indexer(type_module, type_name, type_version):
 
 
 def generic_indexer():
+    """
+    Indexes any type based on a common set of generic fields.
+    """
     def fn(obj_data, ws_info, obj_data_v1):
         workspace_id = obj_data['info'][6]
         object_id = obj_data['info'][0]

@@ -1,9 +1,12 @@
 import sys
 from bs4 import BeautifulSoup
 from markdown2 import Markdown
+import logging
 
 from src.utils.get_path import get_path
 from src.index_runner.es_indexers import indexer_utils
+
+logger = logging.getLogger('IR')
 
 _NAMESPACE = "WS"
 _MARKDOWNER = Markdown()
@@ -28,6 +31,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
     # Get all the types and names of objects in the narrative's workspace.
     narrative_data_objects = indexer_utils.fetch_objects_in_workspace(ws_id)
     index_cells = []
+    logger.debug(f'obj_data is {obj_data}')
     cells = obj_data['data'].get('cells', [])
     creator = obj_data['creator']
     for cell in cells:

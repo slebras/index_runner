@@ -89,11 +89,13 @@ def _pad(left, right, amount=17):
 
 def _reindex(args):
     id_pieces = args.ref.split('/')
-    if len(id_pieces) > 2:
-        raise ValueError("--ref value should be in the format '1/2' or '1'")
-    reindexing_obj = len(id_pieces) == 2
+    if len(id_pieces) > 3:
+        raise ValueError("--ref value should be in the format '1/2', '1/2/3', or '1'")
+    reindexing_obj = len(id_pieces) >= 2
     if reindexing_obj:
         ev = {'evtype': 'INDEX_NONEXISTENT', 'wsid': id_pieces[0], 'objid': id_pieces[1]}
+        if len(id_pieces) == 3:
+            ev['ver'] = id_pieces[2]
         if args.overwrite:
             ev['evtype'] = 'REINDEX'
     else:
@@ -179,7 +181,7 @@ if __name__ == '__main__':
     reindex.add_argument(
         '--ref',
         '-r',
-        help='Workspace ID or "ws_id/obj_id" to reindex (eg. "1", "1/2")',
+        help='Workspace ID or object ID to reindex (eg. "1", "1/2", or "1/2/3")',
         required=True,
         type=str
     )
