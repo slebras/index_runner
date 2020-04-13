@@ -263,7 +263,7 @@ def _produce(data, topic=config()['topics']['admin_events']):
     """
     producer = Producer({'bootstrap.servers': config()['kafka_server']})
     producer.produce(topic, json.dumps(data), callback=_delivery_report)
-    producer.poll(0.1)
+    producer.flush()
 
 
 def _log_err_to_es(msg, err=None):

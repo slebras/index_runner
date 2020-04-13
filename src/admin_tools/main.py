@@ -147,7 +147,7 @@ def _reindex_ws_type(args):
 def _produce(data, topic=config()['topics']['admin_events']):
     producer = Producer({'bootstrap.servers': config()['kafka_server']})
     producer.produce(topic, json.dumps(data), callback=_delivery_report)
-    producer.poll(60)
+    producer.flush()
 
 
 def _delivery_report(err, msg):
