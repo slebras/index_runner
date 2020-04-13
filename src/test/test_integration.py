@@ -47,6 +47,8 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(es_doc['_id'], es_id)
         self.assertEqual(re_doc['workspace_id'], wsid)
         self.assertEqual(re_doc['object_id'], objid)
+        log_doc = _get_es_doc_blocking(_TEST_EVENT['time'])
+        self.assertEqual(log_doc['_source'], _TEST_EVENT)
 
 
 # -- Test utils

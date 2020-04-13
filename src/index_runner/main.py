@@ -115,6 +115,7 @@ def main():
             _handle_msg(msg)
             # Move the offset for our partition
             consumer.commit()
+            _log_msg_to_elastic(msg)
             logger.info(f"Handled {msg['evtype']} message in {time.time() - start}s")
         except Exception as err:
             logger.error(f'Error processing message: {err.__class__.__name__} {err}')
@@ -173,6 +174,20 @@ def _handle_msg(msg):
     else:
         logger.warning(f"Unrecognized event {event_type}.")
         return
+
+
+def _log_msg_to_elastic(msg):
+    """
+    Save every message consumed from Kafka to an Elasticsearch index for logging purposes.
+    """
+    # The key is a hash of the message data body
+    # The index document is the error string plus the message data itself
+    ts = msg.get('time', int(time.time() * 1000))
+    es_indexer._write_to_elastic([{
+        'index': config()['msg_log_index_name'],
+        'id': ts,
+        'doc': msg
+    }])
 
 
 def _fetch_obj_data(msg):
