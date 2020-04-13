@@ -4,6 +4,7 @@ Relation engine API client functions.
 import json
 import re
 import requests
+import logging
 
 from src.utils.config import config
 
@@ -12,6 +13,8 @@ from src.utils.config import config
 MAX_ADB_INTEGER = 2**53 - 1
 
 _ADB_KEY_DISALLOWED_CHARS_REGEX = re.compile(r"[^a-zA-Z0-9_\-:\.@\(\)\+,=;\$!\*'%]")
+
+logger = logging.getLogger('IR')
 
 
 # should this live somewhere else?
@@ -157,4 +160,23 @@ def save(coll_name, docs, on_duplicate='update'):
     )
     if not resp.ok:
         raise RuntimeError(f'Error response from RE API: {resp.text}')
+    return resp.json()
+
+
+def execute_query(query, params=None):
+    """
+    Execute an arbitrary query in the database.
+    NOTE: be sure to guard against AQL injection when using this function.
+    """
+    if not params:
+        params = {}
+    params['query'] = query
+    url = config()['re_api_url'] + '/api/v1/query_results'
+    resp = requests.post(
+        url,
+        data=json.dumps(params),
+        headers={'Authorization': config()['re_api_token']}
+    )
+    if not resp.ok:
+        raise RuntimeError(resp.text)
     return resp.json()

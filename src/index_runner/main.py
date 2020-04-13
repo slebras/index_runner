@@ -73,16 +73,21 @@ def main():
     """
     Run the the Kafka consumer and two threads for the releng_importer and es_indexer
     """
+    # Remove the ready indicator file if it has been written on a previous boot
+    if os.path.exists(config()['proc_ready_path']):
+        os.remove(config()['proc_ready_path'])
     # Wait for dependency services (ES and RE) to be live
     wait_for_dependencies(timeout=180)
     # Used for re-fetching the configuration with a throttle
     last_updated_minute = int(time.time() / 60)
     if not config()['global_config_url']:
         config_tag = _fetch_latest_config_tag()
-
     # Database initialization
     es_indexer.init_indexes()
     es_indexer.reload_aliases()
+    # Touch a temp file indicating the daemon is ready
+    with open(config()['proc_ready_path'], 'w') as fd:
+        fd.write('')
 
     while True:
         msg = consumer.poll(timeout=0.5)
@@ -308,8 +313,8 @@ def init_logger():
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(formatter)
     logger.addHandler(stdout_handler)
-    print(f'Logger and level: {logger}')
-    print(f'Logging to file: {log_path}')
+    logger.info(f'Logger and level: {logger}')
+    logger.info(f'Logging to file: {log_path}')
 
 
 if __name__ == '__main__':

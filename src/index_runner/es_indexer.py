@@ -70,15 +70,17 @@ def run_indexer(obj, ws_info, msg):
         if action == 'index':
             batch_writes.append(data)
             if len(batch_writes) >= _BATCH_WRITE_MAX:
+                count = len(batch_writes)
                 _write_to_elastic(batch_writes)
-                logger.info(f'Indexing of {len(batch_writes)} docs on ES took {time.time() - start}s')
+                logger.info(f'Indexing of {count} docs on ES took {time.time() - start}s')
                 start = time.time()
                 batch_writes = []
         elif action == 'init_generic_index':
             _init_generic_index(data)
     if batch_writes:
+        count = len(batch_writes)
         _write_to_elastic(batch_writes)
-        logger.info(f'Indexing of {len(batch_writes)} docs on ES took {time.time() - start}s')
+        logger.info(f'Indexing of {count} docs on ES took {time.time() - start}s')
 
 
 def delete_obj(msg):
@@ -112,6 +114,7 @@ def delete_obj(msg):
     if not resp.ok:
         # Unsuccesful request to elasticsearch.
         raise RuntimeError(f"Error deleting object on elasticsearch:\n{resp.text}")
+    logger.info(f"Deleted elasticsearch documents associated with obj {wsid}/{objid}")
 
 
 def delete_ws(msg):
