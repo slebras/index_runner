@@ -1,4 +1,4 @@
-kbase_workspace_client==0.0.1
+kbase-workspace-client==0.0.1
 biopython==1.74
 confluent-kafka==0.11.6
 docker==3.7.0
