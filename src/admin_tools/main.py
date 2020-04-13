@@ -5,7 +5,6 @@ import json
 import argparse
 from confluent_kafka import Producer
 from kbase_workspace_client import WorkspaceClient
-from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 from src.utils.config import config
 
@@ -22,7 +21,7 @@ def _get_count(args):
     rj = resp.json()
     if not resp.ok:
         raise RuntimeError(json.dumps(rj, indent=2))
-    print('Total errors:', rj['hits']['total'])
+    print('Total errors:', rj['hits']['total']['value'])
 
 
 def _get_count_by_type(args):
@@ -47,6 +46,7 @@ def _get_upas(args):
     resp = requests.post(
         _ERR_SEARCH_URL,
         params={'scroll': '1m'},
+        headers={'Content-Type': 'application/json'},
         data=json.dumps({
             'size': 100,
             '_source': ['wsid', 'objid', 'error']
@@ -61,6 +61,7 @@ def _get_upas(args):
     while scrolling:
         resp = requests.post(
             _ES_URL + '/_search/scroll',
+            headers={'Content-Type': 'application/json'},
             data=json.dumps({
                 'scroll': '1m',
                 'scroll_id': scroll_id
@@ -93,13 +94,13 @@ def _reindex(args):
         raise ValueError("--ref value should be in the format '1/2', '1/2/3', or '1'")
     reindexing_obj = len(id_pieces) >= 2
     if reindexing_obj:
-        ev = {'evtype': 'INDEX_NONEXISTENT', 'wsid': id_pieces[0], 'objid': id_pieces[1]}
+        ev = {'evtype': 'INDEX_NONEXISTENT', 'wsid': int(id_pieces[0]), 'objid': int(id_pieces[1])}
         if len(id_pieces) == 3:
-            ev['ver'] = id_pieces[2]
+            ev['ver'] = int(id_pieces[2])
         if args.overwrite:
             ev['evtype'] = 'REINDEX'
     else:
-        ev = {'evtype': 'INDEX_NONEXISTENT_WS', 'wsid': id_pieces[0]}
+        ev = {'evtype': 'INDEX_NONEXISTENT_WS', 'wsid': int(id_pieces[0])}
         if args.overwrite:
             ev['evtype'] = 'REINDEX_WS'
     print('Producing...')
@@ -112,7 +113,7 @@ def _reindex_ws_range(args):
         evtype = 'REINDEX_WS'
     count = 0
     for wsid in range(args.min, args.max + 1):
-        _produce({'evtype': evtype, 'wsid': wsid})
+        _produce({'evtype': evtype, 'wsid': int(wsid)})
         count += 1
     print(f'Produced {count} total events.')
 
@@ -127,20 +128,21 @@ def _reindex_ws_type(args):
     # - Iterate over all workspaces
     #   - For each workspace, list objects
     #   - For each obj matching args.type, produce a reindex event
-    ws = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
     evtype = 'INDEX_NONEXISTENT'
     if args.overwrite:
         evtype = 'REINDEX'
     for wsid in range(args.start, args.stop + 1):
+        wsid = int(wsid)
         try:
-            infos = ws.admin_req('listObjects', {'ids': [wsid]})
-        except WorkspaceResponseError as err:
-            print(err.resp_data['error']['message'])
+            infos = ws_client.generate_obj_infos(wsid, admin=True)
+        except Exception as err:
+            print(f'Error fetching object infos for workspace {wsid}: {err}')
             continue
         for obj_info in infos:
             obj_type = obj_info[2]
             if obj_type == args.type:
-                _produce({'evtype': evtype, 'wsid': wsid, 'objid': obj_info[0]})
+                _produce({'evtype': evtype, 'wsid': wsid, 'objid': int(obj_info[0])})
     print('..done!')
 
 
