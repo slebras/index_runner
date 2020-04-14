@@ -20,9 +20,7 @@ class TestIndexers(unittest.TestCase):
             narr_obj = json.load(fd)
         with open(os.path.join(_DIR, 'test_data', 'narrative_wsinfo_valid.json')) as fd:
             ws_info = json.load(fd)
-        results = []
-        for result in index_narrative(narr_obj, ws_info, {}):
-            results.append(result)
+        results = list(index_narrative(narr_obj, ws_info, {}))
         self.assertTrue(len(results) == 1)
         result = results[0]
         self.assertEqual(result['_action'], 'index')
@@ -47,16 +45,42 @@ class TestIndexers(unittest.TestCase):
 
     def test_temporary_narr(self):
         """Test that temporary narratives get flagged."""
-        # TODO test that temporary narratives get flagged
+        with open(os.path.join(_DIR, 'test_data', 'narrative_obj_temporary.json')) as fd:
+            narr_obj = json.load(fd)
+        with open(os.path.join(_DIR, 'test_data', 'narrative_wsinfo_temporary.json')) as fd:
+            ws_info = json.load(fd)
+        results = list(index_narrative(narr_obj, ws_info, {}))
+        self.assertTrue(len(results) == 1)
+        result = results[0]
+        self.assertEqual(result['doc']['is_temporary'], True)
 
     def test_narratorial(self):
         """Test that a narratorial gets flagged as such."""
-        # TODO test that a narrative gets flagged as such
+        with open(os.path.join(_DIR, 'test_data', 'narrative_obj_narratorial.json')) as fd:
+            narr_obj = json.load(fd)
+        with open(os.path.join(_DIR, 'test_data', 'narrative_wsinfo_narratorial.json')) as fd:
+            ws_info = json.load(fd)
+        results = list(index_narrative(narr_obj, ws_info, {}))
+        self.assertTrue(len(results) == 1)
+        result = results[0]
+        self.assertEqual(result['doc']['is_narratorial'], True)
 
     def test_fail_no_obj_metadata(self):
         """Test that a narrative index fails without obj metadata."""
-        # TODO test that a narrative index fails without obj metadata
+        with open(os.path.join(_DIR, 'test_data', 'narrative_obj_no_metadata.json')) as fd:
+            narr_obj = json.load(fd)
+        with open(os.path.join(_DIR, 'test_data', 'narrative_wsinfo_valid.json')) as fd:
+            ws_info = json.load(fd)
+        with self.assertRaises(RuntimeError) as ctx:
+            list(index_narrative(narr_obj, ws_info, {}))
+        self.assertTrue('no metadata' in str(ctx.exception))
 
     def test_fail_no_ws_metadata(self):
         """Test that a narrative index fails without workspace metadata."""
-        # TODO test that a narrative index fails without workspace metadata
+        with open(os.path.join(_DIR, 'test_data', 'narrative_obj_valid.json')) as fd:
+            narr_obj = json.load(fd)
+        with open(os.path.join(_DIR, 'test_data', 'narrative_wsinfo_no_metadata.json')) as fd:
+            ws_info = json.load(fd)
+        with self.assertRaises(RuntimeError) as ctx:
+            list(index_narrative(narr_obj, ws_info, {}))
+        self.assertTrue('no metadata' in str(ctx.exception))

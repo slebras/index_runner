@@ -1,0 +1,18 @@
+{
+  "methods": ["POST"],
+  "path": "/ws",
+  "headers": {"Authorization": "valid_admin_token"},
+  "body": {
+    "version": "1.1",
+    "method": "Workspace.administer",
+    "params": [{"command": "listObjects", "params": {"ids": [33400], "minObjectID": 1}}]
+  },
+  "response": {
+    "status": "200",
+    "body": {
+      "version": "1.1",
+      "result": [[]]
+    }
+  }
+}
+
