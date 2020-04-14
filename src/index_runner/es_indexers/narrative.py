@@ -28,7 +28,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
     """
     # Reference for the workspace info type:
     #    https://kbase.us/services/ws/docs/Workspace.html#typedefWorkspace.workspace_info
-    # Refer for the object info type:
+    # Reference for the object info type:
     #    https://kbase.us/services/ws/docs/Workspace.html#typedefWorkspace.object_info
     obj_info = obj_data['info']
     obj_id = obj_info[0]
