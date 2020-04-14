@@ -171,7 +171,8 @@ def _init_generic_index(msg):
     """
     (_, type_name, type_ver) = get_type_pieces(msg['full_type_name'])
     index_name = type_name.lower()
-    _init_index(index_name + '_0', _GLOBAL_MAPPINGS['ws_object'])
+    mappings = {**_GLOBAL_MAPPINGS['ws_auth'], **_GLOBAL_MAPPINGS['ws_object']}
+    _init_index(index_name + '_0', mappings)
 
 
 def _write_to_elastic(data):
@@ -200,7 +201,7 @@ def _write_to_elastic(data):
     # Save the documents using the elasticsearch http api
     resp = requests.post(f"{_ES_URL}/_bulk", data=json_body, headers={"Content-Type": "application/json"})
     if not resp.ok:
-        # Unsuccesful save to elasticsearch.
+        # Unsuccessful save to elasticsearch.
         raise RuntimeError(f"Error saving to elasticsearch:\n{resp.text}")
 
 

@@ -152,15 +152,20 @@ def _handle_msg(msg):
             objid = objinfo[0]
             _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid})
     elif event_type == 'INDEX_NONEXISTENT':
-        exists_in_releng = re_client.check_doc_existence(msg['wsid'], msg['objid'])
-        exists_in_es = es_utils.check_doc_existence(msg['wsid'], msg['objid'])
-        if not exists_in_releng or not exists_in_es:
-            obj = _fetch_obj_data(msg)
-            ws_info = _fetch_ws_info(msg)
-            if not exists_in_releng and not config()['skip_releng']:
-                releng_importer.run_importer(obj, ws_info, msg)
-            if not exists_in_es:
-                es_indexer.run_indexer(obj, ws_info, msg)
+        # Import to RE if we are not skipping RE and also it does not exist in the db
+        re_required = not config()['skip_releng'] and not re_client.check_doc_existence(msg['wsid'], msg['objid'])
+        # Index in elasticsearch if it does not exist there by ID
+        es_required = not es_utils.check_doc_existence(msg['wsid'], msg['objid'])
+        if not re_required and not es_required:
+            # Skip any indexing/importing of this object
+            return
+        # We need to either index or import the object
+        obj = _fetch_obj_data(msg)
+        ws_info = _fetch_ws_info(msg)
+        if re_required:
+            releng_importer.run_importer(obj, ws_info, msg)
+        if es_required:
+            es_indexer.run_indexer(obj, ws_info, msg)
     elif event_type == 'OBJECT_DELETE_STATE_CHANGE':
         # Delete the object on RE and ES. Synchronous for now.
         es_indexer.delete_obj(msg)
