@@ -66,8 +66,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
 
 
 def _narrative_is_temporary(ws_metadata):
-    is_temporary_string = ws_metadata.get('is_temporary')
-    return is_temporary_string == 'true'
+    return ws_metadata.get('is_temporary') == 'true'
 
 
 def _narrative_is_narratorial(ws_metadata):
