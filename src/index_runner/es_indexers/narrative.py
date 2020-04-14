@@ -2,10 +2,11 @@ import sys
 from bs4 import BeautifulSoup
 from markdown2 import Markdown
 import logging
+from kbase_workspace_client import WorkspaceClient
 
 from src.utils.get_path import get_path
 from src.utils.formatting import ts_to_epoch
-from src.index_runner.es_indexers import indexer_utils
+from src.utils.config import config
 
 logger = logging.getLogger('IR')
 
@@ -39,10 +40,10 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
         raise RuntimeError(f"Cannot index narrative: no metadata for the workspace. WS info: {ws_info}")
     is_temporary = _narrative_is_temporary(ws_metadata)
     is_narratorial = _narrative_is_narratorial(ws_metadata)
-    narrative_title = ws_metadata.get('name')
+    narrative_title = obj_metadata.get('name')
     creator = obj_data['creator']
     # Get all the types and names of objects in the narrative's workspace.
-    narrative_data_objects = indexer_utils.fetch_objects_in_workspace(ws_id)
+    narrative_data_objects = _fetch_objects_in_workspace(ws_id)
     # Extract all the data we want to index from the notebook cells
     raw_cells = obj_data['data'].get('cells', [])
     index_cells = _extract_cells(raw_cells, ws_id)
@@ -131,3 +132,19 @@ def _process_code_cell(cell):
         index_cell['cell_type'] = 'code_cell'
         index_cell['desc'] = cell.get('source', '')
     return index_cell
+
+
+def _fetch_objects_in_workspace(ws_id):
+    """
+    Get a list of dicts with keys 'obj_type' and 'name' corresponding to all data
+    objects in the requested workspace. This discludes the narrative object.
+    Args:
+        ws_id - a workspace id
+    """
+    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+    obj_infos = ws_client.generate_obj_infos(ws_id, admin=True)
+    return [
+        {"name": info[1], "obj_type": info[2]}
+        for info in obj_infos
+        if 'KBaseNarrative' not in str(info[2])
+    ]

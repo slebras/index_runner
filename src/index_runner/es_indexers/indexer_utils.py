@@ -77,35 +77,6 @@ def get_shared_users(ws_id):
     return shared_users
 
 
-def fetch_objects_in_workspace(ws_id, include_narrative=False):
-    """
-    Get a list of dicts with keys 'type' and 'name' corresponding to all data
-    objects in the requested workspace.
-    Args:
-        ws_id - a workspace id
-    """
-    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-    try:
-        narr_data_obj_info = ws_client.admin_req("listObjects", {
-            "ids": [ws_id]
-        })
-    except WorkspaceResponseError as err:
-        logger.error("Workspace response error: ", err.resp_data)
-        raise err
-    if include_narrative:
-        narrative_data = [
-            {"obj_id": obj[0], "name": obj[1], "obj_type": obj[2], "ver": obj[4]}
-            for obj in narr_data_obj_info
-        ]
-    else:
-        narrative_data = [
-            {"name": obj[1], "obj_type": obj[2]}
-            for obj in narr_data_obj_info
-            if 'KBaseNarrative' not in str(obj[2])
-        ]
-    return narrative_data
-
-
 def _get_tags(ws_info):
     """Get the tags relevant to search from the ws_info metadata"""
     metadata = ws_info[-1]

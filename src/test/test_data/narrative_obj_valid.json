@@ -1,0 +1,892 @@
+{
+    "data": {
+        "cells": [
+            {
+                "cell_type": "code",
+                "execution_count": null,
+                "metadata": {
+                    "kbase": {
+                        "attributes": {
+                            "created": "Tue, 26 Jun 2018 21:43:52 GMT",
+                            "icon": "code",
+                            "id": "aae40b07-6247-41c8-b190-9ae9daf5cd4a",
+                            "lastLoaded": "Tue, 26 Jun 2018 21:43:52 GMT",
+                            "status": "new",
+                            "title": "TEst data"
+                        },
+                        "codeCell": {
+                            "userSettings": {
+                                "showCodeInputArea": true
+                            }
+                        },
+                        "type": "code"
+                    }
+                },
+                "outputs": [],
+                "source": ""
+            },
+            {
+                "cell_type": "code",
+                "execution_count": 3,
+                "metadata": {
+                    "kbase": {
+                        "appCell": {
+                            "app": {
+                                "gitCommitHash": "88e0322e81f5c00bebe5a6411ed56866eef55af0",
+                                "id": "kb_Bowtie2/align_reads_using_bowtie2",
+                                "spec": {
+                                    "behavior": {
+                                        "kb_service_input_mapping": [
+                                            {
+                                                "narrative_system_variable": "workspace",
+                                                "target_property": "output_workspace"
+                                            },
+                                            {
+                                                "input_parameter": "input_ref",
+                                                "target_property": "input_ref",
+                                                "target_type_transform": "resolved-ref"
+                                            },
+                                            {
+                                                "input_parameter": "assembly_or_genome_ref",
+                                                "target_property": "assembly_or_genome_ref",
+                                                "target_type_transform": "resolved-ref"
+                                            },
+                                            {
+                                                "input_parameter": "output_obj_name_suffix",
+                                                "target_property": "output_obj_name_suffix"
+                                            },
+                                            {
+                                                "input_parameter": "quality_score",
+                                                "target_property": "quality_score"
+                                            },
+                                            {
+                                                "input_parameter": "alignment_type",
+                                                "target_property": "alignment_type"
+                                            },
+                                            {
+                                                "input_parameter": "trim5",
+                                                "target_property": "trim5"
+                                            },
+                                            {
+                                                "input_parameter": "trim3",
+                                                "target_property": "trim3"
+                                            },
+                                            {
+                                                "input_parameter": "np",
+                                                "target_property": "np"
+                                            },
+                                            {
+                                                "input_parameter": "preset_options",
+                                                "target_property": "preset_options"
+                                            },
+                                            {
+                                                "input_parameter": "minins",
+                                                "target_property": "minins"
+                                            },
+                                            {
+                                                "input_parameter": "maxins",
+                                                "target_property": "maxins"
+                                            },
+                                            {
+                                                "input_parameter": "orientation",
+                                                "target_property": "orientation"
+                                            },
+                                            {
+                                                "input_parameter": "condition_label",
+                                                "target_property": "condition_label"
+                                            },
+                                            {
+                                                "input_parameter": "output_alignment_suffix",
+                                                "target_property": "output_alignment_suffix"
+                                            }
+                                        ],
+                                        "kb_service_method": "align_reads_to_assembly_app",
+                                        "kb_service_name": "kb_Bowtie2",
+                                        "kb_service_output_mapping": [
+                                            {
+                                                "narrative_system_variable": "workspace",
+                                                "target_property": "workspace"
+                                            },
+                                            {
+                                                "narrative_system_variable": "workspace",
+                                                "target_property": "workspace_name"
+                                            },
+                                            {
+                                                "service_method_output_path": [
+                                                    "0",
+                                                    "report_info",
+                                                    "report_name"
+                                                ],
+                                                "target_property": "report_name"
+                                            },
+                                            {
+                                                "service_method_output_path": [
+                                                    "0",
+                                                    "report_info",
+                                                    "report_ref"
+                                                ],
+                                                "target_property": "report_ref"
+                                            }
+                                        ],
+                                        "kb_service_url": "",
+                                        "kb_service_version": "88e0322e81f5c00bebe5a6411ed56866eef55af0"
+                                    },
+                                    "fixed_parameters": [],
+                                    "info": {
+                                        "app_type": "app",
+                                        "authors": [],
+                                        "categories": [
+                                            "active",
+                                            "expression",
+                                            "sequence"
+                                        ],
+                                        "git_commit_hash": "88e0322e81f5c00bebe5a6411ed56866eef55af0",
+                                        "icon": {
+                                            "url": "img?method_id=kb_Bowtie2/align_reads_using_bowtie2&image_name=bowtie-cyan.png&tag=dev"
+                                        },
+                                        "id": "kb_Bowtie2/align_reads_using_bowtie2",
+                                        "input_types": [
+                                            "KBaseAssembly.PairedEndLibrary",
+                                            "KBaseAssembly.SingleEndLibrary",
+                                            "KBaseFile.PairedEndLibrary",
+                                            "KBaseFile.SingleEndLibrary",
+                                            "KBaseGenomeAnnotations.Assembly",
+                                            "KBaseGenomes.ContigSet",
+                                            "KBaseGenomes.Genome",
+                                            "KBaseRNASeq.RNASeqSampleSet",
+                                            "KBaseSets.ReadsSet"
+                                        ],
+                                        "module_name": "kb_Bowtie2",
+                                        "name": "Align Reads using Bowtie2 v2.3.2",
+                                        "namespace": "kb_Bowtie2",
+                                        "output_types": [],
+                                        "subtitle": "Align sequencing reads to long reference prokaryotic genome sequences using Bowtie2",
+                                        "tooltip": "Align sequencing reads to long reference prokaryotic genome sequences using Bowtie2",
+                                        "ver": "0.3.3"
+                                    },
+                                    "job_id_output_field": "docker",
+                                    "parameters": [
+                                        {
+                                            "advanced": 0,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                ""
+                                            ],
+                                            "description": "",
+                                            "disabled": 0,
+                                            "field_type": "text",
+                                            "id": "input_ref",
+                                            "optional": 0,
+                                            "short_hint": "Select the RNA-seq SampleSet or ReadsSet. If you have only one sample of RNA-seq reads, select the corresponding library object.",
+                                            "text_options": {
+                                                "is_output_name": 0,
+                                                "placeholder": "",
+                                                "regex_constraint": [],
+                                                "valid_ws_types": [
+                                                    "KBaseSets.ReadsSet",
+                                                    "KBaseRNASeq.RNASeqSampleSet",
+                                                    "KBaseAssembly.SingleEndLibrary",
+                                                    "KBaseAssembly.PairedEndLibrary",
+                                                    "KBaseFile.SingleEndLibrary",
+                                                    "KBaseFile.PairedEndLibrary"
+                                                ]
+                                            },
+                                            "ui_class": "input",
+                                            "ui_name": "RNA-seq SampleSet or Read Library"
+                                        },
+                                        {
+                                            "advanced": 0,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                ""
+                                            ],
+                                            "description": "",
+                                            "disabled": 0,
+                                            "field_type": "text",
+                                            "id": "assembly_or_genome_ref",
+                                            "optional": 0,
+                                            "short_hint": "Select the assembly or genome on which to align to",
+                                            "text_options": {
+                                                "is_output_name": 0,
+                                                "placeholder": "",
+                                                "regex_constraint": [],
+                                                "valid_ws_types": [
+                                                    "KBaseGenomes.Genome",
+                                                    "KBaseGenomeAnnotations.Assembly",
+                                                    "KBaseGenomes.ContigSet"
+                                                ]
+                                            },
+                                            "ui_class": "input",
+                                            "ui_name": "Assembly or Genome"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                "_alignment_set"
+                                            ],
+                                            "description": "",
+                                            "disabled": 0,
+                                            "field_type": "text",
+                                            "id": "output_obj_name_suffix",
+                                            "optional": 0,
+                                            "short_hint": "Provide the suffix used for the output reads alignment set name",
+                                            "text_options": {
+                                                "is_output_name": 1,
+                                                "placeholder": "",
+                                                "regex_constraint": [],
+                                                "valid_ws_types": []
+                                            },
+                                            "ui_class": "parameter",
+                                            "ui_name": "Output Alignment Set Name Suffix"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                "phred33"
+                                            ],
+                                            "description": "phred33 is used by Illumina starting with v1.8",
+                                            "disabled": 0,
+                                            "dropdown_options": {
+                                                "options": [
+                                                    {
+                                                        "display": "phred33",
+                                                        "index": 0,
+                                                        "value": "phred33"
+                                                    },
+                                                    {
+                                                        "display": "phred64",
+                                                        "index": 1,
+                                                        "value": "phred64"
+                                                    }
+                                                ]
+                                            },
+                                            "field_type": "dropdown",
+                                            "id": "quality_score",
+                                            "optional": 1,
+                                            "short_hint": "Select the quality score type depending on the sequencing platform",
+                                            "ui_class": "parameter",
+                                            "ui_name": "Alignment Quality Score Type"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                "end-to-end"
+                                            ],
+                                            "description": "By default, Bowtie2 performs end-to-end read alignment. It searches for alignments involving all of read characters. For local option, it can clip some read characters from one or both ends of the alignment to maximize the alignment score.",
+                                            "disabled": 0,
+                                            "dropdown_options": {
+                                                "options": [
+                                                    {
+                                                        "display": "end-to-end",
+                                                        "index": 0,
+                                                        "value": "end-to-end"
+                                                    },
+                                                    {
+                                                        "display": "local",
+                                                        "index": 1,
+                                                        "value": "local"
+                                                    }
+                                                ]
+                                            },
+                                            "field_type": "dropdown",
+                                            "id": "alignment_type",
+                                            "optional": 1,
+                                            "short_hint": "Select the alignment type",
+                                            "ui_class": "parameter",
+                                            "ui_name": "Alignment Type"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                "0"
+                                            ],
+                                            "description": "Trim the base-pairs from 5' end before alignment, if needed. By default, it is 0.",
+                                            "disabled": 0,
+                                            "field_type": "text",
+                                            "id": "trim5",
+                                            "optional": 1,
+                                            "short_hint": "Trim the base-pairs from 5' (left) end of each read before alignment",
+                                            "text_options": {
+                                                "is_output_name": 0,
+                                                "placeholder": "",
+                                                "regex_constraint": [],
+                                                "validate_as": "int"
+                                            },
+                                            "ui_class": "parameter",
+                                            "ui_name": "Trim Bases From 5'end"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                "0"
+                                            ],
+                                            "description": "Trim the base-pairs from 3' end before alignment, if needed. By default, it is 0.",
+                                            "disabled": 0,
+                                            "field_type": "text",
+                                            "id": "trim3",
+                                            "optional": 1,
+                                            "short_hint": "Trim the base-pairs from 3' (right) end of each read before alignment",
+                                            "text_options": {
+                                                "is_output_name": 0,
+                                                "placeholder": "",
+                                                "regex_constraint": [],
+                                                "validate_as": "int"
+                                            },
+                                            "ui_class": "parameter",
+                                            "ui_name": "Trim Bases From 3'end"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                "1"
+                                            ],
+                                            "description": "By default, penalty is 1.",
+                                            "disabled": 0,
+                                            "field_type": "text",
+                                            "id": "np",
+                                            "optional": 1,
+                                            "short_hint": "Sets the penalty for positions where the read, reference, or both, contain an ambiguous character such as N.",
+                                            "text_options": {
+                                                "is_output_name": 0,
+                                                "placeholder": "",
+                                                "regex_constraint": [],
+                                                "validate_as": "int"
+                                            },
+                                            "ui_class": "parameter",
+                                            "ui_name": "Penalty"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                ""
+                                            ],
+                                            "description": "Faster option is generally less sensitive and vice versa.",
+                                            "disabled": 0,
+                                            "dropdown_options": {
+                                                "options": [
+                                                    {
+                                                        "display": "sensitive",
+                                                        "index": 0,
+                                                        "value": "sensitive"
+                                                    },
+                                                    {
+                                                        "display": "very-sensitive",
+                                                        "index": 1,
+                                                        "value": "very-sensitive"
+                                                    },
+                                                    {
+                                                        "display": "fast",
+                                                        "index": 2,
+                                                        "value": "fast"
+                                                    },
+                                                    {
+                                                        "display": "very-fast",
+                                                        "index": 3,
+                                                        "value": "very-fast"
+                                                    }
+                                                ]
+                                            },
+                                            "field_type": "dropdown",
+                                            "id": "preset_options",
+                                            "optional": 1,
+                                            "short_hint": "Select the preset options based on alignment type",
+                                            "ui_class": "parameter",
+                                            "ui_name": "Alignment Type Preset Options"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                "0"
+                                            ],
+                                            "description": "By default, 0 is used.",
+                                            "disabled": 0,
+                                            "field_type": "text",
+                                            "id": "minins",
+                                            "optional": 1,
+                                            "short_hint": "Select the minimum fragment length for valid untrimmed paired-end alignments",
+                                            "text_options": {
+                                                "is_output_name": 0,
+                                                "placeholder": "",
+                                                "regex_constraint": [],
+                                                "validate_as": "int"
+                                            },
+                                            "ui_class": "parameter",
+                                            "ui_name": "Minimum Fragment Length For Paired-end Alignments"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                "500"
+                                            ],
+                                            "description": "By default, 500 is used.",
+                                            "disabled": 0,
+                                            "field_type": "text",
+                                            "id": "maxins",
+                                            "optional": 1,
+                                            "short_hint": "Select the maximum fragment length for valid untrimmed paired-end alignments",
+                                            "text_options": {
+                                                "is_output_name": 0,
+                                                "placeholder": "",
+                                                "regex_constraint": [],
+                                                "validate_as": "int"
+                                            },
+                                            "ui_class": "parameter",
+                                            "ui_name": "Maximum Fragment Length For Paired-end Alignments"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                ""
+                                            ],
+                                            "description": "By default, fr is used.",
+                                            "disabled": 0,
+                                            "dropdown_options": {
+                                                "options": [
+                                                    {
+                                                        "display": "fr",
+                                                        "index": 0,
+                                                        "value": "fr"
+                                                    },
+                                                    {
+                                                        "display": "rf",
+                                                        "index": 1,
+                                                        "value": "rf"
+                                                    },
+                                                    {
+                                                        "display": "ff",
+                                                        "index": 2,
+                                                        "value": "ff"
+                                                    }
+                                                ]
+                                            },
+                                            "field_type": "dropdown",
+                                            "id": "orientation",
+                                            "optional": 1,
+                                            "short_hint": "Select the upstream/downstream mate orientations for a valid paired-end alignments against the forward reference strand.",
+                                            "ui_class": "parameter",
+                                            "ui_name": "Orientation"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                "unknown"
+                                            ],
+                                            "description": "",
+                                            "disabled": 0,
+                                            "field_type": "text",
+                                            "id": "condition_label",
+                                            "optional": 1,
+                                            "short_hint": "If you run on a single Reads Library, and want to specify a condition label in the alignment, set this paramter",
+                                            "text_options": {
+                                                "is_output_name": 0,
+                                                "placeholder": "",
+                                                "regex_constraint": []
+                                            },
+                                            "ui_class": "parameter",
+                                            "ui_name": "Condition Label for Single Library Run"
+                                        },
+                                        {
+                                            "advanced": 1,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                "_alignment"
+                                            ],
+                                            "description": "",
+                                            "disabled": 0,
+                                            "field_type": "text",
+                                            "id": "output_alignment_suffix",
+                                            "optional": 1,
+                                            "short_hint": "Individual alignments will be given names based on the reads object name appended with this extension",
+                                            "text_options": {
+                                                "is_output_name": 1,
+                                                "placeholder": "",
+                                                "regex_constraint": []
+                                            },
+                                            "ui_class": "parameter",
+                                            "ui_name": "Alignment output name suffix"
+                                        }
+                                    ],
+                                    "widgets": {
+                                        "input": "null",
+                                        "output": "no-display"
+                                    }
+                                },
+                                "tag": "dev",
+                                "version": "0.3.3"
+                            },
+                            "exec": {
+                                "jobState": {
+                                    "canceled": 0,
+                                    "cancelled": 0,
+                                    "cell_id": "032690ce-5855-4b9c-98b0-89a1b8506d67",
+                                    "creation_time": 1530049496589,
+                                    "exec_start_time": 1530049513693,
+                                    "finish_time": 1530049970644,
+                                    "finished": 1,
+                                    "job_id": "5b32b3d2e4b0d417818a2c6a",
+                                    "job_state": "completed",
+                                    "result": [
+                                        {
+                                            "output_info": {
+                                                "library_type": "paired_end",
+                                                "output_dir": "/kb/module/work/tmp/bowtie2_alignment_output_15300496502122",
+                                                "output_sam_file": "/kb/module/work/tmp/bowtie2_alignment_output_15300496502122/reads_alignment.sam",
+                                                "upload_results": {
+                                                    "obj_ref": "33192/19/1"
+                                                }
+                                            },
+                                            "report_info": {
+                                                "report_name": "kb_Bowtie2_f69a5149-8eb3-44ab-8f82-71091c47f34a",
+                                                "report_ref": "33192/20/1"
+                                            }
+                                        }
+                                    ],
+                                    "run_id": "26653cb8-f1cd-436d-ba72-9be77a63ee97",
+                                    "status": [
+                                        "2018-06-26T21:52:50+0000",
+                                        "complete",
+                                        "done",
+                                        null,
+                                        null,
+                                        1,
+                                        0
+                                    ],
+                                    "sub_jobs": [],
+                                    "ujs_url": "https://ci.kbase.us/services/userandjobstate/"
+                                },
+                                "jobStateUpdated": 1530049981457,
+                                "launchState": {
+                                    "cell_id": "032690ce-5855-4b9c-98b0-89a1b8506d67",
+                                    "event": "launched_job",
+                                    "event_at": "2018-06-26T21:44:56.637548Z",
+                                    "job_id": "5b32b3d2e4b0d417818a2c6a",
+                                    "run_id": "26653cb8-f1cd-436d-ba72-9be77a63ee97"
+                                },
+                                "outputWidgetInfo": {
+                                    "name": "no-display",
+                                    "params": {
+                                        "report_name": "kb_Bowtie2_f69a5149-8eb3-44ab-8f82-71091c47f34a",
+                                        "report_ref": "33192/20/1",
+                                        "workspace": "jayrbolton:narrative_1528306445083",
+                                        "workspace_name": "jayrbolton:narrative_1528306445083"
+                                    },
+                                    "tag": "dev"
+                                }
+                            },
+                            "fsm": {
+                                "currentState": {
+                                    "mode": "success"
+                                }
+                            },
+                            "output": {
+                                "byJob": {
+                                    "5b32b3d2e4b0d417818a2c6a": {
+                                        "cell": {
+                                            "created": false
+                                        },
+                                        "createdAt": "Tue, 26 Jun 2018 21:53:01 GMT",
+                                        "params": {
+                                            "alignment_type": "end-to-end",
+                                            "assembly_or_genome_ref": "rhodobacter-genome",
+                                            "condition_label": "unknown",
+                                            "input_ref": "33192/2;15/44/1",
+                                            "maxins": 500,
+                                            "minins": 0,
+                                            "np": 1,
+                                            "orientation": "",
+                                            "output_alignment_suffix": "_alignment",
+                                            "output_obj_name_suffix": "_alignment_set",
+                                            "preset_options": "",
+                                            "quality_score": "phred33",
+                                            "trim3": 0,
+                                            "trim5": 0
+                                        }
+                                    }
+                                }
+                            },
+                            "params": {
+                                "alignment_type": "end-to-end",
+                                "assembly_or_genome_ref": "rhodobacter-genome",
+                                "condition_label": "unknown",
+                                "input_ref": "33192/2;15/44/1",
+                                "maxins": 500,
+                                "minins": 0,
+                                "np": 1,
+                                "orientation": "",
+                                "output_alignment_suffix": "_alignment",
+                                "output_obj_name_suffix": "_alignment_set",
+                                "preset_options": "",
+                                "quality_score": "phred33",
+                                "trim3": 0,
+                                "trim5": 0
+                            },
+                            "user-settings": {
+                                "showCodeInputArea": false
+                            }
+                        },
+                        "attributes": {
+                            "created": "Tue, 26 Jun 2018 21:44:21 GMT",
+                            "id": "032690ce-5855-4b9c-98b0-89a1b8506d67",
+                            "info": {
+                                "label": "more...",
+                                "url": "/#appcatalog/app/kb_Bowtie2/align_reads_using_bowtie2/dev"
+                            },
+                            "lastLoaded": "Mon, 13 Apr 2020 18:17:34 GMT",
+                            "status": "new",
+                            "subtitle": "Align sequencing reads to long reference prokaryotic genome sequences using Bowtie2",
+                            "title": "Align Reads using Bowtie2 v2.3.2"
+                        },
+                        "type": "app"
+                    }
+                },
+                "outputs": [],
+                "source": "from biokbase.narrative.jobs.appmanager import AppManager\nAppManager().run_app(\n    \"kb_Bowtie2/align_reads_using_bowtie2\",\n    {\n        \"input_ref\": \"33192/2;15/44/1\",\n        \"assembly_or_genome_ref\": \"rhodobacter-genome\",\n        \"output_obj_name_suffix\": \"_alignment_set\",\n        \"quality_score\": \"phred33\",\n        \"alignment_type\": \"end-to-end\",\n        \"trim5\": 0,\n        \"trim3\": 0,\n        \"np\": 1,\n        \"preset_options\": \"\",\n        \"minins\": 0,\n        \"maxins\": 500,\n        \"orientation\": \"\",\n        \"condition_label\": \"unknown\",\n        \"output_alignment_suffix\": \"_alignment\"\n    },\n    tag=\"dev\",\n    version=\"88e0322e81f5c00bebe5a6411ed56866eef55af0\",\n    cell_id=\"032690ce-5855-4b9c-98b0-89a1b8506d67\",\n    run_id=\"26653cb8-f1cd-436d-ba72-9be77a63ee97\"\n)"
+            },
+            {
+                "cell_type": "code",
+                "execution_count": null,
+                "metadata": {
+                    "kbase": {
+                        "appCell": {
+                            "app": {
+                                "gitCommitHash": "4b5a37e6fed857c199df65191ba3344a467b8aab",
+                                "id": "echo_test/example_method",
+                                "spec": {
+                                    "behavior": {
+                                        "kb_service_input_mapping": [
+                                            {
+                                                "input_parameter": "message",
+                                                "target_property": "message"
+                                            },
+                                            {
+                                                "narrative_system_variable": "workspace",
+                                                "target_property": "workspace_name"
+                                            }
+                                        ],
+                                        "kb_service_method": "echo",
+                                        "kb_service_name": "echo_test",
+                                        "kb_service_output_mapping": [
+                                            {
+                                                "service_method_output_path": [
+                                                    "0",
+                                                    "report_name"
+                                                ],
+                                                "target_property": "report_name"
+                                            },
+                                            {
+                                                "service_method_output_path": [
+                                                    "0",
+                                                    "report_ref"
+                                                ],
+                                                "target_property": "report_ref"
+                                            },
+                                            {
+                                                "narrative_system_variable": "workspace",
+                                                "target_property": "workspace_name"
+                                            }
+                                        ],
+                                        "kb_service_url": "",
+                                        "kb_service_version": "4b5a37e6fed857c199df65191ba3344a467b8aab"
+                                    },
+                                    "fixed_parameters": [],
+                                    "info": {
+                                        "app_type": "app",
+                                        "authors": [
+                                            "jayrbolton"
+                                        ],
+                                        "categories": [
+                                            "active"
+                                        ],
+                                        "git_commit_hash": "4b5a37e6fed857c199df65191ba3344a467b8aab",
+                                        "id": "echo_test/example_method",
+                                        "input_types": [],
+                                        "module_name": "echo_test",
+                                        "name": "Echo test",
+                                        "namespace": "echo_test",
+                                        "output_types": [],
+                                        "subtitle": "Test method -- echo text back to you",
+                                        "tooltip": "Test method -- echo text back to you",
+                                        "ver": "0.0.1"
+                                    },
+                                    "job_id_output_field": "docker",
+                                    "parameters": [
+                                        {
+                                            "advanced": 0,
+                                            "allow_multiple": 0,
+                                            "default_values": [
+                                                ""
+                                            ],
+                                            "description": "Test message to echo back",
+                                            "disabled": 0,
+                                            "field_type": "text",
+                                            "id": "message",
+                                            "optional": 1,
+                                            "short_hint": "Test message to echo back",
+                                            "text_options": {
+                                                "is_output_name": 0,
+                                                "placeholder": "",
+                                                "regex_constraint": [],
+                                                "valid_ws_types": []
+                                            },
+                                            "ui_class": "parameter",
+                                            "ui_name": "Test message to echo back"
+                                        }
+                                    ],
+                                    "widgets": {
+                                        "input": "null",
+                                        "output": "null"
+                                    }
+                                },
+                                "tag": "dev",
+                                "version": "0.0.1"
+                            },
+                            "fatalError": {
+                                "advice": [],
+                                "detail": "us.kbase.narrativemethodstore.exceptions.NarrativeMethodStoreException: Method is not found: echo_test/example_method (version: d99bfd2a434c27d8b731333e61d82cb32cd74f1a)\n\tat us.kbase.narrativemethodstore.db.JsonRepoProvider.checkMethod(JsonRepoProvider.java:101)\n\tat us.kbase.narrativemethodstore.db.JsonRepoProvider.getUINarrativeMethodSpec(JsonRepoProvider.java:86)\n\tat us.kbase.narrativemethodstore.db.github.LocalGitDB.loadMethodDataUncached(LocalGitDB.java:413)\n\tat us.kbase.narrativemethodstore.db.github.LocalGitDB$1.load(LocalGitDB.java:92)\n\tat us.kbase.narrativemethodstore.db.github.LocalGitDB$1.load(LocalGitDB.java:89)\n\tat com.google.common.cache.LocalCache$LoadingValueReference.loadFuture(LocalCache.java:3599)\n\tat com.google.common.cache.LocalCache$Segment.loadSync(LocalCache.java:2379)\n\tat com.google.common.cache.LocalCache$Segment.lockedGetOrLoad(LocalCache.java:2342)\n\tat com.google.common.cache.LocalCache$Segment.get(LocalCache.java:2257)\n\tat com.google.common.cache.LocalCache.get(LocalCache.java:4000)\n\tat com.google.common.cache.LocalCache.getOrLoad(LocalCache.java:4004)\n\tat com.google.common.cache.LocalCache$LocalLoadingCache.get(LocalCache.java:4874)\n\tat us.kbase.narrativemethodstore.db.github.LocalGitDB.getMethodSpec(LocalGitDB.java:568)\n\tat us.kbase.narrativemethodstore.NarrativeMethodStoreServer.getMethodSpec(NarrativeMethodStoreServer.java:607)\n\tat sun.reflect.GeneratedMethodAccessor107.invoke(Unknown Source)\n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\tat java.lang.reflect.Method.invoke(Method.java:498)\n\tat us.kbase.common.service.JsonServerServlet.processRpcCall(JsonServerServlet.java:603)\n\tat us.kbase.common.service.JsonServerServlet.doPost(JsonServerServlet.java:456)\n\tat javax.servlet.http.HttpServlet.service(HttpServlet.java:707)\n\tat javax.servlet.http.HttpServlet.service(HttpServlet.java:790)\n\tat org.eclipse.jetty.servlet.ServletHolder.handle(ServletHolder.java:857)\n\tat org.eclipse.jetty.servlet.ServletHandler.doHandle(ServletHandler.java:535)\n\tat org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:146)\n\tat org.eclipse.jetty.security.SecurityHandler.handle(SecurityHandler.java:548)\n\tat org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:132)\n\tat org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:257)\n\tat org.eclipse.jetty.server.session.SessionHandler.doHandle(SessionHandler.java:1595)\n\tat org.eclipse.jetty.server.handler.ScopedHandler.nextHandle(ScopedHandler.java:255)\n\tat org.eclipse.jetty.server.handler.ContextHandler.doHandle(ContextHandler.java:1340)\n\tat org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:203)\n\tat org.eclipse.jetty.servlet.ServletHandler.doScope(ServletHandler.java:473)\n\tat org.eclipse.jetty.server.session.SessionHandler.doScope(SessionHandler.java:1564)\n\tat org.eclipse.jetty.server.handler.ScopedHandler.nextScope(ScopedHandler.java:201)\n\tat org.eclipse.jetty.server.handler.ContextHandler.doScope(ContextHandler.java:1242)\n\tat org.eclipse.jetty.server.handler.ScopedHandler.handle(ScopedHandler.java:144)\n\tat org.eclipse.jetty.server.handler.ContextHandlerCollection.handle(ContextHandlerCollection.java:220)\n\tat org.eclipse.jetty.server.handler.HandlerCollection.handle(HandlerCollection.java:126)\n\tat org.eclipse.jetty.server.handler.HandlerWrapper.handle(HandlerWrapper.java:132)\n\tat org.eclipse.jetty.server.Server.handle(Server.java:503)\n\tat org.eclipse.jetty.server.HttpChannel.handle(HttpChannel.java:364)\n\tat org.eclipse.jetty.server.HttpConnection.onFillable(HttpConnection.java:260)\n\tat org.eclipse.jetty.io.AbstractConnection$ReadCallback.succeeded(AbstractConnection.java:305)\n\tat org.eclipse.jetty.io.FillInterest.fillable(FillInterest.java:103)\n\tat org.eclipse.jetty.io.ChannelEndPoint$2.run(ChannelEndPoint.java:118)\n\tat org.eclipse.jetty.util.thread.strategy.EatWhatYouKill.runTask(EatWhatYouKill.java:333)\n\tat org.eclipse.jetty.util.thread.strategy.EatWhatYouKill.doProduce(EatWhatYouKill.java:310)\n\tat org.eclipse.jetty.util.thread.strategy.EatWhatYouKill.tryProduce(EatWhatYouKill.java:168)\n\tat org.eclipse.jetty.util.thread.strategy.EatWhatYouKill.run(EatWhatYouKill.java:126)\n\tat org.eclipse.jetty.util.thread.ReservedThreadExecutor$ReservedThread.run(ReservedThreadExecutor.java:366)\n\tat org.eclipse.jetty.util.thread.QueuedThreadPool.runJob(QueuedThreadPool.java:765)\n\tat org.eclipse.jetty.util.thread.QueuedThreadPool$2.run(QueuedThreadPool.java:683)\n\tat java.lang.Thread.run(Thread.java:748)\n",
+                                "message": "Method is not found: echo_test/example_method (version: d99bfd2a434c27d8b731333e61d82cb32cd74f1a)",
+                                "title": "Error loading main widgets"
+                            },
+                            "fsm": {
+                                "currentState": {
+                                    "mode": "internal-error"
+                                }
+                            },
+                            "output": {
+                                "byJob": {}
+                            },
+                            "params": {
+                                "message": "what up"
+                            },
+                            "user-settings": {
+                                "showCodeInputArea": false
+                            }
+                        },
+                        "attributes": {
+                            "created": "Tue, 26 Jun 2018 21:57:29 GMT",
+                            "id": "42ac9e9f-056d-47e8-a37f-9a68cfb5de99",
+                            "info": {
+                                "label": "more...",
+                                "url": "/#appcatalog/app/echo_test/example_method/dev"
+                            },
+                            "lastLoaded": "Mon, 13 Apr 2020 18:17:34 GMT",
+                            "status": "new",
+                            "subtitle": "Test method -- echo text back to you",
+                            "title": "Echo test"
+                        },
+                        "type": "app"
+                    }
+                },
+                "outputs": [],
+                "source": "from biokbase.narrative.jobs.appmanager import AppManager\nAppManager().run_app(\n    \"echo_test/example_method\",\n    {\n        \"message\": \"what up\"\n    },\n    tag=\"dev\",\n    version=\"4b5a37e6fed857c199df65191ba3344a467b8aab\",\n    cell_id=\"42ac9e9f-056d-47e8-a37f-9a68cfb5de99\",\n    run_id=\"c5c6c045-8aba-435d-87e8-023a8083f29c\"\n)"
+            }
+        ],
+        "metadata": {
+            "creator": "jayrbolton",
+            "data_dependencies": [],
+            "description": "",
+            "format": "ipynb",
+            "is_temporary": "false",
+            "job_ids": {
+                "apps": [],
+                "job_usage": {
+                    "queue_time": 0,
+                    "run_time": 0
+                },
+                "methods": []
+            },
+            "kbase": {
+                "creator": "jayrbolton",
+                "job_ids": {
+                    "apps": [],
+                    "job_usage": {
+                        "queue_time": 0,
+                        "run_time": 0
+                    },
+                    "methods": []
+                },
+                "name": "Untitled",
+                "ws_name": "jayrbolton:narrative_1528306445083"
+            },
+            "kernelspec": {
+                "display_name": "Python 3",
+                "language": "python",
+                "name": "python3"
+            },
+            "language_info": {
+                "codemirror_mode": {
+                    "name": "ipython",
+                    "version": 3
+                },
+                "file_extension": ".py",
+                "mimetype": "text/x-python",
+                "name": "python",
+                "nbconvert_exporter": "python",
+                "pygments_lexer": "ipython3",
+                "version": "3.6.9"
+            },
+            "name": "Test fiesta",
+            "type": "KBaseNarrative.Narrative",
+            "ws_name": "jayrbolton:narrative_1528306445083"
+        },
+        "nbformat": 4,
+        "nbformat_minor": 1
+    },
+    "info": [
+        1,
+        "Narrative.1528306445083",
+        "KBaseNarrative.Narrative-4.0",
+        "2020-04-13T18:19:30+0000",
+        56,
+        "jayrbolton",
+        33192,
+        "jayrbolton:narrative_1528306445083",
+        "c25532b0ac502e753f7cbdfaa0837f67",
+        21584,
+        {
+            "method.echo_test/example_method/4b5a37e6fed857c199df65191ba3344a467b8aab": "1",
+            "creator": "jayrbolton",
+            "data_dependencies": "[]",
+            "is_temporary": "false",
+            "job_info": "{\"queue_time\": 0, \"run_time\": 0, \"running\": 0, \"completed\": 0, \"error\": 0}",
+            "format": "ipynb",
+            "name": "Test fiesta",
+            "description": "",
+            "type": "KBaseNarrative.Narrative",
+            "method.kb_Bowtie2/align_reads_using_bowtie2/88e0322e81f5c00bebe5a6411ed56866eef55af0": "1",
+            "ws_name": "jayrbolton:narrative_1528306445083"
+        }
+    ],
+    "path": [
+        "33192/1/56"
+    ],
+    "provenance": [
+        {
+            "service": "narrative",
+            "service_ver": "4.1.1",
+            "input_ws_objects": [],
+            "resolved_ws_objects": [],
+            "external_data": [],
+            "subactions": [],
+            "custom": {},
+            "description": "Saved by KBase Narrative Interface"
+        }
+    ],
+    "creator": "jayrbolton",
+    "orig_wsid": 33192,
+    "created": "2020-04-13T18:19:30+0000",
+    "epoch": 1586801970276,
+    "refs": [],
+    "copy_source_inaccessible": 0,
+    "extracted_ids": {}
+}
