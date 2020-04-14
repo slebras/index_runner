@@ -27,6 +27,7 @@ from src.utils.service_utils import wait_for_dependencies
 
 logger = logging.getLogger('IR')
 ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+_KAFKA_PRODUCE_RETRIES = 5
 
 
 def _init_consumer():
@@ -264,8 +265,17 @@ def _produce(data, topic=config()['topics']['admin_events']):
     Produce a new event messagew on a Kafka topic and block at most 60s for it to get published.
     """
     producer = Producer({'bootstrap.servers': config()['kafka_server']})
-    producer.produce(topic, json.dumps(data), callback=_delivery_report)
-    producer.flush()
+    tries = 0
+    while True:
+        try:
+            producer.produce(topic, json.dumps(data), callback=_delivery_report)
+            producer.flush()
+            break
+        except BufferError:
+            if tries == _KAFKA_PRODUCE_RETRIES:
+                raise RuntimeError("Unable to produce a Kafka message due to BufferError")
+            logger.error("Received a BufferError trying to produce a message on Kafka. Retrying..")
+            tries += 1
 
 
 def _log_err_to_es(msg, err=None):

@@ -7,6 +7,7 @@ import logging
 import requests
 
 logger = logging.getLogger('IR')
+_FETCH_CONFIG_RETRIES = 5
 
 
 def config(force_reload=False):
@@ -100,7 +101,15 @@ def _fetch_global_config(config_url, github_release_url, gh_token):
             headers = {'Authorization': f'token {gh_token}'}
         else:
             headers = {}
-        release_info = requests.get(github_release_url, headers=headers).json()
+        tries = 0
+        # Sometimes Github returns usage errors and a retry will solve it
+        while True:
+            release_info = requests.get(github_release_url, headers=headers).json()
+            if release_info.get('assets'):
+                break
+            if tries == _FETCH_CONFIG_RETRIES:
+                raise RuntimeError(f"Cannot fetch config from {github_release_url}: {release_info}")
+            tries += 1
         for asset in release_info['assets']:
             if asset['name'] == 'config.yaml':
                 download_url = asset['browser_download_url']
