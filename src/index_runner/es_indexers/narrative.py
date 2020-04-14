@@ -75,7 +75,6 @@ def _narrative_is_narratorial(ws_metadata):
 
 def _extract_cells(cells, workspace_id):
     index_cells = []
-
     for cell in cells:
         if cell.get('cell_type') == 'markdown':
             if not cell.get('source'):
@@ -99,7 +98,6 @@ def _extract_cells(cells, workspace_id):
             sys.stderr.write('\n' + ('-' * 80) + '\n')
             index_cell = {'desc': 'Narrative Cell', 'cell_type': 'unknown'}
         index_cells.append(index_cell)
-
     return index_cells
 
 
