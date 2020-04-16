@@ -2,9 +2,11 @@ import sys
 from bs4 import BeautifulSoup
 from markdown2 import Markdown
 import logging
+from kbase_workspace_client import WorkspaceClient
 
 from src.utils.get_path import get_path
-from src.index_runner.es_indexers import indexer_utils
+from src.utils.formatting import ts_to_epoch
+from src.utils.config import config
 
 logger = logging.getLogger('IR')
 
@@ -24,16 +26,56 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
         - created and updated dates
         - total number of cells
     """
+    # Reference for the workspace info type:
+    #    https://kbase.us/services/ws/docs/Workspace.html#typedefWorkspace.workspace_info
+    # Reference for the object info type:
+    #    https://kbase.us/services/ws/docs/Workspace.html#typedefWorkspace.object_info
     obj_info = obj_data['info']
     obj_id = obj_info[0]
-    workspace_id = obj_data['info'][6]
-    ws_id = obj_info[6]
-    # Get all the types and names of objects in the narrative's workspace.
-    narrative_data_objects = indexer_utils.fetch_objects_in_workspace(ws_id)
-    index_cells = []
-    logger.debug(f'obj_data is {obj_data}')
-    cells = obj_data['data'].get('cells', [])
+    obj_metadata = obj_info[-1]
+    if not obj_metadata:
+        raise RuntimeError(f"Cannot index narrative: no metadata for the narrative object. Obj info: {obj_info}")
+    [ws_id, _, owner, moddate, _, _, _, _, ws_metadata] = ws_info
+    if not ws_metadata:
+        raise RuntimeError(f"Cannot index narrative: no metadata for the workspace. WS info: {ws_info}")
+    is_temporary = _narrative_is_temporary(ws_metadata)
+    is_narratorial = _narrative_is_narratorial(ws_metadata)
+    narrative_title = obj_metadata.get('name')
     creator = obj_data['creator']
+    # Get all the types and names of objects in the narrative's workspace.
+    narrative_data_objects = _fetch_objects_in_workspace(ws_id)
+    # Extract all the data we want to index from the notebook cells
+    raw_cells = obj_data['data'].get('cells', [])
+    index_cells = _extract_cells(raw_cells, ws_id)
+    result = {
+        '_action': 'index',
+        'doc': {
+            'narrative_title': narrative_title,
+            'is_temporary': is_temporary,
+            'is_narratorial': is_narratorial,
+            'data_objects': narrative_data_objects,
+            'owner': owner,
+            'modified_at': ts_to_epoch(moddate),
+            'cells': index_cells,
+            'creator': creator,
+            'total_cells': len(raw_cells),
+        },
+        'index': _NARRATIVE_INDEX_NAME,
+        'id': f'{_NAMESPACE}::{ws_id}:{obj_id}',
+    }
+    yield result
+
+
+def _narrative_is_temporary(ws_metadata):
+    return ws_metadata.get('is_temporary') == 'true'
+
+
+def _narrative_is_narratorial(ws_metadata):
+    return ws_metadata.get('narratorial') == '1'
+
+
+def _extract_cells(cells, workspace_id):
+    index_cells = []
     for cell in cells:
         if cell.get('cell_type') == 'markdown':
             if not cell.get('source'):
@@ -57,21 +99,7 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             sys.stderr.write('\n' + ('-' * 80) + '\n')
             index_cell = {'desc': 'Narrative Cell', 'cell_type': 'unknown'}
         index_cells.append(index_cell)
-    metadata = obj_info[-1] or {}  # last elem of obj info is a metadata dict
-    narrative_title = metadata.get('name')
-    result = {
-        '_action': 'index',
-        'doc': {
-            'narrative_title': narrative_title,
-            'data_objects': narrative_data_objects,
-            'cells': index_cells,
-            'creator': creator,
-            'total_cells': len(cells),
-        },
-        'index': _NARRATIVE_INDEX_NAME,
-        'id': f'{_NAMESPACE}::{workspace_id}:{obj_id}',
-    }
-    yield result
+    return index_cells
 
 
 def _process_code_cell(cell):
@@ -104,3 +132,19 @@ def _process_code_cell(cell):
         index_cell['cell_type'] = 'code_cell'
         index_cell['desc'] = cell.get('source', '')
     return index_cell
+
+
+def _fetch_objects_in_workspace(ws_id):
+    """
+    Get a list of dicts with keys 'obj_type' and 'name' corresponding to all data
+    objects in the requested workspace. This discludes the narrative object.
+    Args:
+        ws_id - a workspace id
+    """
+    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+    obj_infos = ws_client.generate_obj_infos(ws_id, admin=True)
+    return [
+        {"name": info[1], "obj_type": info[2]}
+        for info in obj_infos
+        if 'KBaseNarrative' not in str(info[2])
+    ]

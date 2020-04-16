@@ -1,0 +1,20 @@
+[
+    33400,
+    "jayrbolton:narrative_1528306445083",
+    "jayrbolton",
+    "2020-04-13T18:19:30+0000",
+    35,
+    "n",
+    "r",
+    "unlocked",
+        {
+            "searchtags": "narrative",
+            "narratorial": 1,
+            "is_temporary": "true",
+            "narrative": "1",
+            "data_palette_id": "2",
+            "narrative_nice_name": "Test fiesta",
+            "cell_count": "3"
+        }
+]
+
