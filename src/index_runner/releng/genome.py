@@ -80,7 +80,6 @@ def _generate_features(obj_ver_key, obj_data):
     if not d.get('features'):
         logger.info(f'Genome {obj_ver_key} has no features')
         return
-
     verts = []
     edges = []
     wsid = obj_data['info'][6]
@@ -101,7 +100,6 @@ def _generate_features(obj_ver_key, obj_data):
             '_from': f'{_OBJ_VER_COLL}/{obj_ver_key}',
             '_to': f'{_WS_FEAT_COLL}/{feature_key}'
         })
-
     logger.info(f'Saving {len(verts)} features for genome {obj_ver_key}')
     # hmm, this could leave the db in a corrupt state... options are 1) rollback 2) retry 3) leave
     # rollback is kind of impossible as an error here implies the re api isn't reachable
@@ -117,13 +115,11 @@ def _generate_GO_links(obj_ver_key, obj_data):
     if not d.get('features'):
         # no features logged already in _generate_features
         return
-
     f_to_go = {}
     for f in d['features']:
         # this works for Genome-8.2 to 10.0 in production
         if _ONTOLOGY_TERMS in f and _ONTOLOGY_GO_KEY in f[_ONTOLOGY_TERMS]:
             f_to_go[f['id']] = f[_ONTOLOGY_TERMS][_ONTOLOGY_GO_KEY].keys()
-
     terms_set = {i for items in f_to_go.values() for i in items}  # flatten
     query_time = _now_epoch_ms()
     # might want to do this in smaller batches if memory pressure is an issue

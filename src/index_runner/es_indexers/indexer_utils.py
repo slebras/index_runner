@@ -20,18 +20,13 @@ def check_object_deleted(ws_id, obj_id):
     """
     ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
     try:
-        narr_data_obj_info = ws_client.admin_req("listObjects", {
-            'ids': [ws_id]
-        })
+        narr_data_obj_info = ws_client.admin_req("listObjects", {'ids': [ws_id]})
     except WorkspaceResponseError as err:
-        logger.error("Workspace response error: ", err.resp_data)
-        # NOTE: not sure if we want to raise err here, worth thinking about
-        raise err
-    # make sure obj_id is not in list of object ids of workspace (this means its deleted)
-    if obj_id not in [obj[0] for obj in narr_data_obj_info]:
-        return True
-    else:
-        return False
+        logger.warning(f"Workspace response error: {err.resp_data}")
+        narr_data_obj_info = []
+    # Make sure obj_id is not in list of object ids (this means it is deleted)
+    obj_ids = [obj[0] for obj in narr_data_obj_info]
+    return obj_id not in obj_ids
 
 
 def is_workspace_public(ws_id):
@@ -80,35 +75,6 @@ def get_shared_users(ws_id):
         if user_perms in ['a', 'r', 'w'] and username != '*':
             shared_users.append(username)
     return shared_users
-
-
-def fetch_objects_in_workspace(ws_id, include_narrative=False):
-    """
-    Get a list of dicts with keys 'type' and 'name' corresponding to all data
-    objects in the requested workspace.
-    Args:
-        ws_id - a workspace id
-    """
-    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-    try:
-        narr_data_obj_info = ws_client.admin_req("listObjects", {
-            "ids": [ws_id]
-        })
-    except WorkspaceResponseError as err:
-        logger.error("Workspace response error: ", err.resp_data)
-        raise err
-    if include_narrative:
-        narrative_data = [
-            {"obj_id": obj[0], "name": obj[1], "obj_type": obj[2], "ver": obj[4]}
-            for obj in narr_data_obj_info
-        ]
-    else:
-        narrative_data = [
-            {"name": obj[1], "obj_type": obj[2]}
-            for obj in narr_data_obj_info
-            if 'KBaseNarrative' not in str(obj[2])
-        ]
-    return narrative_data
 
 
 def _get_tags(ws_info):

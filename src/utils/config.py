@@ -7,6 +7,7 @@ import logging
 import requests
 
 logger = logging.getLogger('IR')
+_FETCH_CONFIG_RETRIES = 5
 
 
 def config(force_reload=False):
@@ -46,6 +47,8 @@ def get_config():
     global_config = _fetch_global_config(config_url, github_release_url, gh_token)
     skip_indices = _get_comma_delimited_env('SKIP_INDICES')
     allow_indices = _get_comma_delimited_env('ALLOW_INDICES')
+    # Use a tempfile to indicate that the service is done booting up
+    proc_ready_path = '/tmp/IR_READY'  # nosec
     return {
         'skip_releng': os.environ.get('SKIP_RELENG'),
         'skip_features': os.environ.get('SKIP_FEATURES'),
@@ -68,6 +71,7 @@ def get_config():
         'kafka_server': os.environ.get('KAFKA_SERVER', 'kafka'),
         'kafka_clientgroup': os.environ.get('KAFKA_CLIENTGROUP', 'search_indexer'),
         'error_index_name': os.environ.get('ERROR_INDEX_NAME', 'indexing_errors'),
+        'msg_log_index_name': os.environ.get('MSG_LOG_INDEX_NAME', 'indexer_messages'),
         'elasticsearch_index_prefix': os.environ.get('ELASTICSEARCH_INDEX_PREFIX', 'search2'),
         'topics': {
             'workspace_events': os.environ.get('KAFKA_WORKSPACE_TOPIC', 'workspaceevents'),
@@ -75,6 +79,7 @@ def get_config():
         },
         'config_timeout': 600,  # 10 minutes in seconds.
         'last_config_reload': time.time(),
+        'proc_ready_path': proc_ready_path,  # File indicating the daemon is booted and ready
     }
 
 
@@ -96,7 +101,15 @@ def _fetch_global_config(config_url, github_release_url, gh_token):
             headers = {'Authorization': f'token {gh_token}'}
         else:
             headers = {}
-        release_info = requests.get(github_release_url, headers=headers).json()
+        tries = 0
+        # Sometimes Github returns usage errors and a retry will solve it
+        while True:
+            release_info = requests.get(github_release_url, headers=headers).json()
+            if release_info.get('assets'):
+                break
+            if tries == _FETCH_CONFIG_RETRIES:
+                raise RuntimeError(f"Cannot fetch config from {github_release_url}: {release_info}")
+            tries += 1
         for asset in release_info['assets']:
             if asset['name'] == 'config.yaml':
                 download_url = asset['browser_download_url']

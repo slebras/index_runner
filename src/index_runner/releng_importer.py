@@ -5,8 +5,11 @@ Writes data to arangodb from workspace update events.
 """
 import logging
 import time
+from kbase_workspace_client import WorkspaceClient
 
+from src.utils.config import config
 from src.index_runner.releng.import_obj import import_object
+from src.index_runner.releng.del_obj import delete_object
 
 logger = logging.getLogger('IR')
 
@@ -20,9 +23,19 @@ def run_importer(obj, ws_info, msg):
 
 
 def delete_obj(msg):
-    """Handle an object deletion event (OBJECT_DELETE_STATE_CHANGE)"""
-    logger.info('_delete_obj TODO')  # TODO
-    # raise NotImplementedError()
+    """
+    Handle an object deletion event (OBJECT_DELETE_STATE_CHANGE)
+    Delete everything that was created for this object. This is the inverse
+    operation of the import_obj action.
+    """
+    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+    obj_ref = f"{msg['wsid']}/{msg['objid']}"
+    if msg.get("ver"):
+        obj_ref += f"/{msg['ver']}"
+    obj_info = ws_client.admin_req('getObjectInfo', {
+        'objects': [{'ref': obj_ref}]
+    })['infos'][0]
+    delete_object(obj_info)
 
 
 def delete_ws(msg):

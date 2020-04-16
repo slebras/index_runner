@@ -27,6 +27,7 @@ from src.utils.service_utils import wait_for_dependencies
 
 logger = logging.getLogger('IR')
 ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+_KAFKA_PRODUCE_RETRIES = 5
 
 
 def _init_consumer():
@@ -73,16 +74,21 @@ def main():
     """
     Run the the Kafka consumer and two threads for the releng_importer and es_indexer
     """
+    # Remove the ready indicator file if it has been written on a previous boot
+    if os.path.exists(config()['proc_ready_path']):
+        os.remove(config()['proc_ready_path'])
     # Wait for dependency services (ES and RE) to be live
     wait_for_dependencies(timeout=180)
     # Used for re-fetching the configuration with a throttle
     last_updated_minute = int(time.time() / 60)
     if not config()['global_config_url']:
         config_tag = _fetch_latest_config_tag()
-
     # Database initialization
     es_indexer.init_indexes()
     es_indexer.reload_aliases()
+    # Touch a temp file indicating the daemon is ready
+    with open(config()['proc_ready_path'], 'w') as fd:
+        fd.write('')
 
     while True:
         msg = consumer.poll(timeout=0.5)
@@ -115,6 +121,7 @@ def main():
             _handle_msg(msg)
             # Move the offset for our partition
             consumer.commit()
+            _log_msg_to_elastic(msg)
             logger.info(f"Handled {msg['evtype']} message in {time.time() - start}s")
         except Exception as err:
             logger.error(f'Error processing message: {err.__class__.__name__} {err}')
@@ -136,22 +143,29 @@ def _handle_msg(msg):
         es_indexer.run_indexer(obj, ws_info, msg)
     elif event_type == 'REINDEX_WS' or event_type == 'CLONE_WORKSPACE':
         # Reindex all objects in a workspace, overwriting existing data
-        for (objid, _) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
+        for objinfo in ws_client.generate_obj_infos(msg['wsid'], admin=True):
+            objid = objinfo[0]
             _produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid})
     elif event_type == 'INDEX_NONEXISTENT_WS':
         # Reindex all objects in a workspace without overwriting any existing data
-        for (objid, _) in ws_client.generate_all_ids_for_workspace(msg['wsid'], admin=True):
+        for objinfo in ws_client.generate_obj_infos(msg['wsid'], admin=True):
+            objid = objinfo[0]
             _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid})
     elif event_type == 'INDEX_NONEXISTENT':
-        exists_in_releng = re_client.check_doc_existence(msg['wsid'], msg['objid'])
-        exists_in_es = es_utils.check_doc_existence(msg['wsid'], msg['objid'])
-        if not exists_in_releng or not exists_in_es:
-            obj = _fetch_obj_data(msg)
-            ws_info = _fetch_ws_info(msg)
-            if not exists_in_releng and not config()['skip_releng']:
-                releng_importer.run_importer(obj, ws_info, msg)
-            if not exists_in_es:
-                es_indexer.run_indexer(obj, ws_info, msg)
+        # Import to RE if we are not skipping RE and also it does not exist in the db
+        re_required = not config()['skip_releng'] and not re_client.check_doc_existence(msg['wsid'], msg['objid'])
+        # Index in elasticsearch if it does not exist there by ID
+        es_required = not es_utils.check_doc_existence(msg['wsid'], msg['objid'])
+        if not re_required and not es_required:
+            # Skip any indexing/importing of this object
+            return
+        # We need to either index or import the object
+        obj = _fetch_obj_data(msg)
+        ws_info = _fetch_ws_info(msg)
+        if re_required:
+            releng_importer.run_importer(obj, ws_info, msg)
+        if es_required:
+            es_indexer.run_indexer(obj, ws_info, msg)
     elif event_type == 'OBJECT_DELETE_STATE_CHANGE':
         # Delete the object on RE and ES. Synchronous for now.
         es_indexer.delete_obj(msg)
@@ -173,6 +187,20 @@ def _handle_msg(msg):
     else:
         logger.warning(f"Unrecognized event {event_type}.")
         return
+
+
+def _log_msg_to_elastic(msg):
+    """
+    Save every message consumed from Kafka to an Elasticsearch index for logging purposes.
+    """
+    # The key is a hash of the message data body
+    # The index document is the error string plus the message data itself
+    ts = msg.get('time', int(time.time() * 1000))
+    es_indexer._write_to_elastic([{
+        'index': config()['msg_log_index_name'],
+        'id': ts,
+        'doc': msg
+    }])
 
 
 def _fetch_obj_data(msg):
@@ -242,8 +270,17 @@ def _produce(data, topic=config()['topics']['admin_events']):
     Produce a new event messagew on a Kafka topic and block at most 60s for it to get published.
     """
     producer = Producer({'bootstrap.servers': config()['kafka_server']})
-    producer.produce(topic, json.dumps(data), callback=_delivery_report)
-    producer.poll(0.1)
+    tries = 0
+    while True:
+        try:
+            producer.produce(topic, json.dumps(data), callback=_delivery_report)
+            producer.flush()
+            break
+        except BufferError:
+            if tries == _KAFKA_PRODUCE_RETRIES:
+                raise RuntimeError("Unable to produce a Kafka message due to BufferError")
+            logger.error("Received a BufferError trying to produce a message on Kafka. Retrying..")
+            tries += 1
 
 
 def _log_err_to_es(msg, err=None):
@@ -293,8 +330,8 @@ def init_logger():
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(formatter)
     logger.addHandler(stdout_handler)
-    print(f'Logger and level: {logger}')
-    print(f'Logging to file: {log_path}')
+    logger.info(f'Logger and level: {logger}')
+    logger.info(f'Logging to file: {log_path}')
 
 
 if __name__ == '__main__':

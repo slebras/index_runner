@@ -60,17 +60,17 @@ def index_obj(obj_data, ws_info, msg_data):
     defaults = indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
     for indexer_ret in indexer(obj_data, ws_info, obj_data_v1):
         if indexer_ret['_action'] == 'index':
+            if config()['allow_indices'] and indexer_ret.get('index') not in config()['allow_indices']:
+                # This index name is not in the indexing whitelist from the config, so we skip
+                logger.debug(f"Index '{indexer_ret['index']}' is not in ALLOW_INDICES, skipping")
+                continue
+            if indexer_ret.get('index') in config()['skip_indices']:
+                # This index name is in the indexing blacklist in the config, so we skip
+                logger.debug(f"Index '{indexer_ret['index']}' is in SKIP_INDICES, skipping")
+                continue
             if '_no_defaults' not in indexer_ret:
                 # Inject all default fields into the index document.
                 indexer_ret['doc'].update(defaults)
-            # if not indexer_ret.get('namespace'):
-            #     indexer_ret['namespace'] = "WS"
-        if config()['allow_indices'] and indexer_ret.get('index') not in config()['allow_indices']:
-            logger.debug(f"Index '{indexer_ret['index']}' is not in ALLOW_INDICES, skipping")
-            continue
-        if indexer_ret.get('index') in config()['skip_indices']:
-            logger.debug(f"Index '{indexer_ret['index']}' is in SKIP_INDICES, skipping")
-            continue
         yield indexer_ret
 
 

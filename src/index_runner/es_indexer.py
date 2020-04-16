@@ -70,15 +70,17 @@ def run_indexer(obj, ws_info, msg):
         if action == 'index':
             batch_writes.append(data)
             if len(batch_writes) >= _BATCH_WRITE_MAX:
+                count = len(batch_writes)
                 _write_to_elastic(batch_writes)
-                logger.info(f'Indexing of {len(batch_writes)} docs on ES took {time.time() - start}s')
+                logger.info(f'Indexing of {count} docs on ES took {time.time() - start}s')
                 start = time.time()
                 batch_writes = []
         elif action == 'init_generic_index':
             _init_generic_index(data)
     if batch_writes:
+        count = len(batch_writes)
         _write_to_elastic(batch_writes)
-        logger.info(f'Indexing of {len(batch_writes)} docs on ES took {time.time() - start}s')
+        logger.info(f'Indexing of {count} docs on ES took {time.time() - start}s')
 
 
 def delete_obj(msg):
@@ -112,6 +114,7 @@ def delete_obj(msg):
     if not resp.ok:
         # Unsuccesful request to elasticsearch.
         raise RuntimeError(f"Error deleting object on elasticsearch:\n{resp.text}")
+    logger.info(f"Deleted elasticsearch documents associated with obj {wsid}/{objid}")
 
 
 def delete_ws(msg):
@@ -168,7 +171,8 @@ def _init_generic_index(msg):
     """
     (_, type_name, type_ver) = get_type_pieces(msg['full_type_name'])
     index_name = type_name.lower()
-    _init_index(index_name + '_0', _GLOBAL_MAPPINGS['ws_object'])
+    mappings = {**_GLOBAL_MAPPINGS['ws_auth'], **_GLOBAL_MAPPINGS['ws_object']}
+    _init_index(index_name + '_0', mappings)
 
 
 def _write_to_elastic(data):
@@ -197,7 +201,7 @@ def _write_to_elastic(data):
     # Save the documents using the elasticsearch http api
     resp = requests.post(f"{_ES_URL}/_bulk", data=json_body, headers={"Content-Type": "application/json"})
     if not resp.ok:
-        # Unsuccesful save to elasticsearch.
+        # Unsuccessful save to elasticsearch.
         raise RuntimeError(f"Error saving to elasticsearch:\n{resp.text}")
 
 
