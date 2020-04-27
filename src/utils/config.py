@@ -80,6 +80,8 @@ def get_config():
         'config_timeout': 600,  # 10 minutes in seconds.
         'last_config_reload': time.time(),
         'proc_ready_path': proc_ready_path,  # File indicating the daemon is booted and ready
+        'generic_shard_count': os.environ.get('GENERIC_SHARD_COUNT', 2),
+        'generic_replica_count': os.environ.get('GENERIC_SHARD_COUNT', 1),
     }
 
 
