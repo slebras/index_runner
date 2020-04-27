@@ -244,8 +244,8 @@ def _create_index(index_name):
     request_body = {
         "settings": {
             "index": {
-                "number_of_shards": 10,
-                "number_of_replicas": 2
+                "number_of_shards": config()['generic_shard_count'],
+                "number_of_replicas": config()['generic_replica_count'],
             }
         }
     }
