@@ -136,13 +136,13 @@ def _reindex_ws_type(args):
         wsid = int(wsid)
         try:
             infos = ws_client.generate_obj_infos(wsid, admin=True)
+            for obj_info in infos:
+                obj_type = obj_info[2]
+                if obj_type == args.type:
+                    _produce({'evtype': evtype, 'wsid': wsid, 'objid': int(obj_info[0])})
         except Exception as err:
             print(f'Error fetching object infos for workspace {wsid}: {err}')
             continue
-        for obj_info in infos:
-            obj_type = obj_info[2]
-            if obj_type == args.type:
-                _produce({'evtype': evtype, 'wsid': wsid, 'objid': int(obj_info[0])})
     print('..done!')
 
 
