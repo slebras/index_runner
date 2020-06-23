@@ -30,7 +30,7 @@ destructiveness:
 1. `docker-compose build` will build any images with changed `Dockerfile`s using the build cache.
 2. Delete the `index_runner_deluxe_app` image. `make test` will then rebuild the application image
    from scratch.
-3. `make reset`. This will remove all test images and rebuid them from scratch.
+3. `make reset`. This will remove all test images and rebuild them from scratch.
 
 ## Config
 
