@@ -36,9 +36,9 @@ topics = [
         config()['topics']['admin_events']
     ]
 consumer = kafka.init_consumer(topics)
-atexit.register(lambda c: kafka.close_consumer(consumer))
-signal.signal(signal.SIGTERM, lambda c: kafka.close_consumer(consumer))
-signal.signal(signal.SIGINT, lambda c: kafka.close_consumer(consumer))
+atexit.register(lambda signum, stack_frame: kafka.close_consumer(consumer))
+signal.signal(signal.SIGTERM, lambda signum, stack_frame: kafka.close_consumer(consumer))
+signal.signal(signal.SIGINT, lambda signum, stack_frame: kafka.close_consumer(consumer))
 
 
 def main():

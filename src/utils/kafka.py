@@ -15,6 +15,7 @@ logger = logging.getLogger('src.utils.kafka')
 
 _KAFKA_PRODUCE_RETRIES = 5
 
+
 def init_consumer(topics: List[str]) -> Consumer:
     """
     Initialize a Kafka consumer instance
