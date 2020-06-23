@@ -108,6 +108,7 @@ def main():
                 logger.info('End of stream.')
             else:
                 logger.error(f"Kafka message error: {msg.error()}")
+            consumer.commit()
             continue
         val = msg.value().decode('utf-8')
         try:
