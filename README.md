@@ -22,10 +22,10 @@ Run the tests (servers need not be running, and will be shut down if they are):
 make test
 ```
 
-Note that `docker-compose` will only build a Docker image for the application if no image exists,
-and therefore Dockerfile changes will not be included in any tests unless the application image
-is deleted or a new image is built **with the correct repository name**, that being
-`index_runner_deluxe_app`.
+Note that `docker-compose`, and therefore `make test`, will only build a Docker image for the
+application if no image exists, and therefore Dockerfile changes will not be included in any
+tests unless the application image is deleted or a new image is built
+**with the correct repository name**, that being `index_runner_deluxe_app`.
 
 ## Config
 
