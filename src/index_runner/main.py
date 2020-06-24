@@ -166,7 +166,7 @@ def _on_ready():
     es_indexer.reload_aliases()
 
 
-if __name__ == '__main__':
+def main():
     # Set up the logger
     # Make the urllib debug logs less noisy
     logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -191,3 +191,7 @@ if __name__ == '__main__':
         on_ready=_on_ready,
         on_config_update=es_indexer.reload_aliases,
         logger=logger)
+
+
+if __name__ == '__main__':
+    main()
