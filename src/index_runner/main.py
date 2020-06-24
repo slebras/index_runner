@@ -4,12 +4,10 @@ Sends work to the es_indexer or the releng_importer.
 Generally handles every message synchronously. Duplicate the service to get more parallelism.
 """
 import logging
-import logging.handlers
 import os
 import json
 import time
 import requests
-import sys
 import atexit
 import signal
 import traceback
@@ -19,6 +17,7 @@ from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
 import src.utils.kafka as kafka
+from src.utils.logger import init_logger
 import src.utils.es_utils as es_utils
 import src.utils.re_client as re_client
 import src.index_runner.es_indexer as es_indexer
@@ -261,40 +260,10 @@ def _delivery_report(err, msg):
         logger.info(f'Message delivered to {msg.topic()}')
 
 
-def init_logger():
-    """
-    Initialize log settings. Mutates the `logger` object.
-    Write to stdout and to a local rotating file.
-    Logs to tmp/app.log
-    """
-    # Set the log level
-    level = os.environ.get('LOGLEVEL', 'DEBUG').upper()
-    logger.setLevel(level)
-    logger.propagate = False  # Don't print duplicate messages
-    logging.basicConfig(level=level)
-    # Create the formatter
-    fmt = "%(asctime)s %(levelname)-8s %(message)s (%(filename)s:%(lineno)s)"
-    time_fmt = "%Y-%m-%d %H:%M:%S"
-    formatter = logging.Formatter(fmt, time_fmt)
-    # File handler
-    os.makedirs('tmp', exist_ok=True)
-    # 1mb max log file with 2 backups
-    log_path = 'tmp/app.log'
-    file_handler = logging.handlers.RotatingFileHandler(log_path, maxBytes=1048576, backupCount=2)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
-    # Stdout
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setFormatter(formatter)
-    logger.addHandler(stdout_handler)
-    logger.info(f'Logger and level: {logger}')
-    logger.info(f'Logging to file: {log_path}')
-
-
 if __name__ == '__main__':
     # Set up the logger
     # Make the urllib debug logs less noisy
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    init_logger()
+    init_logger(logger)
     # Run the main thread
     main()
