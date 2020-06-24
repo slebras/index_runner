@@ -14,10 +14,11 @@ import atexit
 import signal
 import traceback
 import hashlib
-from confluent_kafka import Consumer, KafkaError, Producer
+from confluent_kafka import KafkaError
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
+import src.utils.kafka as kafka
 import src.utils.es_utils as es_utils
 import src.utils.re_client as re_client
 import src.index_runner.es_indexer as es_indexer
@@ -27,47 +28,17 @@ from src.utils.service_utils import wait_for_dependencies
 
 logger = logging.getLogger('IR')
 ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-_KAFKA_PRODUCE_RETRIES = 5
-
-
-def _init_consumer():
-    """
-    Initialize a Kafka consumer instance
-    """
-    consumer = Consumer({
-        'bootstrap.servers': config()['kafka_server'],
-        'group.id': config()['kafka_clientgroup'],
-        'auto.offset.reset': 'earliest',
-        'enable.auto.commit': False
-    })
-    topics = [
-        config()['topics']['workspace_events'],
-        config()['topics']['admin_events']
-    ]
-    logger.info(f"Subscribing to: {topics}")
-    logger.info(f"Client group: {config()['kafka_clientgroup']}")
-    logger.info(f"Kafka server: {config()['kafka_server']}")
-    consumer.subscribe(topics)
-    return consumer
-
-
-def _close_consumer(signum=None, stack_frame=None):
-    """
-    This will close the network connections and sockets. It will also trigger
-    a rebalance immediately rather than wait for the group coordinator to
-    discover that the consumer stopped sending heartbeats and is likely dead,
-    which will take longer and therefore result in a longer period of time in
-    which consumers can’t consume messages from a subset of the partitions.
-    """
-    consumer.close()
-    logger.info("Closed the Kafka consumer")
 
 
 # Initialize and run the Kafka consumer
-consumer = _init_consumer()
-atexit.register(_close_consumer)
-signal.signal(signal.SIGTERM, _close_consumer)
-signal.signal(signal.SIGINT, _close_consumer)
+topics = [
+        config()['topics']['workspace_events'],
+        config()['topics']['admin_events']
+    ]
+consumer = kafka.init_consumer(topics)
+atexit.register(lambda signum, stack_frame: kafka.close_consumer(consumer))
+signal.signal(signal.SIGTERM, lambda signum, stack_frame: kafka.close_consumer(consumer))
+signal.signal(signal.SIGINT, lambda signum, stack_frame: kafka.close_consumer(consumer))
 
 
 def main():
@@ -145,12 +116,14 @@ def _handle_msg(msg):
         # Reindex all objects in a workspace, overwriting existing data
         for objinfo in ws_client.generate_obj_infos(msg['wsid'], admin=True):
             objid = objinfo[0]
-            _produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid})
+            kafka.produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid},
+                          callback=_delivery_report)
     elif event_type == 'INDEX_NONEXISTENT_WS':
         # Reindex all objects in a workspace without overwriting any existing data
         for objinfo in ws_client.generate_obj_infos(msg['wsid'], admin=True):
             objid = objinfo[0]
-            _produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid})
+            kafka.produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid},
+                          callback=_delivery_report)
     elif event_type == 'INDEX_NONEXISTENT':
         # Import to RE if we are not skipping RE and also it does not exist in the db
         re_required = not config()['skip_releng'] and not re_client.check_doc_existence(msg['wsid'], msg['objid'])
@@ -263,24 +236,6 @@ def _fetch_latest_config_tag():
         return None
     data = resp.json()
     return data['tag_name']
-
-
-def _produce(data, topic=config()['topics']['admin_events']):
-    """
-    Produce a new event messagew on a Kafka topic and block at most 60s for it to get published.
-    """
-    producer = Producer({'bootstrap.servers': config()['kafka_server']})
-    tries = 0
-    while True:
-        try:
-            producer.produce(topic, json.dumps(data), callback=_delivery_report)
-            producer.flush()
-            break
-        except BufferError:
-            if tries == _KAFKA_PRODUCE_RETRIES:
-                raise RuntimeError("Unable to produce a Kafka message due to BufferError")
-            logger.error("Received a BufferError trying to produce a message on Kafka. Retrying..")
-            tries += 1
 
 
 def _log_err_to_es(msg, err=None):
