@@ -4,18 +4,15 @@ Sends work to the es_indexer or the releng_importer.
 Generally handles every message synchronously. Duplicate the service to get more parallelism.
 """
 import logging
-import os
 import json
 import time
-import requests
 import atexit
 import signal
-import traceback
 import hashlib
-from confluent_kafka import KafkaError
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
+from src import event_loop
 import src.utils.kafka as kafka
 from src.utils.logger import init_logger
 import src.utils.es_utils as es_utils
@@ -23,81 +20,9 @@ import src.utils.re_client as re_client
 import src.index_runner.es_indexer as es_indexer
 import src.index_runner.releng_importer as releng_importer
 from src.utils.config import config
-from src.utils.service_utils import wait_for_dependencies
 
 logger = logging.getLogger('IR')
 ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-
-
-# Initialize and run the Kafka consumer
-topics = [
-        config()['topics']['workspace_events'],
-        config()['topics']['admin_events']
-    ]
-consumer = kafka.init_consumer(topics)
-atexit.register(lambda signum, stack_frame: kafka.close_consumer(consumer))
-signal.signal(signal.SIGTERM, lambda signum, stack_frame: kafka.close_consumer(consumer))
-signal.signal(signal.SIGINT, lambda signum, stack_frame: kafka.close_consumer(consumer))
-
-
-def main():
-    """
-    Run the the Kafka consumer and two threads for the releng_importer and es_indexer
-    """
-    # Remove the ready indicator file if it has been written on a previous boot
-    if os.path.exists(config()['proc_ready_path']):
-        os.remove(config()['proc_ready_path'])
-    # Wait for dependency services (ES and RE) to be live
-    wait_for_dependencies(timeout=180)
-    # Used for re-fetching the configuration with a throttle
-    last_updated_minute = int(time.time() / 60)
-    if not config()['global_config_url']:
-        config_tag = _fetch_latest_config_tag()
-    # Database initialization
-    es_indexer.init_indexes()
-    es_indexer.reload_aliases()
-    # Touch a temp file indicating the daemon is ready
-    with open(config()['proc_ready_path'], 'w') as fd:
-        fd.write('')
-
-    while True:
-        msg = consumer.poll(timeout=0.5)
-        if msg is None:
-            continue
-        curr_min = int(time.time() / 60)
-        if not config()['global_config_url'] and curr_min > last_updated_minute:
-            # Check for configuration updates
-            latest_config_tag = _fetch_latest_config_tag()
-            last_updated_minute = curr_min
-            if config_tag is not None and latest_config_tag != config_tag:
-                config(force_reload=True)
-                config_tag = latest_config_tag
-                es_indexer.reload_aliases()
-        if msg.error():
-            if msg.error().code() == KafkaError._PARTITION_EOF:
-                logger.info('End of stream.')
-            else:
-                logger.error(f"Kafka message error: {msg.error()}")
-            continue
-        val = msg.value().decode('utf-8')
-        try:
-            msg = json.loads(val)
-        except ValueError as err:
-            logger.error(f'JSON parsing error: {err}')
-            logger.error(f'Message content: {val}')
-        logger.info(f'Received event: {msg}')
-        start = time.time()
-        try:
-            _handle_msg(msg)
-            # Move the offset for our partition
-            consumer.commit()
-            _log_msg_to_elastic(msg)
-            logger.info(f"Handled {msg['evtype']} message in {time.time() - start}s")
-        except Exception as err:
-            logger.error(f'Error processing message: {err.__class__.__name__} {err}')
-            logger.error(traceback.format_exc())
-            # Save this error and message to a topic in Elasticsearch
-            _log_err_to_es(msg, err=err)
 
 
 def _handle_msg(msg):
@@ -214,29 +139,6 @@ def _fetch_ws_info(msg):
     return ws_info
 
 
-def _fetch_latest_config_tag():
-    """
-    Using the Github release API, check for a new version of the config.
-    https://developer.github.com/v3/repos/releases/
-    """
-    github_release_url = config()['github_release_url']
-    if config()['github_token']:
-        headers = {'Authorization': f"token {config()['github_token']}"}
-    else:
-        headers = {}
-    try:
-        resp = requests.get(url=github_release_url, headers=headers)
-    except Exception as err:
-        logging.error(f"Unable to fetch indexer config from github: {err}")
-        # Ignore any error and continue; try the fetch again later
-        return None
-    if not resp.ok:
-        logging.error(f"Unable to fetch indexer config from github: {resp.text}")
-        return None
-    data = resp.json()
-    return data['tag_name']
-
-
 def _log_err_to_es(msg, err=None):
     """Log an indexing error in an elasticsearch index."""
     # The key is a hash of the message data body
@@ -258,10 +160,34 @@ def _delivery_report(err, msg):
         logger.info(f'Message delivered to {msg.topic()}')
 
 
+def _on_ready():
+    # Database initialization
+    es_indexer.init_indexes()
+    es_indexer.reload_aliases()
+
+
 if __name__ == '__main__':
     # Set up the logger
     # Make the urllib debug logs less noisy
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     init_logger(logger)
+
+    # Initialize and run the Kafka consumer
+    topics = [
+            config()['topics']['workspace_events'],
+            config()['topics']['admin_events']
+        ]
+    consumer = kafka.init_consumer(topics)
+    atexit.register(lambda signum, stack_frame: kafka.close_consumer(consumer))
+    signal.signal(signal.SIGTERM, lambda signum, stack_frame: kafka.close_consumer(consumer))
+    signal.signal(signal.SIGINT, lambda signum, stack_frame: kafka.close_consumer(consumer))
+
     # Run the main thread
-    main()
+    event_loop.start_loop(
+        consumer,
+        _handle_msg,
+        on_success=_log_msg_to_elastic,
+        on_failure=_log_err_to_es,
+        on_ready=_on_ready,
+        on_config_update=es_indexer.reload_aliases,
+        logger=logger)
