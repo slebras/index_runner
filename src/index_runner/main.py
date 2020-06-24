@@ -12,7 +12,7 @@ import hashlib
 from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
-from src import event_loop
+from src.index_runner import event_loop
 import src.utils.kafka as kafka
 from src.utils.logger import init_logger
 import src.utils.es_utils as es_utils

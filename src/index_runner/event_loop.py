@@ -83,6 +83,8 @@ def start_loop(
         except ValueError as err:
             logger.error(f'JSON parsing error: {err}')
             logger.error(f'Message content: {val}')
+            consumer.commit()
+            continue
         logger.info(f'Received event: {msg}')
         start = time.time()
         try:
