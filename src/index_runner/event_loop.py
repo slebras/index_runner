@@ -9,7 +9,6 @@ import requests
 import time
 import traceback
 
-from logging import Logger
 from typing import Callable, Dict, Any
 
 from confluent_kafka import Consumer, KafkaError
@@ -29,7 +28,7 @@ def start_loop(
         on_failure: Callable[[Message, Exception], None] = lambda msg, e: None,
         on_ready: Callable[[], None] = lambda: None,
         on_config_update: Callable[[], None] = lambda: None,
-        logger: Logger = logging.getLogger('src.event_loop')):
+        logger: logging.Logger = logging.getLogger('src.event_loop')):
     """
     Run the indexer event loop.
 
