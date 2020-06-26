@@ -28,7 +28,7 @@ def start_loop(
         on_failure: Callable[[Message, Exception], None] = lambda msg, e: None,
         on_ready: Callable[[], None] = lambda: None,
         on_config_update: Callable[[], None] = lambda: None,
-        logger: logging.Logger = logging.getLogger('src.event_loop')):
+        logger: logging.Logger = logging.getLogger('IR')):
     """
     Run the indexer event loop.
 
@@ -40,8 +40,7 @@ def start_loop(
         exception. A noop by default.
     :param on_ready: called when the event loop is intialized and about to start.
     :param on_config_update: called when the configuration has been updated.
-    :param logger: a logger to use for logging events. By default a standard logger for
-        'src.event_loop'.
+    :param logger: a logger to use for logging events. By default a standard logger for 'IR'.
     """
     # Remove the ready indicator file if it has been written on a previous boot
     if os.path.exists(config()['proc_ready_path']):
