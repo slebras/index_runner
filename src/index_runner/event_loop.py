@@ -4,7 +4,6 @@ The event loop for the index runner.
 
 import json
 import logging
-import os
 import requests
 import time
 import traceback
