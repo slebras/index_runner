@@ -29,14 +29,15 @@ def start_loop(
     """
     Run the indexer event loop.
 
-    :param consumer: A Kafka consumer which will be polled for messages.
-    :param message_handler: a processor for messages from Kafka.
-    :param on_success: called after message_handler has returned sucessfully and the message
-        offset has been committed to Kafka. A noop by default.
-    :param on_failure: called if the message_handler, the Kafka commit, or on_success throws an
-        exception. A noop by default.
-    :param on_config_update: called when the configuration has been updated.
-    :param logger: a logger to use for logging events. By default a standard logger for 'IR'.
+    Attributes:
+        consumer: A Kafka consumer which will be polled for messages.
+        message_handler: a processor for messages from Kafka.
+        on_success: called after message_handler has returned sucessfully and the message
+            offset has been committed to Kafka. A noop by default.
+        on_failure: called if the message_handler, the Kafka commit, or on_success throws an
+            exception. A noop by default.
+        on_config_update: called when the configuration has been updated.
+        logger: a logger to use for logging events. By default a standard logger for 'IR'.
     """
     # Used for re-fetching the configuration with a throttle
     last_updated_minute = int(time.time() / 60)
