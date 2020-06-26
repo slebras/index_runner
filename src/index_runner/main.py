@@ -6,6 +6,7 @@ Generally handles every message synchronously. Duplicate the service to get more
 import logging
 import json
 import time
+import os
 import atexit
 import signal
 import hashlib
@@ -20,6 +21,7 @@ import src.utils.re_client as re_client
 import src.index_runner.es_indexer as es_indexer
 import src.index_runner.releng_importer as releng_importer
 from src.utils.config import config
+from src.utils.service_utils import wait_for_dependencies
 
 logger = logging.getLogger('IR')
 ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
@@ -160,12 +162,6 @@ def _delivery_report(err, msg):
         logger.info(f'Message delivered to {msg.topic()}')
 
 
-def _on_ready():
-    # Database initialization
-    es_indexer.init_indexes()
-    es_indexer.reload_aliases()
-
-
 def main():
     # Set up the logger
     # Make the urllib debug logs less noisy
@@ -188,10 +184,20 @@ def main():
         _handle_msg,
         on_success=_log_msg_to_elastic,
         on_failure=_log_err_to_es,
-        on_ready=_on_ready,
         on_config_update=es_indexer.reload_aliases,
         logger=logger)
 
 
 if __name__ == '__main__':
+    # Remove the ready indicator file if it has been written on a previous boot
+    if os.path.exists(config()['proc_ready_path']):
+        os.remove(config()['proc_ready_path'])
+    # Wait for dependency services (ES and RE) to be live
+    wait_for_dependencies(timeout=180)
+    # Database initialization
+    es_indexer.init_indexes()
+    es_indexer.reload_aliases()
+    # Touch a temp file indicating the daemon is ready
+    with open(config()['proc_ready_path'], 'w') as fd:
+        fd.write('')
     main()

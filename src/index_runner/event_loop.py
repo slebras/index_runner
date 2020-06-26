@@ -14,7 +14,6 @@ from typing import Callable, Dict, Any
 from confluent_kafka import Consumer, KafkaError
 
 from src.utils.config import config
-from src.utils.service_utils import wait_for_dependencies
 
 Message = Dict[str, Any]
 
@@ -26,7 +25,6 @@ def start_loop(
         message_handler: Callable[[Message], None],
         on_success: Callable[[Message], None] = lambda msg: None,
         on_failure: Callable[[Message, Exception], None] = lambda msg, e: None,
-        on_ready: Callable[[], None] = lambda: None,
         on_config_update: Callable[[], None] = lambda: None,
         logger: logging.Logger = logging.getLogger('IR')):
     """
@@ -38,23 +36,13 @@ def start_loop(
         offset has been committed to Kafka. A noop by default.
     :param on_failure: called if the message_handler, the Kafka commit, or on_success throws an
         exception. A noop by default.
-    :param on_ready: called when the event loop is intialized and about to start.
     :param on_config_update: called when the configuration has been updated.
     :param logger: a logger to use for logging events. By default a standard logger for 'IR'.
     """
-    # Remove the ready indicator file if it has been written on a previous boot
-    if os.path.exists(config()['proc_ready_path']):
-        os.remove(config()['proc_ready_path'])
-    # Wait for dependency services (ES and RE) to be live
-    wait_for_dependencies(timeout=180)
     # Used for re-fetching the configuration with a throttle
     last_updated_minute = int(time.time() / 60)
     if not config()['global_config_url']:
         config_tag = _fetch_latest_config_tag()
-    on_ready()
-    # Touch a temp file indicating the daemon is ready
-    with open(config()['proc_ready_path'], 'w') as fd:
-        fd.write('')
 
     while True:
         msg = consumer.poll(timeout=0.5)
