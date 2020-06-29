@@ -29,7 +29,7 @@ def start_loop(
     """
     Run the indexer event loop.
 
-    Attributes:
+    Args:
         consumer: A Kafka consumer which will be polled for messages.
         message_handler: a processor for messages from Kafka.
         on_success: called after message_handler has returned sucessfully and the message
