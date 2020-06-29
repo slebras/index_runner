@@ -26,7 +26,7 @@ def config(force_reload=False):
 
 class Config:
     """
-    A class contining the configuration for the for the search indexer. Supports dict like
+    A class containing the configuration for the for the search indexer. Supports dict like
     configuration item access, e.g. config['ws-token'].
 
     Not thread-safe.
