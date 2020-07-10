@@ -1,6 +1,7 @@
 import urllib.request
 import yaml
 import os
+import json
 import time
 import logging
 import requests
@@ -12,6 +13,24 @@ _FETCH_CONFIG_RETRIES = 5
 # Alternative is passing the configuration through the entire stack, which is feasible,
 # but we consider that YAGNI for now.
 _CONFIG_SINGLETON = None
+
+
+def get_sample_service_url(sw_url):
+    """"""
+    payload = {
+        "method": "ServiceWizard.get_service_status",
+        "id": '',
+        "params": [{"module_name": "SampleService", "version": "dev"}],  # TODO: change to beta/release
+        "version": "1.1"
+    }
+    headers = {'Content-Type': 'application/json'}
+
+    sw_resp = requests.post(url=sw_url, headers=headers, data=json.dumps(payload))
+    wiz_resp = sw_resp.json()
+    if wiz_resp.get('error'):
+        raise RuntimeError(f"ServiceWizard {sw_url} with params"
+                           f" {json.dumps(payload)} Error - " + str(wiz_resp['error']))
+    return wiz_resp['result'][0]['url']
 
 
 def config(force_reload=False):
@@ -60,6 +79,8 @@ class Config:
         workspace_url = os.environ.get('WS_URL', kbase_endpoint + '/ws')
         catalog_url = os.environ.get('CATALOG_URL', kbase_endpoint + '/catalog')
         re_api_url = os.environ.get('RE_URL', kbase_endpoint + '/relation_engine_api').strip('/')
+        service_wizard_url = os.environ.get('SW_URL', kbase_endpoint + '/service_wizard').strip('/')
+        sample_service_url = get_sample_service_url(service_wizard_url)
         config_url = os.environ.get('GLOBAL_CONFIG_URL')
         github_release_url = os.environ.get(
             'GITHUB_RELEASE_URL',
@@ -92,6 +113,7 @@ class Config:
             'workspace_url': workspace_url,
             're_api_url': re_api_url,
             're_api_token': os.environ['RE_API_TOKEN'],
+            'sample_service_url': sample_service_url,
             'elasticsearch_host': es_host,
             'elasticsearch_port': es_port,
             'elasticsearch_url': f"http://{es_host}:{es_port}",

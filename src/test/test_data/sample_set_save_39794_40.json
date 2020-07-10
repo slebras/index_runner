@@ -1,0 +1,27 @@
+{
+    "obj": {
+        "info": [
+            40,
+            "test_sample_set",
+            "KBaseSets.SampleSet-1.0",
+            "2016-10-05T17:11:40+0000",
+            1,
+            "kbasetest",
+            39794,
+            "KBaseExampleData",
+            "abaa39d622962856b799c3eb32de2c2f",
+            447,
+            {
+                "sequencing_tech": "Illumina",
+                "single_genome": "1"
+            }
+        ],
+        "data": {
+            "description": "Pamela's Sesar sample data",
+            "samples": [
+                {"id": "1", "name": "PB-Low-5", "version": 1}
+            ]
+        }
+    },
+    "ws_info": [39794, "username:narrative_1553621013004", "username", "2019-04-05T22:17:00+0000", 12, "n", "r", "unlocked", {"searchtags": "narrative", "is_temporary": "false", "narrative": "1", "data_palette_id": "2", "cell_count": "1", "narrative_nice_name": "wat"}]
+}
