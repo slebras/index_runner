@@ -89,11 +89,13 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
 
         sample_index = {
             "_action": "index",
-            "doc": {**{
+            "doc": {
                 "save_date": sample['save_date'],
                 "version": sample['version'],
-                "name": sample['name']
-            }, **meta_user, **meta_controlled},
+                "name": sample['name'],
+                **meta_user,
+                **meta_controlled
+            },
             "index": _SAMPLE_INDEX_NAME,
             "id": sample_id
         }
