@@ -15,12 +15,12 @@ _FETCH_CONFIG_RETRIES = 5
 _CONFIG_SINGLETON = None
 
 
-def get_sample_service_url(sw_url):
+def get_sample_service_url(sw_url, ss_release):
     """"""
     payload = {
         "method": "ServiceWizard.get_service_status",
         "id": '',
-        "params": [{"module_name": "SampleService", "version": "dev"}],  # TODO: change to beta/release
+        "params": [{"module_name": "SampleService", "version": ss_release}],
         "version": "1.1"
     }
     headers = {'Content-Type': 'application/json'}
@@ -82,7 +82,8 @@ class Config:
         catalog_url = os.environ.get('CATALOG_URL', kbase_endpoint + '/catalog')
         re_api_url = os.environ.get('RE_URL', kbase_endpoint + '/relation_engine_api').strip('/')
         service_wizard_url = os.environ.get('SW_URL', kbase_endpoint + '/service_wizard').strip('/')
-        sample_service_url = get_sample_service_url(service_wizard_url)
+        sample_service_release = os.environ.get('SAMPLE_SERVICE_RELEASE', 'dev')
+        sample_service_url = get_sample_service_url(service_wizard_url, sample_service_release)
         config_url = os.environ.get('GLOBAL_CONFIG_URL')
         github_release_url = os.environ.get(
             'GITHUB_RELEASE_URL',
