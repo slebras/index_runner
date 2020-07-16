@@ -59,19 +59,27 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
     }
     yield sample_set_index
 
-    def flatten_meta(meta, prefix=None):
+    def flatten_meta(meta, prefix=None, new_meta, ):
         new_meta = {}
         for key in meta:
             if prefix:
-                val = prefix + ": "
+                val = prefix + ":"
             else:
                 val = ""
             if "value" in meta[key]:
                 val += str(meta[key]['value'])
             if "units" in meta[key]:
-                val += " UNITS: " + str(meta[key]['units'])
+                val += ";" + str(meta[key]['units'])
             new_meta[key] = val
         return new_meta
+
+    def combine_meta(meta, flattened_meta, ite):
+        for key in flattened_meta:
+            if key in meta:
+                meta[key] += ["" for _ in range(ite - len(meta[key]))] + [flattened_meta[key]]
+            else:
+                meta[key] = ["" for _ in range(ite)] + [flattened_meta[key]]
+        return meta
 
     for samp in data["samples"]:
         # query the sample service for sample
@@ -79,13 +87,31 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
         sample_id = sample['id']
         # not sure on how we need to handle more than 1 node.
         if len(sample['node_tree']) == 1:
-            meta_controlled = flatten_meta(sample['node_tree'][0]['meta_controlled'])
-            meta_user = flatten_meta(sample['node_tree'][0]['meta_user'])
+            meta_controlled = flatten_meta(
+                sample['node_tree'][0]['meta_controlled']
+            )
+            meta_user = flatten_meta(
+                sample['node_tree'][0]['meta_user']
+            )
         else:
             meta_controlled, meta_user = {}, {}
-            for node in sample['node_tree']:
-                meta_controlled.update(flatten_meta(node['meta_controlled'], prefix=node['id']))
-                meta_user.update(flatten_meta(node['meta_user'], prefix=node['id']))
+            for ite, node in enumerate(sample['node_tree']):
+                meta_controlled = combine_meta(
+                    meta_controlled,
+                    flatten_meta(
+                        node['meta_controlled'],
+                        prefix=node['id']
+                    ),
+                    ite
+                )
+                meta_user = combine_meta(
+                    meta_user,
+                    flatten_meta(
+                        node['meta_user'],
+                        prefix=node['id']
+                    ),
+                    ite
+                )
 
         sample_index = {
             "_action": "index",
