@@ -1,0 +1,115 @@
+{
+    "methods": ["POST"],
+    "path": "/SampleService",
+    "headers": {"Authorization": "valid_admin_token"},
+    "body": {
+        "method": "SampleService.get_sample",
+        "id": "",
+        "params": [{
+            "id": "1",
+            "version": 1
+        }],
+        "version": "1.1"
+    },
+    "response": {
+        "status": "200",
+        "body": {
+            "version": "1.1",
+            "result": [
+                {
+                    "id": "8948a78f-9b3b-477b-8502-fc6fc952a394",
+                    "user": "slebras",
+                    "name": "PB-Low-5",
+                    "node_tree": [
+                        {
+                            "id": "IEAWH0001",
+                            "type": "BioReplicate",
+                            "parent": null,
+                            "meta_controlled": {
+                                "id": {
+                                    "value": "IEAWH0001"
+                                },
+                                "name": {
+                                    "value": "PB-Low-5"
+                                },
+                                "material": {
+                                    "value": "Soil"
+                                },
+                                "latitude": {
+                                    "units": "degrees",
+                                    "value": 33.3375
+                                },
+                                "longitude": {
+                                    "units": "degrees",
+                                    "value": 81.71861111
+                                }
+                            },
+                            "meta_user": {
+                                "latitude": {
+                                    "units": "degrees",
+                                    "value": 33.3375
+                                },
+                                "collection_date": {
+                                    "units": "day",
+                                    "value": "2019-06-26 00:00:00"
+                                },
+                                "longitude": {
+                                    "units": "degrees",
+                                    "value": 81.71861111
+                                },
+                                "material": {
+                                    "value": "Soil"
+                                },
+                                "current_archive_contact": {
+                                    "value": "pweisenhorn@anl.gov"
+                                },
+                                "location_description": {
+                                    "value": "Savannah River Site"
+                                },
+                                "collection_method": {
+                                    "value": "Coring > Syringe"
+                                },
+                                "primary_physiographic_feature": {
+                                    "value": "Hollow"
+                                },
+                                "field_program_cruise": {
+                                    "value": "Argonne Wetlands Hydrobiogeochemistry SFA"
+                                },
+                                "coordinate_precision?": {
+                                    "value": 30
+                                },
+                                "navigation_type": {
+                                    "value": "GPS"
+                                },
+                                "relation_type": {
+                                    "value": "grouped"
+                                },
+                                "name_of_physiographic_feature": {
+                                    "value": "Tims Branch watershed"
+                                },
+                                "current_archive": {
+                                    "value": "Argonne National Lab"
+                                },
+                                "locality_description": {
+                                    "value": "Pine Backwater"
+                                },
+                                "purpose": {
+                                    "value": "Microbial Characterization 1"
+                                },
+                                "collector_chief_scientist": {
+                                    "value": "Pamela Weisenhorn"
+                                },
+                                "related_identifiers": {
+                                    "value": "IEAWH0002"
+                                }
+                            }
+                        }
+                    ],
+                    "save_date": 1591823661642,
+                    "version": 1
+                }
+            ],
+            "id": ""
+        }
+    }
+}
