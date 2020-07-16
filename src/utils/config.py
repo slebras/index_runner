@@ -27,7 +27,7 @@ def get_sample_service_url(sw_url, ss_release):
 
     sw_resp = requests.post(url=sw_url, headers=headers, data=json.dumps(payload))
     if not sw_resp.ok:
-        raise RuntimeError(f"ServiceWizard error, with code {sw_resp.status_code}")
+        raise RuntimeError(f"ServiceWizard error, with code {sw_resp.status_code}. \n{sw_resp.text}")
     wiz_resp = sw_resp.json()
     if wiz_resp.get('error'):
         raise RuntimeError(f"ServiceWizard {sw_url} with params"
