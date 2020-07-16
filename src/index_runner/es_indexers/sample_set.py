@@ -59,7 +59,7 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
     }
     yield sample_set_index
 
-    def flatten_meta(meta, prefix=None, new_meta, ):
+    def flatten_meta(meta, prefix=None):
         new_meta = {}
         for key in meta:
             if prefix:
