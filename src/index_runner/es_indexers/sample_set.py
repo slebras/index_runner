@@ -5,10 +5,16 @@ import requests
 
 
 _NAMESPACE = "WS"
+_VER_NAMESPACE = "WSVER"
+_SAMPLE_NAMESPACE = "SMP"
+# versioned and non-versioned index have same version
 _SAMPLE_SET_INDEX_VERSION = 1
 _SAMPLE_SET_INDEX_NAME = 'sample_set_' + str(_SAMPLE_SET_INDEX_VERSION)
+_VER_SAMPLE_SET_INDEX_NAME = 'sample_set_version_' + str(_SAMPLE_SET_INDEX_VERSION)
+# versioned and non-versioned index have same version
 _SAMPLE_INDEX_VERSION = 1
 _SAMPLE_INDEX_NAME = 'sample_' + str(_SAMPLE_INDEX_VERSION)
+# _VER_SAMPLE_INDEX_NAME = 'sample_version_' + str(_SAMPLE_INDEX_VERSION)
 
 
 def get_sample(sample_info):
@@ -35,6 +41,30 @@ def get_sample(sample_info):
     return sample
 
 
+def flatten_meta(meta, prefix=None):
+    new_meta = {}
+    for key in meta:
+        if prefix:
+            val = prefix + ":"
+        else:
+            val = ""
+        if "value" in meta[key]:
+            val += str(meta[key]['value'])
+        if "units" in meta[key]:
+            val += ";" + str(meta[key]['units'])
+        new_meta[key] = val
+    return new_meta
+
+
+def combine_meta(meta, flattened_meta, ite):
+    for key in flattened_meta:
+        if key in meta:
+            meta[key] += ["" for _ in range(ite - len(meta[key]))] + [flattened_meta[key]]
+        else:
+            meta[key] = ["" for _ in range(ite)] + [flattened_meta[key]]
+    return meta
+
+
 def index_sample_set(obj_data, ws_info, obj_data_v1):
     """Indexer for KBaseSets.SampleSet object type"""
     info = obj_data['info']
@@ -43,8 +73,9 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
     data = obj_data['data']
     workspace_id = info[6]
     object_id = info[0]
-    # version = info[4]
+    version = info[4]
     sample_set_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
+    ver_sample_set_id = f"{_VER_NAMESPACE}::{workspace_id}:{object_id}:{version}"
 
     sample_set_index = {
         "_action": "index",
@@ -58,33 +89,15 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
         "id": sample_set_id
     }
     yield sample_set_index
-
-    def flatten_meta(meta, prefix=None):
-        new_meta = {}
-        for key in meta:
-            if prefix:
-                val = prefix + ":"
-            else:
-                val = ""
-            if "value" in meta[key]:
-                val += str(meta[key]['value'])
-            if "units" in meta[key]:
-                val += ";" + str(meta[key]['units'])
-            new_meta[key] = val
-        return new_meta
-
-    def combine_meta(meta, flattened_meta, ite):
-        for key in flattened_meta:
-            if key in meta:
-                meta[key] += ["" for _ in range(ite - len(meta[key]))] + [flattened_meta[key]]
-            else:
-                meta[key] = ["" for _ in range(ite)] + [flattened_meta[key]]
-        return meta
+    ver_sample_set_index = dict(sample_set_index)
+    ver_sample_set_index['index'] = _VER_SAMPLE_SET_INDEX_NAME
+    ver_sample_set_index['id'] = ver_sample_set_id
+    yield ver_sample_set_index
 
     for samp in data["samples"]:
         # query the sample service for sample
         sample = get_sample(samp)
-        sample_id = sample['id']
+        sample_id = f"{_SAMPLE_NAMESPACE}::{sample['id']}:{sample['version']}"
         # not sure on how we need to handle more than 1 node.
         if len(sample['node_tree']) == 1:
             meta_controlled = flatten_meta(
@@ -119,6 +132,7 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
                 "save_date": sample['save_date'],
                 "version": sample['version'],
                 "name": sample['name'],
+                "parent_id": sample_set_id,
                 **meta_user,
                 **meta_controlled
             },
