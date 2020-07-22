@@ -121,25 +121,25 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
             meta_user = _flatten_meta(
                 sample['node_tree'][0]['meta_user']
             )
+            meta_controlled['node_id'] = sample['node_tree'][0]['id']
         else:
             meta_controlled, meta_user = {}, {}
             for idx, node in enumerate(sample['node_tree']):
                 meta_controlled = _combine_meta(
                     meta_controlled,
                     _flatten_meta(
-                        node['meta_controlled'],
-                        prefix=node['id']
+                        node['meta_controlled']
                     ),
                     idx
                 )
                 meta_user = _combine_meta(
                     meta_user,
                     _flatten_meta(
-                        node['meta_user'],
-                        prefix=node['id']
+                        node['meta_user']
                     ),
                     idx
                 )
+                meta_controlled['node_id'] = node['id']
 
         sample_index = {
             "_action": "index",
