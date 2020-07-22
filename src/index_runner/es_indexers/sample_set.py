@@ -44,7 +44,7 @@ def _get_sample(sample_info):
 
 
 def _flatten_meta(meta, prefix=None):
-    """ Flattens metadata fields in a Sample object. Fields are concatenated into a 
+    """ Flattens metadata fields in a Sample object. Fields are concatenated into a
         single string field to save into an Elasticsearch index
     meta   - Sample Metadata to be flattened
     prefix - (optional) prefix for the metadata values. default=None
@@ -145,7 +145,7 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
             "_action": "index",
             "doc": {
                 "save_date": sample['save_date'],
-                "version": sample['version'],
+                "sample_version": sample['version'],
                 "name": sample['name'],
                 "parent_id": sample_set_id,
                 **meta_user,

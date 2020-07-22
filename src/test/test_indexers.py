@@ -183,7 +183,7 @@ class TestIndexers(unittest.TestCase):
                 "_action": "index",
                 "doc": {
                     "save_date": 1591823661642,
-                    "version": 1,
+                    "sample_version": 1,
                     "name": "PB-Low-5",
                     "parent_id": "WS::39794:40",
                     "latitude": "33.3375;degrees",
@@ -204,7 +204,8 @@ class TestIndexers(unittest.TestCase):
                     "purpose": "Microbial Characterization 1",
                     "collector_chief_scientist": "Pamela Weisenhorn",
                     "related_identifiers": "IEAWH0002",
-                    "id": "IEAWH0001"
+                    "id": "IEAWH0001",
+                    "node_id": "IEAWH0001"
                 },
                 "index": "sample_1",
                 "id": "SMP::8948a78f-9b3b-477b-8502-fc6fc952a394:1"
