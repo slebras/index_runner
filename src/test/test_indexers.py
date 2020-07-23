@@ -167,12 +167,25 @@ class TestIndexers(unittest.TestCase):
                 },
                 "index": "sample_set_1",
                 "id": "WS::39794:40"
-            }, {
+            },
+            {
+                "_action": "index",
+                "doc": {
+                    "description": "Pamela's Sesar sample data",
+                    "sample_ids": ["1"],
+                    "sample_names": ["PB-Low-5"],
+                    "sample_versions": [1]
+                },
+                "index": "sample_set_version_1",
+                "id": "WSVER::39794:40:1"
+            },
+            {
                 "_action": "index",
                 "doc": {
                     "save_date": 1591823661642,
-                    "version": 1,
+                    "sample_version": 1,
                     "name": "PB-Low-5",
+                    "parent_id": "WS::39794:40",
                     "latitude": "33.3375;degrees",
                     "collection_date": "2019-06-26 00:00:00;day",
                     "longitude": "81.71861111;degrees",
@@ -190,10 +203,12 @@ class TestIndexers(unittest.TestCase):
                     "locality_description": "Pine Backwater",
                     "purpose": "Microbial Characterization 1",
                     "collector_chief_scientist": "Pamela Weisenhorn",
-                    "related_identifiers": "IEAWH0002", "id": "IEAWH0001"
+                    "related_identifiers": "IEAWH0002",
+                    "id": "IEAWH0001",
+                    "node_id": "IEAWH0001"
                 },
                 "index": "sample_1",
-                "id": "8948a78f-9b3b-477b-8502-fc6fc952a394"
+                "id": "SMP::8948a78f-9b3b-477b-8502-fc6fc952a394:1"
             }
         ]
         self._default_obj_test('sample_set_save', index_sample_set, check_against)
