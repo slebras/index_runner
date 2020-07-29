@@ -100,6 +100,10 @@ class Config:
         allow_indices = _get_comma_delimited_env('ALLOW_INDICES')
         # Use a tempfile to indicate that the service is done booting up
         proc_ready_path = '/tmp/IR_READY'  # nosec
+        # Set the indexer log messages index name from a configured index name or alias
+        msg_log_index_name = os.environ.get('MSG_LOG_INDEX_NAME', 'indexer_messages')
+        if msg_log_index_name in global_config['latest_versions']:
+            msg_log_index_name = global_config['latest_versions'][msg_log_index_name]
         self._cfg = {
             'skip_releng': os.environ.get('SKIP_RELENG'),
             'skip_features': os.environ.get('SKIP_FEATURES'),
@@ -123,7 +127,7 @@ class Config:
             'kafka_server': os.environ.get('KAFKA_SERVER', 'kafka'),
             'kafka_clientgroup': os.environ.get('KAFKA_CLIENTGROUP', 'search_indexer'),
             'error_index_name': os.environ.get('ERROR_INDEX_NAME', 'indexing_errors'),
-            'msg_log_index_name': os.environ.get('MSG_LOG_INDEX_NAME', 'indexer_messages'),
+            'msg_log_index_name': msg_log_index_name,
             'elasticsearch_index_prefix': os.environ.get('ELASTICSEARCH_INDEX_PREFIX', 'search2'),
             'topics': {
                 'workspace_events': os.environ.get('KAFKA_WORKSPACE_TOPIC', 'workspaceevents'),
