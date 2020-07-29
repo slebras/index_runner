@@ -22,6 +22,16 @@ Run the tests (servers need not be running, and will be shut down if they are):
 make test
 ```
 
+Note that `docker-compose run`, and therefore `make test`, will only build a Docker image for the
+application if no image exists, and therefore `Dockerfile` changes will not be included in any
+tests. To include `Dockerfile` changes in tests, do one of the following, in order of
+destructiveness:
+
+1. `docker-compose build` will build any images with changed `Dockerfile`s using the build cache.
+2. Delete the `index_runner_deluxe_app` image. `make test` will then rebuild the application image
+   from scratch.
+3. `make reset`. This will remove all test images and rebuild them from scratch.
+
 ## Config
 
 You can set the following env vars:

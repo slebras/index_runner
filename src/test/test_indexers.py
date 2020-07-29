@@ -11,6 +11,7 @@ from src.index_runner.es_indexers.pangenome import index_pangenome
 from src.index_runner.es_indexers.taxon import index_taxon
 from src.index_runner.es_indexers.tree import index_tree
 from src.index_runner.es_indexers.annotated_metagenome_assembly import _index_ama
+from src.index_runner.es_indexers.sample_set import index_sample_set
 from src.index_runner.es_indexers.from_sdk import index_from_sdk
 
 _TEST_EVENTS = {
@@ -101,6 +102,17 @@ _TEST_EVENTS = {
         'objtype': "KBaseMetagenomes.AnnotatedMetagenomeAssembly-1.0",
         'permusers': [],
         'user': "username"
+    },
+    'sample_set_save': {
+        'wsid': 39794,
+        'ver': 1,
+        'perm': None,
+        'evtype': "NEW_VERSION",
+        'objid': 40,
+        'time': 1554408311320,
+        'objtype': "KBaseSets.SampleSet-1.0",
+        'permusers': [],
+        'user': "username"
     }
 }  # type: dict
 
@@ -117,8 +129,11 @@ class TestIndexers(unittest.TestCase):
         json_data_path = f"{event_data_str}_{event_data['wsid']}_{event_data['objid']}.json"
         with open(os.path.join(_DIR, 'test_data', json_data_path)) as fd:
             test_data = json.load(fd)
+        # print('[')
         for (idx, msg_data) in enumerate(indexer(test_data['obj'], test_data['ws_info'], test_data['obj'])):
+            # print(json.dumps(msg_data), ',')
             self.assertEqual(msg_data, check_against[idx])
+        # print(']')
 
     @unittest.skip('TODO')
     def test_from_sdk(self):
@@ -139,6 +154,64 @@ class TestIndexers(unittest.TestCase):
             }
         }]
         self._default_obj_test('genomeset_save', index_from_sdk, check_against)
+
+    def test_sample_set_indexer(self):
+        check_against = [
+            {
+                "_action": "index",
+                "doc": {
+                    "description": "Pamela's Sesar sample data",
+                    "sample_ids": ["1"],
+                    "sample_names": ["PB-Low-5"],
+                    "sample_versions": [1]
+                },
+                "index": "sample_set_1",
+                "id": "WS::39794:40"
+            },
+            {
+                "_action": "index",
+                "doc": {
+                    "description": "Pamela's Sesar sample data",
+                    "sample_ids": ["1"],
+                    "sample_names": ["PB-Low-5"],
+                    "sample_versions": [1]
+                },
+                "index": "sample_set_version_1",
+                "id": "WSVER::39794:40:1"
+            },
+            {
+                "_action": "index",
+                "doc": {
+                    "save_date": 1591823661642,
+                    "sample_version": 1,
+                    "name": "PB-Low-5",
+                    "parent_id": "WS::39794:40",
+                    "latitude": "33.3375;degrees",
+                    "collection_date": "2019-06-26 00:00:00;day",
+                    "longitude": "81.71861111;degrees",
+                    "material": "Soil",
+                    "current_archive_contact": "pweisenhorn@anl.gov",
+                    "location_description": "Savannah River Site",
+                    "collection_method": "Coring > Syringe",
+                    "primary_physiographic_feature": "Hollow",
+                    "field_program_cruise": "Argonne Wetlands Hydrobiogeochemistry SFA",
+                    "coordinate_precision?": "30",
+                    "navigation_type": "GPS",
+                    "relation_type": "grouped",
+                    "name_of_physiographic_feature": "Tims Branch watershed",
+                    "current_archive": "Argonne National Lab",
+                    "locality_description": "Pine Backwater",
+                    "purpose": "Microbial Characterization 1",
+                    "collector_chief_scientist": "Pamela Weisenhorn",
+                    "related_identifiers": "IEAWH0002",
+                    "id": "IEAWH0001",
+                    "node_id": "IEAWH0001"
+                },
+                "index": "sample_1",
+                "id": "SMP::8948a78f-9b3b-477b-8502-fc6fc952a394:1"
+            }
+        ]
+        self._default_obj_test('sample_set_save', index_sample_set, check_against)
 
     def test_reads_indexer(self):
         check_against = [{

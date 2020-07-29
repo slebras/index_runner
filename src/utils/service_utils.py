@@ -33,7 +33,8 @@ def _wait_for_service(url, name, start_time, timeout, params=None):
             requests.get(url, params=params).raise_for_status()
             logger.info(f'{name} is up!')
             break
-        except Exception:
+        except Exception as err:
+            logger.debug(f'Unable to connect to {name}: {err}')
             time.sleep(5)
             if (int(time.time()) - start_time) > timeout:
                 raise RuntimeError(f"Failed to connect to all services in {timeout}s. Timed out on {name}.")
