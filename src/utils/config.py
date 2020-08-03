@@ -136,7 +136,7 @@ def _fetch_global_config(config_url):
     """
     Fetch the index_runner_spec configuration file from a URL to a yaml file.
     """
-    print(f'Fetching config from url: {config_url}')
+    logger.info(f'Fetching config from url: {config_url}')
     # Fetch the config directly from config_url
     with urllib.request.urlopen(config_url) as res:  # nosec
         return yaml.safe_load(res.read())
