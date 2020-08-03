@@ -4,4 +4,6 @@ services:
 - docker
 script:
 - pip install --upgrade poetry
-- ./scripts/run_tests
+- cd $TRAVIS_BUILD_DIR
+- poetry install --dev
+- scripts/run_tests
