@@ -5,5 +5,5 @@ services:
 script:
 - pip install --upgrade poetry
 - cd $TRAVIS_BUILD_DIR
-- poetry install --dev
+- poetry install
 - scripts/run_tests
