@@ -1,6 +1,6 @@
 # Index Runner Spec
 
-This repo holds configuration files for the index runner to use when:
+This directory holds configuration files for the index runner to use when:
 
 * Initializing indexes on Elasticsearch
 * Saving new data into elasticsearch
