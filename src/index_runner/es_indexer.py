@@ -59,7 +59,7 @@ def reload_aliases():
                 names = group_aliases[alias_name]
                 raise RuntimeError(f"Failed creating alias name: {alias_name}, "
                                    f"for indices: {names}..\nerror: {err}")
-        logger.info(f"Reloaded elasticsearch aliases")
+        logger.info("Reloaded elasticsearch aliases")
 
 
 def run_indexer(obj, ws_info, msg):

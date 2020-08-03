@@ -2,8 +2,7 @@
 
 
 test:
-	docker-compose down
-	docker-compose run app sh scripts/run_tests.sh
+	scripts/run_tests
 
 reset:
 	# Remove everything in the docker-compose cluster and rebuild

@@ -1,6 +1,6 @@
 import unittest
 
-import src.test.helpers as helpers
+import tests.helpers as helpers
 
 _TEST_EVENT = {
    "wsid": 33192,

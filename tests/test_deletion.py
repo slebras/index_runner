@@ -3,7 +3,7 @@ import time
 import src.index_runner.es_indexer as es_indexer
 import src.index_runner.releng_importer as releng_importer
 import src.utils.re_client as re_client
-import src.test.helpers as helpers
+import tests.helpers as helpers
 
 
 class TestDeletion(unittest.TestCase):

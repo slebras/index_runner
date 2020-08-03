@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+# To be run outside the docker container
+
+scripts/lint
+
+docker-compose restart
+export PYTHONPATH=.
+docker-compose exec app sh -c "PYTHONPATH=/app python -m tests.wait_for_deps && python -m unittest discover /app/tests"
