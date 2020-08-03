@@ -4,4 +4,4 @@ services:
 - docker
 script:
 - pip install --upgrade poetry
-- make test
+- ./scripts/run_tests
