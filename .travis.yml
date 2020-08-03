@@ -3,4 +3,5 @@ language: python
 services:
 - docker
 script:
+- pip install --upgrade poetry
 - make test
