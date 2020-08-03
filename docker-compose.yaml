@@ -28,6 +28,7 @@ services:
       - RE_URL=http://re_api:5000
       - WORKSPACE_TOKEN=valid_admin_token
       - RE_API_TOKEN=valid_admin_token
+      - GLOBAL_CONFIG_URL=file:///app/spec/config.yaml
 
   kafka:
     image: confluentinc/cp-kafka:5.0.0
@@ -86,7 +87,6 @@ services:
       - KBASE_AUTH_URL=http://mock_kbase_services:5000/auth
       - KBASE_WORKSPACE_URL=http://mock_kbase_services:5000/ws
       - PYTHONUNBUFFERED=true
-      - SPEC_RELEASE_PATH=/app/src/test/spec_release/spec.tar.gz
       - DB_URL=http://arangodb:8529
       - DB_USER=root
 
