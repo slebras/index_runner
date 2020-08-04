@@ -170,9 +170,9 @@ def main():
 
     # Initialize and run the Kafka consumer
     topics = [
-            config()['topics']['workspace_events'],
-            config()['topics']['admin_events']
-        ]
+        config()['topics']['workspace_events'],
+        config()['topics']['admin_events']
+    ]
     consumer = kafka.init_consumer(topics)
     atexit.register(lambda signum, stack_frame: kafka.close_consumer(consumer))
     signal.signal(signal.SIGTERM, lambda signum, stack_frame: kafka.close_consumer(consumer))

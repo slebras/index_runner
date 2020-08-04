@@ -451,7 +451,7 @@ mappings:
       source_id: {type: keyword}
       source: {type: keyword, copy_to: agg_fields}
       gc_content: {type: float}
-      warnings: {type: text}
+      warnings: {type: keyword}
       num_contigs: {type: integer}
       mean_contig_length: {type: float}
       external_source_origination_date: {type: keyword}
