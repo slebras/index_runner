@@ -494,8 +494,8 @@ mappings:
       starts: {type: integer}
       strands: {type: keyword}
       stops: {type: integer}
-      functions: {type: text}
-      functional_descriptions: {type: text}
+      functions: {type: keyword}
+      functional_descriptions: {type: keyword}
       warnings: {type: keyword}
       parent_gene: {type: keyword}
       inference_data: {type: keyword}
@@ -578,12 +578,12 @@ mappings:
       starts: {type: integer}
       strands: {type: keyword}
       stops: {type: integer}
-      functions: {type: text, copy_to: agg_fields}
-      functional_descriptions: {type: text, copy_to: agg_fields}
+      functions: {type: keyword, copy_to: agg_fields}
+      functional_descriptions: {type: keyword, copy_to: agg_fields}
       warnings: {type: keyword}
       parent_gene: {type: keyword}
       inference_data: {type: keyword}
-      dna_sequence: {type: keyword}
+      dna_sequence: {type: text}
       gc_content: {type: float}
       annotated_metagenome_assembly_size: {type: integer}
       annotated_metagenome_assembly_num_features: {type: integer}
