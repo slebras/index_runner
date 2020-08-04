@@ -11,6 +11,8 @@ from src.utils.config import config
 _ES_URL = config()['elasticsearch_url']
 _ERR_IDX_NAME = config()['elasticsearch_index_prefix'] + '.' + config()['error_index_name']
 _ERR_SEARCH_URL = f'{_ES_URL}/{_ERR_IDX_NAME}/_search'
+# Workspace ID to stop iterating at. We don't have a great way of getting this from the server
+_STOP_ID = 60000
 
 
 def _get_count(args):
@@ -132,6 +134,7 @@ def _reindex_ws_type(args):
     evtype = 'INDEX_NONEXISTENT'
     if args.overwrite:
         evtype = 'REINDEX'
+    objids = []
     for wsid in range(args.start, args.stop + 1):
         wsid = int(wsid)
         try:
@@ -139,10 +142,12 @@ def _reindex_ws_type(args):
             for obj_info in infos:
                 obj_type = obj_info[2]
                 if obj_type == args.type:
-                    _produce({'evtype': evtype, 'wsid': wsid, 'objid': int(obj_info[0])})
-        except Exception as err:
-            print(f'Error fetching object infos for workspace {wsid}: {err}')
+                    objids.append((wsid, int(obj_info[0])))
+        except Exception:
             continue
+    print(f'Found {len(objids)} objects total. Producing events...')
+    for (wsid, objid) in objids:
+        _produce({'evtype': evtype, 'wsid': wsid, 'objid': objid})
     print('..done!')
 
 
@@ -227,7 +232,7 @@ if __name__ == '__main__':
         help='ID of workspace to stop indexing (inclusive).',
         required=False,
         type=int,
-        default=50000,
+        default=_STOP_ID,
         action='store'
     )
     reindex_type.set_defaults(func=_reindex_ws_type)
