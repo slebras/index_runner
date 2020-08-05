@@ -1,12 +1,15 @@
 """
 General testing utilities
 """
-import time
-import json
-import requests
 from confluent_kafka import Producer
-import src.utils.re_client as re_client
 from src.utils.config import config
+from typing import Dict
+import contextlib
+import json
+import os
+import requests
+import src.utils.re_client as re_client
+import time
 
 
 def assert_subset(testCls, subset, _dict):
@@ -99,3 +102,22 @@ def produce(data, topic=config()['topics']['workspace_events']):
     producer.produce(topic, json.dumps(data), callback=_delivery_report)
     producer.flush()
     print(f"Produced {data}")
+
+
+@contextlib.contextmanager
+def set_env(**environ: Dict[str, str]):
+    """
+    Temporarily set the process environment variables.
+
+    Example:
+        with set_env(VAR_NAME='value'):
+            # Use VAR_NAME here
+            pass
+    """
+    old_environ = dict(os.environ)
+    os.environ.update(environ)
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(old_environ)
