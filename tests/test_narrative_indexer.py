@@ -24,7 +24,7 @@ class TestIndexers(unittest.TestCase):
         self.assertTrue(len(results) == 1)
         result = results[0]
         self.assertEqual(result['_action'], 'index')
-        self.assertEqual(result['index'], 'narrative_1')
+        self.assertEqual(result['index'], 'narrative_2')
         self.assertEqual(result['id'], 'WS::33192:1')
         doc = result['doc']
         self.assertEqual(doc['narrative_title'], 'Test fiesta')
