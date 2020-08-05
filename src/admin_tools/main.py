@@ -1,10 +1,11 @@
-import requests
-import sys
-import re
-import json
-import argparse
 from confluent_kafka import Producer
 from kbase_workspace_client import WorkspaceClient
+from kbase_workspace_client.exceptions import WorkspaceResponseError
+import argparse
+import json
+import re
+import requests
+import sys
 
 from src.utils.config import config
 
@@ -143,7 +144,7 @@ def _reindex_ws_type(args):
                 obj_type = obj_info[2]
                 if obj_type == args.type:
                     objids.append((wsid, int(obj_info[0])))
-        except Exception:
+        except WorkspaceResponseError:
             continue
     print(f'Found {len(objids)} objects total. Producing events...')
     for (wsid, objid) in objids:
