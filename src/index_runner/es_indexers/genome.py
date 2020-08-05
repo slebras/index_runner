@@ -3,8 +3,8 @@ from src.index_runner.es_indexers.indexer_utils import mean
 from src.utils.config import config
 
 _NAMESPACE = "WS"
-_GENOME_INDEX_VERSION = 1
-_GENOME_FEATURE_INDEX_VERSION = 2
+_GENOME_INDEX_VERSION = 2
+_GENOME_FEATURE_INDEX_VERSION = 3
 _GENOME_INDEX_NAME = 'genome_' + str(_GENOME_INDEX_VERSION)
 _GENOME_FEATURE_INDEX_NAME = 'genome_features_' + str(_GENOME_FEATURE_INDEX_VERSION)
 

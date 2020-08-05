@@ -12,7 +12,7 @@ logger = logging.getLogger('IR')
 
 _NAMESPACE = "WS"
 _MARKDOWNER = Markdown()
-_NARRATIVE_INDEX_VERSION = 1
+_NARRATIVE_INDEX_VERSION = 2
 _NARRATIVE_INDEX_NAME = 'narrative_' + str(_NARRATIVE_INDEX_VERSION)
 
 
