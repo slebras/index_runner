@@ -32,6 +32,15 @@ def _handle_msg(msg):
     if not event_type:
         logger.warning(f"Missing 'evtype' in event: {msg}")
         return
+    objtype = msg.get('objtype')
+    if objtype is not None and isinstance(objtype, str) and len(objtype) > 0:
+        # Check the type against the configured whitelist or blacklist, if present
+        if 'type_whitelist' in config() and objtype not in config()['type_whitelist']:
+            logger.info(f"Type {msg['objtype']} is not in the configured whitelist, skipping")
+            return
+        if 'type_blacklist' in config() and objtype in config()['type_blacklist']:
+            logger.info(f"Type {msg['objtype']} is in the configured blacklist, skipping")
+            return
     if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
         obj = _fetch_obj_data(msg)
         ws_info = _fetch_ws_info(msg)

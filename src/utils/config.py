@@ -126,6 +126,8 @@ class Config:
             'proc_ready_path': proc_ready_path,  # File indicating the daemon is booted and ready
             'generic_shard_count': os.environ.get('GENERIC_SHARD_COUNT', 2),
             'generic_replica_count': os.environ.get('GENERIC_REPLICA_COUNT', 1),
+            'type_blacklist': _get_comma_delimited_env('TYPE_BLACKLIST'),
+            'type_whitelist': _get_comma_delimited_env('TYPE_WHITELIST'),
         }
 
     def __getitem__(self, key):
