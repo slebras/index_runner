@@ -86,8 +86,7 @@ class Config:
             service_wizard_url = os.environ.get('SW_URL', kbase_endpoint + '/service_wizard').strip('/')
             sample_service_release = os.environ.get('SAMPLE_SERVICE_RELEASE', 'dev')
             sample_service_url = _get_sample_service_url(service_wizard_url, sample_service_release)
-        cwd = os.getcwd()  # Current working directory
-        config_url = os.environ.get('GLOBAL_CONFIG_URL', f"file://{cwd}/spec/config.yaml")
+        config_url = os.environ.get('GLOBAL_CONFIG_URL', f"file://{os.getcwd()}/spec/config.yaml")
         global_config = _fetch_global_config(config_url)
         skip_indices = _get_comma_delimited_env('SKIP_INDICES')
         allow_indices = _get_comma_delimited_env('ALLOW_INDICES')
