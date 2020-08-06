@@ -30,8 +30,20 @@ ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_t
 def _handle_msg(msg):
     event_type = msg.get('evtype')
     if not event_type:
-        logger.warning(f"Missing 'evtype' in event: {msg}")
-        return
+        msg = f"Missing 'evtype' in event: {msg}"
+        logger.error(msg)
+        raise RuntimeError(msg)
+    objtype = msg.get('objtype')
+    if objtype is not None and isinstance(objtype, str) and len(objtype) > 0:
+        # Check the type against the configured whitelist or blacklist, if present
+        whitelist = config()['allow_types']
+        blacklist = config()['skip_types']
+        if whitelist is not None and objtype not in whitelist:
+            logger.warning(f"Type {msg['objtype']} is not in ALLOW_TYPES, skipping")
+            return
+        if blacklist is not None and objtype in blacklist:
+            logger.warning(f"Type {msg['objtype']} is in SKIP_TYPES, skipping")
+            return
     if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
         obj = _fetch_obj_data(msg)
         ws_info = _fetch_ws_info(msg)
@@ -84,8 +96,9 @@ def _handle_msg(msg):
         # Reload aliases on ES from the global config file
         es_indexer.reload_aliases()
     else:
-        logger.warning(f"Unrecognized event {event_type}.")
-        return
+        msg = f"Unrecognized event {event_type}."
+        logger.error(msg)
+        raise RuntimeError(msg)
 
 
 def _log_msg_to_elastic(msg):

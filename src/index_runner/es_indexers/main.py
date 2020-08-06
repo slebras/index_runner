@@ -61,11 +61,13 @@ def index_obj(obj_data, ws_info, msg_data):
     defaults = indexer_utils.default_fields(obj_data, ws_info, obj_data_v1)
     for indexer_ret in indexer(obj_data, ws_info, obj_data_v1):
         if indexer_ret['_action'] == 'index':
-            if config()['allow_indices'] and indexer_ret.get('index') not in config()['allow_indices']:
+            allow_indices = config()['allow_indices']
+            skip_indices = config()['skip_indices']
+            if allow_indices is not None and indexer_ret.get('index') not in allow_indices:
                 # This index name is not in the indexing whitelist from the config, so we skip
                 logger.debug(f"Index '{indexer_ret['index']}' is not in ALLOW_INDICES, skipping")
                 continue
-            if indexer_ret.get('index') in config()['skip_indices']:
+            if skip_indices is not None and indexer_ret.get('index') in skip_indices:
                 # This index name is in the indexing blacklist in the config, so we skip
                 logger.debug(f"Index '{indexer_ret['index']}' is in SKIP_INDICES, skipping")
                 continue

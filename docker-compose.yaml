@@ -21,14 +21,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${PWD}:/app
       - ${PWD}/scratch:/scratch
-    environment:
-      - KBASE_ENDPOINT=http://mock_kbase_services:5000/
-      - DEVELOPMENT=1
-      - PYTHONUNBUFFERED=true
-      - RE_URL=http://re_api:5000
-      - WORKSPACE_TOKEN=valid_admin_token
-      - RE_API_TOKEN=valid_admin_token
-      - GLOBAL_CONFIG_URL=file:///app/spec/config.yaml
+    env_file: tests/test.env
 
   kafka:
     image: confluentinc/cp-kafka:5.0.0

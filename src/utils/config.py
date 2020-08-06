@@ -1,3 +1,4 @@
+from typing import Optional
 import json
 import logging
 import os
@@ -15,7 +16,7 @@ _FETCH_CONFIG_RETRIES = 5
 _CONFIG_SINGLETON = None
 
 
-def get_sample_service_url(sw_url, ss_release):
+def _get_sample_service_url(sw_url, ss_release):
     """"""
     payload = {
         "method": "ServiceWizard.get_service_status",
@@ -24,7 +25,6 @@ def get_sample_service_url(sw_url, ss_release):
         "version": "1.1"
     }
     headers = {'Content-Type': 'application/json'}
-
     sw_resp = requests.post(url=sw_url, headers=headers, data=json.dumps(payload))
     if not sw_resp.ok:
         raise RuntimeError(f"ServiceWizard error, with code {sw_resp.status_code}. \n{sw_resp.text}")
@@ -81,10 +81,12 @@ class Config:
         workspace_url = os.environ.get('WS_URL', kbase_endpoint + '/ws')
         catalog_url = os.environ.get('CATALOG_URL', kbase_endpoint + '/catalog')
         re_api_url = os.environ.get('RE_URL', kbase_endpoint + '/relation_engine_api').strip('/')
-        service_wizard_url = os.environ.get('SW_URL', kbase_endpoint + '/service_wizard').strip('/')
-        sample_service_release = os.environ.get('SAMPLE_SERVICE_RELEASE', 'dev')
-        sample_service_url = get_sample_service_url(service_wizard_url, sample_service_release)
-        config_url = os.environ['GLOBAL_CONFIG_URL']
+        sample_service_url = os.environ.get("SAMPLE_SERVICE_URL")
+        if sample_service_url is None:
+            service_wizard_url = os.environ.get('SW_URL', kbase_endpoint + '/service_wizard').strip('/')
+            sample_service_release = os.environ.get('SAMPLE_SERVICE_RELEASE', 'dev')
+            sample_service_url = _get_sample_service_url(service_wizard_url, sample_service_release)
+        config_url = os.environ.get('GLOBAL_CONFIG_URL', f"file://{os.getcwd()}/spec/config.yaml")
         global_config = _fetch_global_config(config_url)
         skip_indices = _get_comma_delimited_env('SKIP_INDICES')
         allow_indices = _get_comma_delimited_env('ALLOW_INDICES')
@@ -126,10 +128,15 @@ class Config:
             'proc_ready_path': proc_ready_path,  # File indicating the daemon is booted and ready
             'generic_shard_count': os.environ.get('GENERIC_SHARD_COUNT', 2),
             'generic_replica_count': os.environ.get('GENERIC_REPLICA_COUNT', 1),
+            'skip_types': _get_comma_delimited_env('SKIP_TYPES'),
+            'allow_types': _get_comma_delimited_env('ALLOW_TYPES'),
         }
 
     def __getitem__(self, key):
         return self._cfg[key]
+
+    def __str__(self):
+        return str(self._cfg)
 
 
 def _fetch_global_config(config_url):
@@ -142,10 +149,12 @@ def _fetch_global_config(config_url):
         return yaml.safe_load(res.read())
 
 
-def _get_comma_delimited_env(key):
+def _get_comma_delimited_env(key: str) -> Optional[set]:
     """
     Fetch a comma-delimited list of strings from an environment variable as a set.
     """
+    if key not in os.environ:
+        return None
     ret = set()
     for piece in os.environ.get(key, '').split(','):
         piece = piece.strip()

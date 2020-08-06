@@ -1,9 +1,6 @@
 #!/bin/sh
 set -e
-# To be run outside the docker container
-
+poetry check
 scripts/lint
-
-docker-compose down && docker-compose up -d
-export PYTHONPATH=.
-docker-compose exec app sh -c "PYTHONPATH=/app python -m tests.wait_for_deps && python -m unittest discover /app/tests"
+scripts/run_unit_tests
+scripts/run_integration_tests
