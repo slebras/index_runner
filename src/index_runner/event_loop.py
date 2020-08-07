@@ -1,16 +1,13 @@
 '''
 The event loop for the index runner.
 '''
-
+from confluent_kafka import Consumer, KafkaError
+from typing import Callable, Dict, Any
 import json
 import logging
 import requests
 import time
 import traceback
-
-from typing import Callable, Dict, Any
-
-from confluent_kafka import Consumer, KafkaError
 
 from src.utils.config import config
 
@@ -43,7 +40,8 @@ def start_loop(
     last_updated_minute = int(time.time() / 60)
     if not config()['global_config_url']:
         config_tag = _fetch_latest_config_tag()
-
+    # Failure count for the current offset
+    fail_count = 0
     while True:
         msg = consumer.poll(timeout=0.5)
         if msg is None:
@@ -78,12 +76,18 @@ def start_loop(
             # Move the offset for our partition
             consumer.commit()
             on_success(msg)
+            fail_count = 0
             logger.info(f"Handled {msg['evtype']} message in {time.time() - start}s")
         except Exception as err:
             logger.error(f'Error processing message: {err.__class__.__name__} {err}')
             logger.error(traceback.format_exc())
             # Save this error and message to a topic in Elasticsearch
             on_failure(msg, err)
+            if fail_count > config()['max_handler_failures']:
+                logger.info(f"Reached max failure count of {fail_count}. Moving on.")
+                consumer.commit()
+            else:
+                fail_count += 1
 
 
 # might make sense to move this into the config module
