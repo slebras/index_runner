@@ -86,6 +86,7 @@ def start_loop(
             if fail_count > config()['max_handler_failures']:
                 logger.info(f"Reached max failure count of {fail_count}. Moving on.")
                 consumer.commit()
+                fail_count = 0
             else:
                 fail_count += 1
 
