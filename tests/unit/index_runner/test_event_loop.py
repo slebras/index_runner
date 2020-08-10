@@ -14,5 +14,5 @@ def test_retry_count():
         call_count += 1
         raise RuntimeError('Test error')
     consumer.produce_test('{}')
-    start_loop(consumer, handler_raise, return_on_empty=True)
+    start_loop(consumer, handler_raise, return_on_empty=True, timeout=0)
     assert call_count == config()['max_handler_failures']

@@ -22,7 +22,8 @@ def start_loop(
         on_failure: Callable[[Message, Exception], None] = lambda msg, e: None,
         on_config_update: Callable[[], None] = lambda: None,
         logger: logging.Logger = logging.getLogger('IR'),
-        return_on_empty: bool = False):
+        return_on_empty: bool = False,
+        timeout: float = 0.5):
     """
     Run the indexer event loop.
 
@@ -42,7 +43,7 @@ def start_loop(
     # Failure count for the current offset
     fail_count = 0
     while True:
-        msg = consumer.poll(timeout=0.5)
+        msg = consumer.poll(timeout=timeout)
         if msg is None:
             logger.info('Message empty')
             if return_on_empty:
