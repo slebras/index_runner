@@ -1,16 +1,12 @@
 '''
 The event loop for the index runner.
 '''
-
+from confluent_kafka import Consumer, KafkaError
+from typing import Callable, Dict, Any
 import json
 import logging
-import requests
 import time
 import traceback
-
-from typing import Callable, Dict, Any
-
-from confluent_kafka import Consumer, KafkaError
 
 from src.utils.config import config
 
@@ -25,7 +21,9 @@ def start_loop(
         on_success: Callable[[Message], None] = lambda msg: None,
         on_failure: Callable[[Message, Exception], None] = lambda msg, e: None,
         on_config_update: Callable[[], None] = lambda: None,
-        logger: logging.Logger = logging.getLogger('IR')):
+        logger: logging.Logger = logging.getLogger('IR'),
+        return_on_empty: bool = False,
+        timeout: float = 0.5):
     """
     Run the indexer event loop.
 
@@ -38,25 +36,24 @@ def start_loop(
             exception. A noop by default.
         on_config_update: called when the configuration has been updated.
         logger: a logger to use for logging events. By default a standard logger for 'IR'.
+        return_on_empty: stop the loop when we receive an empty message. Helps with testing.
     """
     # Used for re-fetching the configuration with a throttle
     last_updated_minute = int(time.time() / 60)
-    if not config()['global_config_url']:
-        config_tag = _fetch_latest_config_tag()
-
+    # Failure count for the current offset
+    fail_count = 0
     while True:
-        msg = consumer.poll(timeout=0.5)
+        msg = consumer.poll(timeout=timeout)
         if msg is None:
+            logger.info('Message empty')
+            if return_on_empty:
+                return
             continue
         curr_min = int(time.time() / 60)
-        if not config()['global_config_url'] and curr_min > last_updated_minute:
-            # Check for configuration updates
-            latest_config_tag = _fetch_latest_config_tag()
+        if curr_min > last_updated_minute:
+            # Reload the configuration
+            config(force_reload=True)
             last_updated_minute = curr_min
-            if config_tag is not None and latest_config_tag != config_tag:
-                config(force_reload=True)
-                config_tag = latest_config_tag
-                on_config_update()
         if msg.error():
             if msg.error().code() == KafkaError._PARTITION_EOF:
                 logger.info('End of stream.')
@@ -65,46 +62,30 @@ def start_loop(
             continue
         val = msg.value().decode('utf-8')
         try:
-            msg = json.loads(val)
+            val_json = json.loads(val)
         except ValueError as err:
             logger.error(f'JSON parsing error: {err}')
             logger.error(f'Message content: {val}')
             consumer.commit()
             continue
-        logger.info(f'Received event: {msg}')
+        logger.info(f'Received event: {val_json}')
         start = time.time()
         try:
-            message_handler(msg)
-            # Move the offset for our partition
-            consumer.commit()
-            on_success(msg)
-            logger.info(f"Handled {msg['evtype']} message in {time.time() - start}s")
+            message_handler(val_json)
         except Exception as err:
             logger.error(f'Error processing message: {err.__class__.__name__} {err}')
             logger.error(traceback.format_exc())
             # Save this error and message to a topic in Elasticsearch
-            on_failure(msg, err)
-
-
-# might make sense to move this into the config module
-def _fetch_latest_config_tag():
-    """
-    Using the Github release API, check for a new version of the config.
-    https://developer.github.com/v3/repos/releases/
-    """
-    github_release_url = config()['github_release_url']
-    if config()['github_token']:
-        headers = {'Authorization': f"token {config()['github_token']}"}
-    else:
-        headers = {}
-    try:
-        resp = requests.get(url=github_release_url, headers=headers)
-    except Exception as err:
-        logging.error(f"Unable to fetch indexer config from github: {err}")
-        # Ignore any error and continue; try the fetch again later
-        return None
-    if not resp.ok:
-        logging.error(f"Unable to fetch indexer config from github: {resp.text}")
-        return None
-    data = resp.json()
-    return data['tag_name']
+            on_failure(val_json, err)
+            fail_count += 1
+            logger.info(f"We've had {fail_count} failures so far")
+            if fail_count >= config()['max_handler_failures']:
+                logger.info(f"Reached max failure count of {fail_count}. Moving on.")
+                consumer.commit()
+                fail_count = 0
+            continue
+        # Move the offset for our partition
+        consumer.commit()
+        on_success(val_json)
+        fail_count = 0
+        logger.info(f"Handled {val_json['evtype']} message in {time.time() - start}s")

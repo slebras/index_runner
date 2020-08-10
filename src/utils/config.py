@@ -130,6 +130,7 @@ class Config:
             'generic_replica_count': os.environ.get('GENERIC_REPLICA_COUNT', 1),
             'skip_types': _get_comma_delimited_env('SKIP_TYPES'),
             'allow_types': _get_comma_delimited_env('ALLOW_TYPES'),
+            'max_handler_failures': int(os.environ.get('MAX_HANDLER_FAILURES', 3)),
         }
 
     def __getitem__(self, key):
