@@ -36,6 +36,7 @@ def init_logger(logger: logging.Logger):
     logger.addHandler(stdout_handler)
     print(f'Logger and level: {logger}')
     logger.info(f'Logging to file: {log_path}')
+    return logger
 
 
 logger = init_logger(logging.getLogger('IR'))
