@@ -37,7 +37,7 @@ class MockConsumer:
             self.msg_popped = self.msg_queue.get()
             return self.msg_popped
 
-    def commit(self):
+    def commit(self, msg):
         """Our fake 'commit' is to clear out the "msg_popped" field, so we do
         not resend that message and move on to the rest of the queue."""
         self.msg_popped = None
