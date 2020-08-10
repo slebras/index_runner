@@ -37,6 +37,7 @@ def start_loop(
         on_config_update: called when the configuration has been updated.
         logger: a logger to use for logging events. By default a standard logger for 'IR'.
         return_on_empty: stop the loop when we receive an empty message. Helps with testing.
+        timeout: how long to wait polling for the next message
     """
     # Used for re-fetching the configuration with a throttle
     last_updated_minute = int(time.time() / 60)
