@@ -37,6 +37,7 @@ def start_loop(
         on_config_update: called when the configuration has been updated.
         logger: a logger to use for logging events. By default a standard logger for 'IR'.
         return_on_empty: stop the loop when we receive an empty message. Helps with testing.
+        timeout: how long to wait polling for the next message
     """
     # Used for re-fetching the configuration with a throttle
     last_updated_minute = int(time.time() / 60)
@@ -66,7 +67,7 @@ def start_loop(
         except ValueError as err:
             logger.error(f'JSON parsing error: {err}')
             logger.error(f'Message content: {val}')
-            consumer.commit()
+            consumer.commit(msg)
             continue
         logger.info(f'Received event: {val_json}')
         start = time.time()
@@ -81,11 +82,11 @@ def start_loop(
             logger.info(f"We've had {fail_count} failures so far")
             if fail_count >= config()['max_handler_failures']:
                 logger.info(f"Reached max failure count of {fail_count}. Moving on.")
-                consumer.commit()
+                consumer.commit(msg)
                 fail_count = 0
             continue
         # Move the offset for our partition
-        consumer.commit()
+        consumer.commit(msg)
         on_success(val_json)
         fail_count = 0
         logger.info(f"Handled {val_json['evtype']} message in {time.time() - start}s")

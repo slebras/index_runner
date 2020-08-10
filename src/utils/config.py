@@ -114,6 +114,7 @@ class Config:
             'elasticsearch_host': es_host,
             'elasticsearch_port': es_port,
             'elasticsearch_url': f"http://{es_host}:{es_port}",
+            'es_batch_writes': int(os.environ.get('ES_BATCH_WRITES', 10000)),
             'kafka_server': os.environ.get('KAFKA_SERVER', 'kafka'),
             'kafka_clientgroup': os.environ.get('KAFKA_CLIENTGROUP', 'search_indexer'),
             'error_index_name': os.environ.get('ERROR_INDEX_NAME', 'indexing_errors'),
