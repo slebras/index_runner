@@ -1,7 +1,8 @@
 #!/bin/sh
 set -e
+set -o xtrace
 export PYTHONPATH=.
 # Set all env vars
 export $(cat tests/test.env | xargs)
-path=${1:-"tests/unit"}
+path=${@:-"tests/unit"}
 poetry run pytest -vv $path

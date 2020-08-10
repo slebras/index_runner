@@ -34,5 +34,9 @@ def init_logger(logger: logging.Logger):
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(formatter)
     logger.addHandler(stdout_handler)
-    logger.info(f'Logger and level: {logger}')
+    print(f'Logger and level: {logger}')
     logger.info(f'Logging to file: {log_path}')
+    return logger
+
+
+logger = init_logger(logging.getLogger('IR'))
