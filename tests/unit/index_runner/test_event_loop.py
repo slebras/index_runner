@@ -1,12 +1,6 @@
-from src.utils.logger import init_logger
-import logging
-
 from src.utils.config import config
 from src.index_runner.event_loop import start_loop
 from tests.unit.index_runner.helpers import MockConsumer
-
-logger = logging.getLogger('IR')
-init_logger(logger)
 
 
 def test_retry_count():

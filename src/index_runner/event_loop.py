@@ -43,7 +43,6 @@ def start_loop(
     fail_count = 0
     while True:
         msg = consumer.poll(timeout=0.5)
-        logger.info('Received message.')
         if msg is None:
             logger.info('Message empty')
             if return_on_empty:
