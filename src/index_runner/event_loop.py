@@ -46,7 +46,6 @@ def start_loop(
     while True:
         msg = consumer.poll(timeout=timeout)
         if msg is None:
-            logger.info('Message empty')
             if return_on_empty:
                 return
             continue
