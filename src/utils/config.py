@@ -114,6 +114,7 @@ class Config:
             'elasticsearch_host': es_host,
             'elasticsearch_port': es_port,
             'elasticsearch_url': f"http://{es_host}:{es_port}",
+            'es_batch_writes': int(os.environ.get('ES_BATCH_WRITES', 10000)),
             'kafka_server': os.environ.get('KAFKA_SERVER', 'kafka'),
             'kafka_clientgroup': os.environ.get('KAFKA_CLIENTGROUP', 'search_indexer'),
             'error_index_name': os.environ.get('ERROR_INDEX_NAME', 'indexing_errors'),
@@ -130,6 +131,7 @@ class Config:
             'generic_replica_count': os.environ.get('GENERIC_REPLICA_COUNT', 1),
             'skip_types': _get_comma_delimited_env('SKIP_TYPES'),
             'allow_types': _get_comma_delimited_env('ALLOW_TYPES'),
+            'max_handler_failures': int(os.environ.get('MAX_HANDLER_FAILURES', 3)),
         }
 
     def __getitem__(self, key):

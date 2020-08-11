@@ -23,7 +23,6 @@ _IDX = _PREFIX + ".*"
 _GLOBAL_MAPPINGS = config()['global']['global_mappings']
 _HEADERS = {"Content-Type": "application/json"}
 _MAPPINGS = config()['global']['mappings']
-_BATCH_WRITE_MAX = 1000
 
 logger = logging.getLogger('IR')
 
@@ -69,7 +68,7 @@ def run_indexer(obj, ws_info, msg):
         action = data['_action']
         if action == 'index':
             batch_writes.append(data)
-            if len(batch_writes) >= _BATCH_WRITE_MAX:
+            if len(batch_writes) >= config()['es_batch_writes']:
                 count = len(batch_writes)
                 _write_to_elastic(batch_writes)
                 logger.info(f'Indexing of {count} docs on ES took {time.time() - start}s')
