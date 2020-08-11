@@ -10,13 +10,13 @@ import os
 
 _NAMESPACE = "WS"
 _VER_NAMESPACE = "WSVER"
-_AMA_INDEX_VERSION = 1
-_AMA_FEATURES_INDEX_VERSION = 1
+_AMA_INDEX_VERSION = 2
+_AMA_FEATURES_INDEX_VERSION = 2
 _AMA_INDEX_NAME = "annotated_metagenome_assembly_" + str(_AMA_INDEX_VERSION)
 _AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features_" + str(_AMA_FEATURES_INDEX_VERSION)
 # version indices
-_VER_AMA_INDEX_VERSION = 1
-_VER_AMA_FEATURES_INDEX_VERSION = 1
+_VER_AMA_INDEX_VERSION = 2
+_VER_AMA_FEATURES_INDEX_VERSION = 2
 _VER_AMA_INDEX_NAME = "annotated_metagenome_assembly_version_" + str(_VER_AMA_INDEX_VERSION)
 _VER_AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features_version_" + str(_VER_AMA_FEATURES_INDEX_VERSION)
 

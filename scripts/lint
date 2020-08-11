@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+# To be run outside docker
+
+poetry run flake8
+poetry run mypy --ignore-missing-imports src/**/*.py
+poetry run bandit -r src/
+poetry run python -m src.utils.validate_spec

@@ -217,7 +217,7 @@ class TestIndexers(unittest.TestCase):
         check_against = [{
             '_action': 'index',
             'id': 'WS::15:44',
-            'index': 'reads_1',
+            'index': 'reads_2',
             'doc': {
                 'phred_type': None,
                 'gc_content': None,
@@ -235,7 +235,7 @@ class TestIndexers(unittest.TestCase):
         check_against = [{
             '_action': 'index',
             'id': 'WS::39794:4',
-            'index': 'assembly_1',
+            'index': 'assembly_2',
             'doc': {
                 'assembly_name': None,
                 'mean_contig_length': 50195.5,
@@ -314,7 +314,7 @@ class TestIndexers(unittest.TestCase):
     def test_taxon_indexer(self):
         check_against = [{
             '_action': 'index',
-            'index': 'taxon_1',
+            'index': 'taxon_2',
             'id': 'WS::39794:9',
             'doc': {
                 "scientific_name": "Escherichia coli",

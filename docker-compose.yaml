@@ -21,13 +21,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${PWD}:/app
       - ${PWD}/scratch:/scratch
-    environment:
-      - KBASE_ENDPOINT=http://mock_kbase_services:5000/
-      - DEVELOPMENT=1
-      - PYTHONUNBUFFERED=true
-      - RE_URL=http://re_api:5000
-      - WORKSPACE_TOKEN=valid_admin_token
-      - RE_API_TOKEN=valid_admin_token
+    env_file: tests/test.env
 
   kafka:
     image: confluentinc/cp-kafka:5.0.0
@@ -62,7 +56,7 @@ services:
     ports:
       - "127.0.0.1:5001:5000"
     volumes:
-      - ${PWD}/src/test/mock_kbase_services:/config
+      - ${PWD}/tests/mock_kbase_services:/config
 
   elasticsearch:
     image: elasticsearch:7.5.0
@@ -86,7 +80,6 @@ services:
       - KBASE_AUTH_URL=http://mock_kbase_services:5000/auth
       - KBASE_WORKSPACE_URL=http://mock_kbase_services:5000/ws
       - PYTHONUNBUFFERED=true
-      - SPEC_RELEASE_PATH=/app/src/test/spec_release/spec.tar.gz
       - DB_URL=http://arangodb:8529
       - DB_USER=root
 

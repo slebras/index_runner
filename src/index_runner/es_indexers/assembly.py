@@ -1,7 +1,7 @@
 from src.index_runner.es_indexers.indexer_utils import mean
 
 _NAMESPACE = "WS"
-_ASSEMBLY_INDEX_VERSION = 1
+_ASSEMBLY_INDEX_VERSION = 2
 _ASSEMBLY_INDEX_NAME = 'assembly_' + str(_ASSEMBLY_INDEX_VERSION)
 
 

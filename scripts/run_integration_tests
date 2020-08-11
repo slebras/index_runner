@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+docker-compose down && docker-compose up -d
+docker-compose exec app sh -c "PYTHONPATH=/app python -m tests.wait_for_deps && python -m unittest discover /app/tests"

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -e
+
+# Remove everything in the docker-compose cluster and rebuild
+
+docker-compose down -v --remove-orphans --rmi all
+docker-compose build --no-cache
