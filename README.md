@@ -22,6 +22,12 @@ Run the tests (servers need not be running, and will be shut down if they are):
 scripts/run_tests
 ```
 
+Other test commands:
+
+* Run unit tests only (fast): `scripts/run_unit_tests`
+* Run integration tests only: `scripts/run_integration_tests`
+* Run linters only: `scripts/lint`
+
 Note that `docker-compose run`, and therefore `scripts/run_tests`, will only
 build a Docker image for the application if no image exists, and therefore
 `Dockerfile` changes will not be included in any tests. To include `Dockerfile`

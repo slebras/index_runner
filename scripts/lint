@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+set -o xtrace
 # To be run outside docker
 
 poetry run flake8
