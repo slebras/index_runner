@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Consumer commits using the current message offset/partition
 - Docs updated
 
+### Fixed
+- Fixed permissions errors for sample sets
+
 ## [1.5.7] - 2020-07-24
 ### Added
 - Sample and SampleSet indexers

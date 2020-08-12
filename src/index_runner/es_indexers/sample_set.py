@@ -23,7 +23,8 @@ def _get_sample(sample_info):
     """
     headers = {"Authorization": config()['ws_token']}
     params = {
-        "id": sample_info['id']
+        "id": sample_info['id'],
+        "as_admin": True
     }
     if sample_info.get('version'):
         params['version'] = sample_info['version']
