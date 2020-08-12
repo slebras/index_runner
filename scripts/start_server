@@ -2,6 +2,7 @@
 set -e
 set -o xtrace
 # To be run within the docker container
+# This is the entrypoint script for the Dockerfile
 
 export PYTHONPATH=/app
 cd /app
