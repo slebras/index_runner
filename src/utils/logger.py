@@ -10,9 +10,7 @@ import sys
 
 def init_logger(logger: logging.Logger):
     """
-    Initialize log settings. Mutates the `logger` object.
-    Write to stdout and to a local rotating file.
-    Logs to tmp/app.log
+    Initialize log settings. Mutates the `logger` object. Writes to stdout.
     """
     # Set the log level
     level = os.environ.get('LOGLEVEL', 'DEBUG').upper()
@@ -23,19 +21,11 @@ def init_logger(logger: logging.Logger):
     fmt = "%(asctime)s %(levelname)-8s %(message)s (%(filename)s:%(lineno)s)"
     time_fmt = "%Y-%m-%d %H:%M:%S"
     formatter = logging.Formatter(fmt, time_fmt)
-    # File handler
-    os.makedirs('tmp', exist_ok=True)
-    # 1mb max log file with 2 backups
-    log_path = 'tmp/app.log'
-    file_handler = logging.handlers.RotatingFileHandler(log_path, maxBytes=1048576, backupCount=2)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
     # Stdout
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(formatter)
     logger.addHandler(stdout_handler)
     print(f'Logger and level: {logger}')
-    logger.info(f'Logging to file: {log_path}')
     return logger
 
 
