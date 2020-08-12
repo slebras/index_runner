@@ -4,7 +4,7 @@ This is a background service that listens to events from the KBase Workspace
 and automatically generates graph data and search indexes to enrich the
 workspace object data.
 
-It consumes event from a Kafka topic and sends data into ArangoDB and
+It consumes events from a Kafka topic and sends data into ArangoDB and
 Elasticsearch. It is designed to have the service replicated in Rancher. Be
 sure to partition the topic to at least the number of running workers.
 
@@ -19,18 +19,18 @@ docker-compose up
 Run the tests (servers need not be running, and will be shut down if they are):
 
 ```sh
-make test
+scripts/run_tests
 ```
 
-Note that `docker-compose run`, and therefore `make test`, will only build a Docker image for the
-application if no image exists, and therefore `Dockerfile` changes will not be included in any
-tests. To include `Dockerfile` changes in tests, do one of the following, in order of
+Note that `docker-compose run`, and therefore `scripts/run_tests`, will only
+build a Docker image for the application if no image exists, and therefore
+`Dockerfile` changes will not be included in any tests. To include `Dockerfile`
+changes in tests, do one of the following, in order of
 destructiveness:
 
 1. `docker-compose build` will build any images with changed `Dockerfile`s using the build cache.
-2. Delete the `index_runner_deluxe_app` image. `make test` will then rebuild the application image
-   from scratch.
-3. `make reset`. This will remove all test images and rebuild them from scratch.
+2. `docker-compose build --no-cache app` will rebuild the application image from scratch.
+3. `scripts/docker_reset`. This will remove all test images and rebuild them from scratch.
 
 ## Config
 
@@ -57,6 +57,10 @@ You can set the following env vars:
 * `ELASTICSEARCH_INDEX_PREFIX` - Name of the prefix to use for all indexes (defaults to "search2")
 * `KAFKA_WORKSPACE_TOPIC` - Name of the topic to consume workspace events from (defaults to "workspaceevents")
 * `KAFKA_ADMIN_TOPIC` - Name of the topic to consume indexer admin events from (defaults to "indexeradminevents")
+* `ALLOW_TYPES` - optional comma-delimited strings - list of KBase Workspace types that we want to whitelist when indexing into ES and importing into RE
+* `SKIP_TYPES` - optional comma-delimited strings - list of KBase Worksapce types that we want to blacklist when indexing into ES and importing into RE
+* `MAX_HANDLER_FAILURES` - optional int - Number of times our consumer can fail processing a message before it commits the offset and moves on
+
 
 ## Admininstration
 
@@ -124,22 +128,14 @@ indexer_admin err_upas
 _Index all objects of a certain type_
 
 ```sh
-indexer_admin reindex_type --type "KBaseNarrative.Narrative"
+indexer_admin reindex_type --type "KBaseNarrative.Narrative-4.0"
 ```
 
 ### Deployment
 
-Build the image:
+First, increment the versions found in `VERSION` and in `pyproject.toml`.
 
-```sh
-IMAGE_NAME=kbase/index_runner2:{VERSION} sh hooks/build
-```
-
-Push to docker hub
-
-```sh
-docker push kbase/index_runner2:{VERSION}
-```
+Then, build the image and push to docker hub with `scripts/docker_deploy`.
 
 ### Project anatomy
 
@@ -149,17 +145,25 @@ docker push kbase/index_runner2:{VERSION}
 * The entrypoint for Arango imports is in `./src/index_runner/releng_importer.py`
   * Type-specific RE importers are found in `./src/index_runner/releng`
 
-## KBase Relation Engine/Knowledge Engine Stack
+## How to add a new indexer
 
-* [Index Runner](https://github.com/kbaseIncubator/index_runner_deluxe) - Kafka worker to construct indexes and documents and save them to Elasticsearch and Arango.
-* [Search API](https://github.com/kbaseIncubator/search_api_deluxe) - HTTP API for performing search queries.
-* [Search Config](https://github.com/kbaseIncubator/search_config) - Global search configuration.
-* [Relation Engine API](https://github.com/kbase/relation_engine_api) - HTTP API for querying the relation engine
-* [Relation Engine Spec](https://github.com/kbase/relation_engine_spec) -  specifications for types, queries, views, etc in the graph database
+* In `spec/config.yaml`:
+  * Create an entry in `ws_type_to_indices` mapping the KBase type name to an index's alias name
+  * Create an entry under `ws_subobjects`, if necessary, indicating that you are indexing additional sub-indexes (like features in a genome)
+  * Create an entry under `latest_versions`, mapping an unversioned alias name to a versioned index name
+  * Create an entry under `aliases` for the actual alias-to-index mapping
+  * Create an entry under `mappings` with a versioned index name corresponding to the thing you are indexing. Check if you want to use any `global_mappings` here, which serve as type mapping mix-ins, pulled from the `global_mappings` section above
+* Create a new module under `src/index_runner/es_indexers`
+  * Add some top-level constants, such as index name, version, and prefix. If you are indexing a workspace object, use the "WS" namespace
+  * Add a function that receives the workspace object data, workspace info, and the original kafka message data
+  * This function should generate (with `yield`) new index documents
+  * `yield` a dictionary with keys for `"index"` (index name), `"_action"` (should be "index" to create/update a document), and `"doc"` with the actual document data.
+* Add your module's indexing function to the `_INDEXER_DIRECTORY` variable inside `src/index_runner/es_indexers/main.py`
 
 ## Creating an SDK indexer application
 
-The index runner has the ability to use SDK modules for indexing. Modules should use the following as input:
+The index runner has the ability to use SDK modules for indexing. Modules
+should use the following as input:
 
 ```
 typedef structure {
@@ -204,7 +208,11 @@ NOTE: Before you can use an SDK module as an indexer, it must be registered in t
 
 ### Registering your SDK indexer module
 
-To register your application with the index runner, you must open a pull request against the [search config repo](https://github.com/kbaseIncubator/search_config). In the `config.yaml` file, the `sdk_indexer_apps` section is a mapping from KBase object types (excluding version) to their appropriate SDK module and method.
+Add your entry in `spec/config.yaml` under the `sdk_indexer_apps` key.
+
+* `sdk_app` is the name of your SDK module
+* `sdk_func` is the name of your module's indexer method
+* `sdk_obj_index` sub-object index name
 
 Example:
 
@@ -215,8 +223,12 @@ Example:
     sub_obj_index: attribute_mapping # required for indexers that have subobjects
 ```
 
-NOTE: `attribute_mapping` is the string name of the sub_obj_index for `KBaseMatrices.MetaboliteMatrix`.
+NOTE: `attribute_mapping` is the string name of the sub_obj_index for
+`KBaseMatrices.MetaboliteMatrix`.
 
-You may also specify `sdk_version`, which corresponds to the version of the SDK module you would like to use.
+You may also specify `sdk_version`, which corresponds to the version of the SDK
+module you would like to use.
 
-An Elasticsearch type mapping is also required. This can be added to the `mappings` field in the config. Several examples are available in the `config.yaml` file.
+An Elasticsearch type mapping is also required. This can be added to the
+`mappings` field in the config. Several examples are available in the
+`spec/config.yaml` file.
