@@ -194,6 +194,8 @@ mappings:
           desc: {type: text, copy_to: agg_fields}
           cell_type: {type: keyword}
       total_cells: {type: short}
+      static_narrative_ref: {type: keyword}
+      static_narrative_saved: {type: date}
 
   "reads_1":
     global_mappings: [ws_auth, ws_object]
