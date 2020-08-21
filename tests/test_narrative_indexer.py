@@ -44,7 +44,7 @@ class TestIndexers(unittest.TestCase):
             self.assertTrue(obj['obj_type'])
         # Static narrative fields
         self.assertEqual(doc['static_narrative_saved'], '1597187531703')
-        self.assertEqual(doc['static_narrative_ref'], '/33500/56/')
+        self.assertEqual(doc['static_narrative_ref'], '/33192/56/')
 
     def test_temporary_narr(self):
         """Test that temporary narratives get flagged."""
