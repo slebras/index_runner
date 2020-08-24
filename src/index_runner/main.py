@@ -22,6 +22,7 @@ import src.index_runner.es_indexer as es_indexer
 import src.index_runner.releng_importer as releng_importer
 from src.utils.config import config
 from src.utils.service_utils import wait_for_dependencies
+from src.utils.ws_utils import get_obj_type
 
 logger = logging.getLogger('IR')
 ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
@@ -33,16 +34,16 @@ def _handle_msg(msg):
         msg = f"Missing 'evtype' in event: {msg}"
         logger.error(msg)
         raise RuntimeError(msg)
-    objtype = msg.get('objtype')
+    objtype = get_obj_type(msg)
     if objtype is not None and isinstance(objtype, str) and len(objtype) > 0:
         # Check the type against the configured whitelist or blacklist, if present
         whitelist = config()['allow_types']
         blacklist = config()['skip_types']
         if whitelist is not None and objtype not in whitelist:
-            logger.warning(f"Type {msg['objtype']} is not in ALLOW_TYPES, skipping")
+            logger.warning(f"Type {objtype} is not in ALLOW_TYPES, skipping")
             return
         if blacklist is not None and objtype in blacklist:
-            logger.warning(f"Type {msg['objtype']} is in SKIP_TYPES, skipping")
+            logger.warning(f"Type {objtype} is in SKIP_TYPES, skipping")
             return
     if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
         obj = _fetch_obj_data(msg)
