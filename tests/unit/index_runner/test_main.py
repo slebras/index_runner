@@ -52,6 +52,9 @@ def test_handle_msg_allow_types2():
 
 @responses.activate
 def test_handle_msg_no_objtype():
+    """Valid test path for filtering by type when no `objtype` field is
+    provided, and we fetch the type from the workspace based on the object
+    reference."""
     objtype = "TypeModule.TypeName-1.2"
     # Mock response
     mock_resp = {
