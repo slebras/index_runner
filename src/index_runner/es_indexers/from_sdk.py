@@ -1,16 +1,14 @@
-import os
-import uuid
-import json
-import shutil
-import docker
-import requests
-import logging
 from configparser import ConfigParser
+import docker
+import json
+import os
+import requests
+import shutil
+import uuid
 
-from src.utils.config import config
 from src.utils import ws_utils
-
-logger = logging.getLogger('IR')
+from src.utils.config import config
+from src.utils.logger import logger
 
 _DOCKER = docker.from_env()
 _SCRATCH = "/scratch"

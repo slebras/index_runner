@@ -4,7 +4,6 @@ Relation engine API client functions.
 import json
 import re
 import requests
-import logging
 
 from src.utils.config import config
 
@@ -13,8 +12,6 @@ from src.utils.config import config
 MAX_ADB_INTEGER = 2**53 - 1
 
 _ADB_KEY_DISALLOWED_CHARS_REGEX = re.compile(r"[^a-zA-Z0-9_\-:\.@\(\)\+,=;\$!\*'%]")
-
-logger = logging.getLogger('IR')
 
 
 # should this live somewhere else?

@@ -1,27 +1,23 @@
 """
 Indexer logic based on type
 """
-import logging
-from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 
-from src.utils.config import config
-from src.utils import ws_utils
 from src.index_runner.es_indexers import indexer_utils
-from src.index_runner.es_indexers.narrative import index_narrative
-from src.index_runner.es_indexers.reads import index_reads
-from src.index_runner.es_indexers.genome import index_genome
-from src.index_runner.es_indexers.assembly import index_assembly
-from src.index_runner.es_indexers.tree import index_tree
-from src.index_runner.es_indexers.taxon import index_taxon
-from src.index_runner.es_indexers.pangenome import index_pangenome
-from src.index_runner.es_indexers.from_sdk import index_from_sdk
 from src.index_runner.es_indexers.annotated_metagenome_assembly import index_annotated_metagenome_assembly
+from src.index_runner.es_indexers.assembly import index_assembly
+from src.index_runner.es_indexers.from_sdk import index_from_sdk
+from src.index_runner.es_indexers.genome import index_genome
+from src.index_runner.es_indexers.narrative import index_narrative
+from src.index_runner.es_indexers.pangenome import index_pangenome
+from src.index_runner.es_indexers.reads import index_reads
 from src.index_runner.es_indexers.sample_set import index_sample_set
+from src.index_runner.es_indexers.taxon import index_taxon
+from src.index_runner.es_indexers.tree import index_tree
+from src.utils import ws_utils
+from src.utils.config import config
 from src.utils.get_upa_from_msg import get_upa_from_msg_data
-
-logger = logging.getLogger('IR')
-ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+from src.utils.logger import logger
 
 
 def index_obj(obj_data, ws_info, msg_data):
@@ -47,7 +43,7 @@ def index_obj(obj_data, ws_info, msg_data):
     # Get the info of the first object to get the creation date of the object.
     upa = get_upa_from_msg_data(msg_data)
     try:
-        obj_data_v1 = ws_client.admin_req('getObjects', {
+        obj_data_v1 = config()['ws_client'].admin_req('getObjects', {
             'objects': [{'ref': upa + '/1'}],
             'no_data': 1
         })

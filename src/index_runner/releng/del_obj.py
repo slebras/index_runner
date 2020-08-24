@@ -1,11 +1,8 @@
 """
 Take object info from the workspace and delete all associated vertices and edges into Arangodb.
 """
-import logging
-
+import src.utils.logger as logger
 import src.utils.re_client as re_client
-
-logger = logging.getLogger('IR')
 
 _OBJ_COLL_NAME = 'ws_object'
 _OBJ_VER_COLL_NAME = 'ws_object_version'

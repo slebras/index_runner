@@ -1,4 +1,4 @@
-import responses
+from typing import Optional
 
 from src.utils.config import config
 
@@ -14,7 +14,7 @@ def get_type_pieces(type_str):
     return (type_module, type_name, type_version)
 
 
-def get_obj_type(msg: dict) -> str:
+def get_obj_type(msg: dict) -> Optional[str]:
     """
     Get the versioned workspace type from a kafka message.
     """
@@ -25,6 +25,7 @@ def get_obj_type(msg: dict) -> str:
     wsid = msg.get('wsid')
     if objid is not None and wsid is not None:
         info = config()['ws_client'].admin_req('get_obj_info3', {
-            'objects': [{'ref': f"{objid}/{wsid}"}]
+            'objects': [{'ref': f"{wsid}/{objid}"}]
         })
         return info['infos'][0][2]
+    return None

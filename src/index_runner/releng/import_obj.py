@@ -1,21 +1,17 @@
 """
 Take object info from the workspace and import various vertices and edges into Arangodb.
 """
-import logging
-from kbase_workspace_client import WorkspaceClient
-
 from src.index_runner.releng import genome
 from src.utils.ws_utils import get_type_pieces
 from src.utils.re_client import save
 from src.utils.config import config
+from src.utils.logger import logger
 from src.utils.formatting import (
     ts_to_epoch,
     get_method_key_from_prov,
     get_module_key_from_prov,
     sanitize_arangodb_key
 )
-
-logger = logging.getLogger('IR')
 
 # need version specific processors here? Or expect the processor to handle all versions?
 # could also have an includes field to reduce the amount of data fetched from the ws
@@ -55,8 +51,7 @@ def import_object(obj, ws_info):
         # this could use a lot of memory. There's a bunch of code in the workspace for
         # dealing with this situation, but that'd have to be ported to Python and it's pretty
         # complex, so YAGNI for now.
-        ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-        resp = ws_client.admin_req('getObjects', {
+        resp = config()['ws_client'].admin_req('getObjects', {
             'objects': [{
                 'ref': obj_ver_key.replace(':', '/'),
             }]

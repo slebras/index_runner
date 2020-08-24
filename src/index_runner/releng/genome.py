@@ -7,17 +7,14 @@ import time
 from collections import defaultdict as _defaultdict
 import datetime as _datetime
 import itertools as _itertools
-import logging
-from kbase_workspace_client import WorkspaceClient
 
 from src.utils.config import config
+from src.utils.logger import logger
 from src.utils.re_client import stored_query as _stored_query
 from src.utils.re_client import save as _save
 # may want to html encode vs replace with _ to avoid collisions? Seems really improbable
 from src.utils.re_client import clean_key as _clean_key
 from src.utils.re_client import MAX_ADB_INTEGER as _MAX_ADB_INTEGER
-
-logger = logging.getLogger('IR')
 
 _OBJ_VER_COLL = "ws_object_version"
 _TAX_VER_COLL = "ncbi_taxon"
@@ -54,8 +51,7 @@ def _generate_taxon_edge(obj_ver_key, obj_data):
     if 'taxon_ref' not in obj_data['data']:
         logger.info('No taxon ref in object; skipping..')
         return
-    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-    result = ws_client.admin_req('getObjects', {
+    result = config()['ws_client'].admin_req('getObjects', {
         'objects': [{'ref': obj_data['data']['taxon_ref']}]
     })
     taxonomy_id = result['data'][0]['data']['taxonomy_id']

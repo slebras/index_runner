@@ -1,5 +1,4 @@
 from confluent_kafka import Producer
-from kbase_workspace_client import WorkspaceClient
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 import argparse
 import json
@@ -131,7 +130,6 @@ def _reindex_ws_type(args):
     # - Iterate over all workspaces
     #   - For each workspace, list objects
     #   - For each obj matching args.type, produce a reindex event
-    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
     evtype = 'INDEX_NONEXISTENT'
     if args.overwrite:
         evtype = 'REINDEX'
@@ -139,7 +137,7 @@ def _reindex_ws_type(args):
     for wsid in range(args.start, args.stop + 1):
         wsid = int(wsid)
         try:
-            infos = ws_client.generate_obj_infos(wsid, admin=True)
+            infos = config()['ws_client'].generate_obj_infos(wsid, admin=True)
             for obj_info in infos:
                 obj_type = obj_info[2]
                 if obj_type == args.type:

@@ -2,16 +2,12 @@
 Helper methods for recieving and sending messages from and to Kafka.
 '''
 
-import json
-import logging
-
-from typing import List
-
 from confluent_kafka import Consumer, Producer
+from typing import List
+import json
 
+from src.utils.logger import logger
 from src.utils.config import config
-
-logger = logging.getLogger('src.utils.kafka')
 
 _KAFKA_PRODUCE_RETRIES = 5
 

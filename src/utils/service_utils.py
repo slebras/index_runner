@@ -3,10 +3,9 @@ Utilites for dealing with the various services the index runner depends on.
 """
 import time
 import requests
-import logging
-from src.utils.config import config
 
-logger = logging.getLogger('IR')
+from src.utils.config import config
+from src.utils.logger import logger
 
 
 def wait_for_dependencies(elasticsearch=True, re_api=True, timeout=60):

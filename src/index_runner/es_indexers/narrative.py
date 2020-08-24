@@ -1,14 +1,10 @@
 import sys
 from bs4 import BeautifulSoup
 from markdown2 import Markdown
-import logging
-from kbase_workspace_client import WorkspaceClient
 
-from src.utils.get_path import get_path
-from src.utils.formatting import ts_to_epoch
 from src.utils.config import config
-
-logger = logging.getLogger('IR')
+from src.utils.formatting import ts_to_epoch
+from src.utils.get_path import get_path
 
 _NAMESPACE = "WS"
 _MARKDOWNER = Markdown()
@@ -143,8 +139,7 @@ def _fetch_objects_in_workspace(ws_id):
     Args:
         ws_id - a workspace id
     """
-    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-    obj_infos = ws_client.generate_obj_infos(ws_id, admin=True)
+    obj_infos = config()['ws_client'].generate_obj_infos(ws_id, admin=True)
     return [
         {"name": info[1], "obj_type": info[2]}
         for info in obj_infos

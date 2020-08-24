@@ -3,16 +3,12 @@ Relation Engine (ArangoDB) data importer.
 
 Writes data to arangodb from workspace update events.
 """
-import logging
 import time
 
 from src.utils.config import config
+from src.utils.logger import logger
 from src.index_runner.releng.import_obj import import_object
 from src.index_runner.releng.del_obj import delete_object
-
-logger = logging.getLogger('IR')
-
-# Initialize configuration data
 
 
 def run_importer(obj, ws_info, msg):
