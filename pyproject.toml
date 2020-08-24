@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "index_runner"
-version = "1.8.1"
+version = "0.0.1"
 description = "Receives KBase system events and imports/indexes on Elasticsearch and Arango"
 authors = ["KBase Team <info@kbase.us>"]
 license = "MIT"
