@@ -59,6 +59,8 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             'cells': index_cells,
             'creator': creator,
             'total_cells': len(raw_cells),
+            'static_narrative_saved': ws_metadata.get('static_narrative_saved'),
+            'static_narrative_ref': ws_metadata.get('static_narrative'),
         },
         'index': _NARRATIVE_INDEX_NAME,
         'id': f'{_NAMESPACE}::{ws_id}:{obj_id}',
