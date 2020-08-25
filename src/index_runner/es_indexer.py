@@ -5,9 +5,9 @@ Takes workspace kafka event data and generates new Elasticsearch index upates
 import json
 import requests
 import time
-import logging
 from enum import Enum
 
+from src.utils.logger import logger
 from src.utils.config import config
 from src.utils.ws_utils import get_type_pieces
 from src.index_runner.es_indexers.main import index_obj
@@ -23,8 +23,6 @@ _IDX = _PREFIX + ".*"
 _GLOBAL_MAPPINGS = config()['global']['global_mappings']
 _HEADERS = {"Content-Type": "application/json"}
 _MAPPINGS = config()['global']['mappings']
-
-logger = logging.getLogger('IR')
 
 
 def init_indexes():

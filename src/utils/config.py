@@ -1,13 +1,14 @@
+from kbase_workspace_client import WorkspaceClient
 from typing import Optional
 import json
-import logging
 import os
 import requests
 import time
 import urllib.request
 import yaml
 
-logger = logging.getLogger('IR')
+from src.utils.logger import logger
+
 _FETCH_CONFIG_RETRIES = 5
 
 # Defines a process-wide instance of the config.
@@ -74,6 +75,7 @@ class Config:
         for req in reqs:
             if not os.environ.get(req):
                 raise RuntimeError(f'{req} env var is not set.')
+        ws_token = os.environ['WORKSPACE_TOKEN']
         es_host = os.environ.get("ELASTICSEARCH_HOST", 'elasticsearch')
         es_port = os.environ.get("ELASTICSEARCH_PORT", 9200)
         kbase_endpoint = os.environ.get(
@@ -103,7 +105,7 @@ class Config:
             'allow_indices': allow_indices,
             'global': global_config,
             'global_config_url': config_url,
-            'ws_token': os.environ['WORKSPACE_TOKEN'],
+            'ws_token': ws_token,
             'mount_dir': os.environ.get('MOUNT_DIR', os.getcwd()),
             'kbase_endpoint': kbase_endpoint,
             'catalog_url': catalog_url,
@@ -132,6 +134,7 @@ class Config:
             'skip_types': _get_comma_delimited_env('SKIP_TYPES'),
             'allow_types': _get_comma_delimited_env('ALLOW_TYPES'),
             'max_handler_failures': int(os.environ.get('MAX_HANDLER_FAILURES', 3)),
+            'ws_client': WorkspaceClient(url=kbase_endpoint, token=ws_token),
         }
 
     def __getitem__(self, key):

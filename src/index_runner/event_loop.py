@@ -4,11 +4,11 @@ The event loop for the index runner.
 from confluent_kafka import Consumer, KafkaError
 from typing import Callable, Dict, Any
 import json
-import logging
 import time
 import traceback
 
 from src.utils.config import config
+from src.utils.logger import logger
 
 Message = Dict[str, Any]
 
@@ -21,7 +21,6 @@ def start_loop(
         on_success: Callable[[Message], None] = lambda msg: None,
         on_failure: Callable[[Message, Exception], None] = lambda msg, e: None,
         on_config_update: Callable[[], None] = lambda: None,
-        logger: logging.Logger = logging.getLogger('IR'),
         return_on_empty: bool = False,
         timeout: float = 0.5):
     """

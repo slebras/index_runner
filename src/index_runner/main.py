@@ -3,28 +3,26 @@ Main entrypoint for the app and the Kafka topic consumer.
 Sends work to the es_indexer or the releng_importer.
 Generally handles every message synchronously. Duplicate the service to get more parallelism.
 """
+from kbase_workspace_client.exceptions import WorkspaceResponseError
+import atexit
+import hashlib
 import logging
 import json
-import time
 import os
-import atexit
 import signal
-import hashlib
-from kbase_workspace_client import WorkspaceClient
-from kbase_workspace_client.exceptions import WorkspaceResponseError
+import time
 
 from src.index_runner import event_loop
-import src.utils.kafka as kafka
+from src.utils.config import config
 from src.utils.logger import init_logger
-import src.utils.es_utils as es_utils
-import src.utils.re_client as re_client
+from src.utils.logger import logger
+from src.utils.service_utils import wait_for_dependencies
+from src.utils.ws_utils import get_obj_type
 import src.index_runner.es_indexer as es_indexer
 import src.index_runner.releng_importer as releng_importer
-from src.utils.config import config
-from src.utils.service_utils import wait_for_dependencies
-
-logger = logging.getLogger('IR')
-ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+import src.utils.es_utils as es_utils
+import src.utils.kafka as kafka
+import src.utils.re_client as re_client
 
 
 def _handle_msg(msg):
@@ -33,16 +31,16 @@ def _handle_msg(msg):
         msg = f"Missing 'evtype' in event: {msg}"
         logger.error(msg)
         raise RuntimeError(msg)
-    objtype = msg.get('objtype')
+    objtype = get_obj_type(msg)
     if objtype is not None and isinstance(objtype, str) and len(objtype) > 0:
         # Check the type against the configured whitelist or blacklist, if present
         whitelist = config()['allow_types']
         blacklist = config()['skip_types']
         if whitelist is not None and objtype not in whitelist:
-            logger.warning(f"Type {msg['objtype']} is not in ALLOW_TYPES, skipping")
+            logger.warning(f"Type {objtype} is not in ALLOW_TYPES, skipping")
             return
         if blacklist is not None and objtype in blacklist:
-            logger.warning(f"Type {msg['objtype']} is in SKIP_TYPES, skipping")
+            logger.warning(f"Type {objtype} is in SKIP_TYPES, skipping")
             return
     if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
         obj = _fetch_obj_data(msg)
@@ -52,13 +50,13 @@ def _handle_msg(msg):
         es_indexer.run_indexer(obj, ws_info, msg)
     elif event_type == 'REINDEX_WS' or event_type == 'CLONE_WORKSPACE':
         # Reindex all objects in a workspace, overwriting existing data
-        for objinfo in ws_client.generate_obj_infos(msg['wsid'], admin=True):
+        for objinfo in config()['ws_client'].generate_obj_infos(msg['wsid'], admin=True):
             objid = objinfo[0]
             kafka.produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid},
                           callback=_delivery_report)
     elif event_type == 'INDEX_NONEXISTENT_WS':
         # Reindex all objects in a workspace without overwriting any existing data
-        for objinfo in ws_client.generate_obj_infos(msg['wsid'], admin=True):
+        for objinfo in config()['ws_client'].generate_obj_infos(msg['wsid'], admin=True):
             objid = objinfo[0]
             kafka.produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid},
                           callback=_delivery_report)
@@ -122,7 +120,7 @@ def _fetch_obj_data(msg):
     if msg.get('ver'):
         obj_ref += f"/{msg['ver']}"
     try:
-        obj_data = ws_client.admin_req('getObjects', {
+        obj_data = config()['ws_client'].admin_req('getObjects', {
             'objects': [{'ref': obj_ref}]
         })
     except WorkspaceResponseError as err:
@@ -145,7 +143,7 @@ def _fetch_ws_info(msg):
     if not msg.get('wsid'):
         raise RuntimeError(f'Cannot get workspace info from msg: {msg}')
     try:
-        ws_info = ws_client.admin_req('getWorkspaceInfo', {
+        ws_info = config()['ws_client'].admin_req('getWorkspaceInfo', {
             'id': msg['wsid']
         })
     except WorkspaceResponseError as err:
@@ -197,8 +195,7 @@ def main():
         _handle_msg,
         on_success=_log_msg_to_elastic,
         on_failure=_log_err_to_es,
-        on_config_update=es_indexer.reload_aliases,
-        logger=logger)
+        on_config_update=es_indexer.reload_aliases)
 
 
 if __name__ == '__main__':
