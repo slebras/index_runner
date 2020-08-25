@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.1] - 2020-08-25
+## Changed
+- Using Github Actions for CI instead of Travis
+- Added docker build and deployment to the github action
+
+## [1.9.0] - 2020-08-24
+## Fixed
+- Fetch the object type from the workspace when it is not provided by the kafka message
+
+## Changed
+- Clean up logger and WorkspaceClient imports and initialization
+
 ## [1.8.1] - 2020-08-12
 ### Added
 - Add workspace type whitelist/blacklist options (`ALLOW_TYPES` and `SKIP_TYPES`)
