@@ -2,4 +2,4 @@
 set -e
 set -o xtrace
 docker-compose down && docker-compose up -d
-docker-compose exec app sh -c "PYTHONPATH=/app python -m tests.wait_for_deps && python -m unittest discover /app/tests"
+docker-compose exec -T app sh -c "PYTHONPATH=/app python -m tests.wait_for_deps && python -m unittest discover /app/tests"
