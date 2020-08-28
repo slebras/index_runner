@@ -1,8 +1,11 @@
 import os
 import json
 import unittest
+import requests
 import tempfile
 import shutil
+
+from src.utils.config import config
 
 from src.index_runner.es_indexers.reads import index_reads
 from src.index_runner.es_indexers.genome import index_genome
@@ -113,6 +116,17 @@ _TEST_EVENTS = {
         'objtype': "KBaseSets.SampleSet-1.0",
         'permusers': [],
         'user': "username"
+    },
+    'sample_set_save_2': {
+        'wsid': 44444,
+        'ver': 1,
+        'perm': None,
+        'evtype': "NEW_VERSION",
+        'objid': 44,
+        'time': 1554408311320,
+        'objtype': "KBaseSets.SampleSet-1.0",
+        'permusers': [],
+        'user': "username"
     }
 }  # type: dict
 
@@ -185,7 +199,7 @@ class TestIndexers(unittest.TestCase):
                     "save_date": 1591823661642,
                     "sample_version": 1,
                     "name": "PB-Low-5",
-                    "parent_id": "WS::39794:40",
+                    "sample_set_ids": ['WSVER::39794:40:1'],
                     "latitude": "33.3375;degrees",
                     "collection_date": "2019-06-26 00:00:00;day",
                     "longitude": "81.71861111;degrees",
@@ -208,10 +222,24 @@ class TestIndexers(unittest.TestCase):
                     "node_id": "IEAWH0001"
                 },
                 "index": "sample_1",
-                "id": "SMP::8948a78f-9b3b-477b-8502-fc6fc952a394:1"
+                "id": "SMP::1:1"
             }
         ]
         self._default_obj_test('sample_set_save', index_sample_set, check_against)
+        #  save to local elasticsearch host.
+        es_url = config()['elasticsearch_url']
+        prefix = config()['elasticsearch_index_prefix']
+        resp = requests.put(
+            f"{es_url}/{prefix}.sample/_doc/SMP::1:1",
+            headers={"Content-type": "application/json"},
+            data=json.dumps(check_against[2]['doc'])
+        )
+        if not resp.ok:
+            raise Exception(f"{resp.text}")
+        check_against[0]['id'] = "WS::44444:44"
+        check_against[1]['id'] = "WSVER::44444:44:1"
+        check_against[2]['doc']['sample_set_ids'].append('WSVER::44444:44:1')
+        self._default_obj_test('sample_set_save_2', index_sample_set, check_against)
 
     def test_reads_indexer(self):
         check_against = [{

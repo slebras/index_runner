@@ -17,6 +17,25 @@ _SAMPLE_INDEX_NAME = 'sample_' + str(_SAMPLE_INDEX_VERSION)
 # _VER_SAMPLE_INDEX_NAME = 'sample_version_' + str(_SAMPLE_INDEX_VERSION)
 
 
+def _get_document(sample_document_id):
+    """ Get Sample document (if it exists) from Elasticsearch, otherwise return None
+    sample_document_id - "SMP::kbase_sample_id:kbase_sample_version"
+    """
+    es_url = config()['elasticsearch_url']
+    prefix = config()['elasticsearch_index_prefix']
+    es_url += f"/{prefix}.sample/_doc/{sample_document_id}"
+    resp = requests.get(url=es_url)
+    # if not resp.ok:
+    #     raise Exception(f"Not able to query {es_url} - {resp.text}")
+    respj = resp.json()
+    if respj.get('error'):
+        raise Exception(f"Query to {es_url} resulted in error - {respj['error']}")
+    if respj['found']:
+        return respj['_source']
+    else:
+        return None
+
+
 def _get_sample(sample_info):
     """ Get sample from SampleService
     sample_info - dict containing 'id' and 'version' of a sample
@@ -112,46 +131,63 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
 
     for samp in data["samples"]:
         # query the sample service for sample
-        sample = _get_sample(samp)
-        sample_id = f"{_SAMPLE_NAMESPACE}::{sample['id']}:{sample['version']}"
-        # not sure on how we need to handle more than 1 node.
-        if len(sample['node_tree']) == 1:
-            meta_controlled = _flatten_meta(
-                sample['node_tree'][0]['meta_controlled']
-            )
-            meta_user = _flatten_meta(
-                sample['node_tree'][0]['meta_user']
-            )
-            meta_controlled['node_id'] = sample['node_tree'][0]['id']
-        else:
-            meta_controlled, meta_user = {}, {}
-            for idx, node in enumerate(sample['node_tree']):
-                meta_controlled = _combine_meta(
-                    meta_controlled,
-                    _flatten_meta(
-                        node['meta_controlled']
-                    ),
-                    idx
-                )
-                meta_user = _combine_meta(
-                    meta_user,
-                    _flatten_meta(
-                        node['meta_user']
-                    ),
-                    idx
-                )
-                meta_controlled['node_id'] = node['id']
 
-        sample_index = {
-            "_action": "index",
-            "doc": {
+        sample_id = f"{_SAMPLE_NAMESPACE}::{samp['id']}"
+        if samp.get('version'):
+            sample_id += f":{samp['version']}"
+            sample = None
+        else:
+            # get latest version of sample
+            sample = _get_sample(samp)
+            sample_id += f":{sample['version']}"
+        # check if sample already indexed
+        document = _get_document(sample_id)
+        if document:
+            # up date index to include this WS
+            document['sample_set_ids'].append(ver_sample_set_id)
+        else:
+            if sample is None:
+                sample = _get_sample(samp)
+            # not sure on how we need to handle more than 1 node.
+            if len(sample['node_tree']) == 1:
+                meta_controlled = _flatten_meta(
+                    sample['node_tree'][0]['meta_controlled']
+                )
+                meta_user = _flatten_meta(
+                    sample['node_tree'][0]['meta_user']
+                )
+                meta_controlled['node_id'] = sample['node_tree'][0]['id']
+            else:
+                meta_controlled, meta_user = {}, {}
+                for idx, node in enumerate(sample['node_tree']):
+                    meta_controlled = _combine_meta(
+                        meta_controlled,
+                        _flatten_meta(
+                            node['meta_controlled']
+                        ),
+                        idx
+                    )
+                    meta_user = _combine_meta(
+                        meta_user,
+                        _flatten_meta(
+                            node['meta_user']
+                        ),
+                        idx
+                    )
+                    meta_controlled['node_id'] = node['id']
+
+            document = {
                 "save_date": sample['save_date'],
                 "sample_version": sample['version'],
                 "name": sample['name'],
-                "parent_id": sample_set_id,
+                "sample_set_ids": [ver_sample_set_id],
                 **meta_user,
                 **meta_controlled
-            },
+            }
+
+        sample_index = {
+            "_action": "index",
+            "doc": document,
             "index": _SAMPLE_INDEX_NAME,
             "id": sample_id
         }

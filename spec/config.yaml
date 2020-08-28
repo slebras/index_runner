@@ -663,10 +663,10 @@ mappings:
     global_mappings: [ws_auth, ws_object]
     properties:
       all_sample_metadata_field: {type: text}
+      sample_set_ids: {type: keyword}
       save_date: {type: text, copy_to: all_sample_metadata_field}
       sample_version: {type: integer, copy_to: all_sample_metadata_field}
       name: {type: keyword, copy_to: all_sample_metadata_field}
-      parent_id: {type: keyword, copy_to: all_sample_metadata_field}
       node_id: {type: keyword, copy_to: all_sample_metadata_field}
       sample_name: {type: text, copy_to: all_sample_metadata_field}
       material: {type: text, copy_to: all_sample_metadata_field}
