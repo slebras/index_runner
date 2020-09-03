@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.2] - 2020-09-03
+## Changed
+- No longer copying publication title/author to agg_fields for genome_2
+- Add more thorough spec validation and testing
+
+## Fixed
+- Fix some latest version alias names in the spec
+- Fix a typo in the spec
+
 ## [1.9.1] - 2020-08-25
 ## Changed
 - Using Github Actions for CI instead of Travis
@@ -17,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changed
 - Clean up logger and WorkspaceClient imports and initialization
+
+## Added
+- Index static narrative data from the workspace info
 
 ## [1.8.1] - 2020-08-12
 ### Added
