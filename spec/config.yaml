@@ -78,24 +78,24 @@ global_mappings:
 
 # For each index alias, what are the versioned index names for the latest versions of each?
 latest_versions:
-  narrative: "narrative_1"
-  reads: "reads_1"
-  assembly: "assembly_1"
-  genome: "genome_1"
-  genome_features: "genome_features_2"
+  narrative: "narrative_2"
+  reads: "reads_2"
+  assembly: "assembly_2"
+  genome: "genome_2"
+  genome_features: "genome_features_3"
   pangenome: "pangenome_1"
   pangenome_orthologfamily: "pangenome_orthologfamily_1"
-  taxon: "taxon_1"
+  taxon: "taxon_2"
   tree: "tree_1"
   matrix: "matrix_1"
-  attribute_mapping: "attribute_ma pping_1"
+  attribute_mapping: "attribute_mapping_1"
   genomeset: "genomeset_1"
   indexing_errors: "indexing_errors_1"
   indexer_messages: "indexer_messages_1"
-  annotated_metagenome_assembly: "annotated_metagenome_assembly_1"
-  annotated_metagenome_assembly_features: "annotated_metagenome_assembly_features_1"
-  annotated_metagenome_assembly_version: "annotated_metagenome_assembly_version_1"
-  annotated_metagenome_assembly_features_version: "annotated_metagenome_assembly_features_version_1"
+  annotated_metagenome_assembly: "annotated_metagenome_assembly_2"
+  annotated_metagenome_assembly_features: "annotated_metagenome_assembly_features_2"
+  annotated_metagenome_assembly_version: "annotated_metagenome_assembly_version_2"
+  annotated_metagenome_assembly_features_version: "annotated_metagenome_assembly_features_version_2"
 
 # Map from unversioned alias to versioned indexes
 aliases:
@@ -311,8 +311,8 @@ mappings:
         dynamic: true
       source: {type: keyword, copy_to: agg_fields}
       warnings: {type: text}
-      publication_titles: {type: text, copy_to: agg_fields}
-      publication_authors: {type: text, copy_to: agg_fields}
+      publication_titles: {type: text}
+      publication_authors: {type: text}
 
   "genome_features_2":
     global_mappings: [ws_subobject, ws_auth, ws_object]

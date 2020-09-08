@@ -6,4 +6,3 @@ set -o xtrace
 poetry run flake8
 poetry run mypy --ignore-missing-imports src/**/*.py
 poetry run bandit -r src/
-poetry run python -m src.utils.validate_spec
