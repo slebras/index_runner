@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [1.9.3] - 2020-09-08
-## Fixed
+### Fixed
 - Updated configuration aliases to include most recent indexes under `default_search`
 
 ## [1.9.2] - 2020-09-03
