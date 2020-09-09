@@ -137,7 +137,6 @@ aliases:
   genome_features:
     - genome_features_3
     - genome_features_2
-    - genome_features_1
   pangenome:
     - pangenome_1
   pangenome_orthologfamily:
