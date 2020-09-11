@@ -2,6 +2,7 @@ import sys
 from bs4 import BeautifulSoup
 from markdown2 import Markdown
 
+from src.utils.logger import logger
 from src.utils.config import config
 from src.utils.formatting import ts_to_epoch
 from src.utils.get_path import get_path
@@ -34,7 +35,9 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
     [ws_id, _, owner, moddate, _, _, _, _, ws_metadata] = ws_info
     if not ws_metadata:
         raise RuntimeError(f"Cannot index narrative: no metadata for the workspace. WS info: {ws_info}")
-    is_temporary = _narrative_is_temporary(ws_metadata)
+    if ws_metadata.get('is_temporary') == 'true':
+        logger.debug("Skipping narrative indexing because it is temporary")
+        return
     is_narratorial = _narrative_is_narratorial(ws_metadata)
     narrative_title = obj_metadata.get('name')
     creator = obj_data['creator']
@@ -47,7 +50,6 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
         '_action': 'index',
         'doc': {
             'narrative_title': narrative_title,
-            'is_temporary': is_temporary,
             'is_narratorial': is_narratorial,
             'data_objects': narrative_data_objects,
             'owner': owner,
@@ -62,10 +64,6 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
         'id': f'{_NAMESPACE}::{ws_id}:{obj_id}',
     }
     yield result
-
-
-def _narrative_is_temporary(ws_metadata):
-    return ws_metadata.get('is_temporary') == 'true'
 
 
 def _narrative_is_narratorial(ws_metadata):

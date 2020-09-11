@@ -28,7 +28,6 @@ class TestIndexers(unittest.TestCase):
         self.assertEqual(result['id'], 'WS::33192:1')
         doc = result['doc']
         self.assertEqual(doc['narrative_title'], 'Test fiesta')
-        self.assertEqual(doc['is_temporary'], False)
         self.assertEqual(doc['is_narratorial'], False)
         self.assertEqual(doc['creator'], 'jayrbolton')
         self.assertEqual(doc['owner'], 'jayrbolton')
@@ -47,15 +46,13 @@ class TestIndexers(unittest.TestCase):
         self.assertEqual(doc['static_narrative_ref'], '/33192/56/')
 
     def test_temporary_narr(self):
-        """Test that temporary narratives get flagged."""
+        """Test that temporary narratives get skipped."""
         with open(os.path.join(_DIR, 'test_data', 'narrative_obj_temporary.json')) as fd:
             narr_obj = json.load(fd)
         with open(os.path.join(_DIR, 'test_data', 'narrative_wsinfo_temporary.json')) as fd:
             ws_info = json.load(fd)
         results = list(index_narrative(narr_obj, ws_info, {}))
-        self.assertTrue(len(results) == 1)
-        result = results[0]
-        self.assertEqual(result['doc']['is_temporary'], True)
+        self.assertTrue(len(results) == 0)
 
     def test_narratorial(self):
         """Test that a narratorial gets flagged as such."""
