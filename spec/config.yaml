@@ -101,17 +101,12 @@ latest_versions:
 aliases:
   default_search:
     - narrative_2
-    - narrative_1
     - reads_2
-    - reads_1
     - assembly_2
-    - assembly_1
     - genome_2
-    - genome_1
     - pangenome_1
     - pangenome_orthologfamily_1
     - taxon_2
-    - taxon_1
     - tree_1
     - matrix_1
     - attribute_mapping_1
@@ -119,9 +114,7 @@ aliases:
     - indexing_errors_1
     - indexer_messages_1
     - annotated_metagenome_assembly_2
-    - annotated_metagenome_assembly_1
     - annotated_metagenome_assembly_features_2
-    - annotated_metagenome_assembly_features_1
   narrative:
     - narrative_2
     - narrative_1

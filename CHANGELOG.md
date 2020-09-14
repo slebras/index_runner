@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.5] - 2020-09-14
+### Changed
+- Default indexes will automatically create an alias to "default_search"
+
+## [1.9.4] - 2020-09-11
+### Changed
+- Skip indexing of temporary narratives
+
 ## [1.9.3] - 2020-09-08
 ### Fixed
 - Updated configuration aliases to include most recent indexes under `default_search`
