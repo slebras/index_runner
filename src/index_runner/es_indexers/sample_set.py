@@ -1,3 +1,7 @@
+"""
+This indexer is for the Sample objects represented in the SampleService and
+the SampleSet object in the Workspace.
+"""
 from src.utils.config import config
 import json
 # import uuid
