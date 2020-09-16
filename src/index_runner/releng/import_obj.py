@@ -28,9 +28,6 @@ def import_object(obj, ws_info):
     # Save the ws_object document
     obj_info = obj['info']
     type_, _ = obj_info[2].split('-')  # 2nd var is version
-    if type_ in config()['global']['ws_type_blacklist']:
-        logger.info(f'Skipped RE import of blacklisted type {type_}')
-        return
     wsid = obj_info[6]
     objid = obj_info[0]
     obj_key = f'{wsid}:{objid}'
