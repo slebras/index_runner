@@ -24,7 +24,7 @@ def get_obj_type(msg: dict) -> Optional[str]:
     objid = msg.get('objid')
     wsid = msg.get('wsid')
     if objid is not None and wsid is not None:
-        info = config()['ws_client'].admin_req('get_obj_info3', {
+        info = config()['ws_client'].admin_req('getObjectInfo', {
             'objects': [{'ref': f"{wsid}/{objid}"}]
         })
         return info['infos'][0][2]

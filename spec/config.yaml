@@ -18,7 +18,7 @@ ws_type_to_indexes:
   KBaseMetagenomes.AnnotatedMetagenomeAssembly: annotated_metagenome_assembly
   KBaseSets.SampleSet: sample_set
 
-# SDK apps used for indexing, map from type_module.type_name -> {'sdk_func': _, 'sdk_app': _, 'sdk_version': _}
+# SDK apps used for indexing, map from type_module.type_name -> {'sdk_func': _, 'sdk_app': _, 'sdk_version':
 sdk_indexer_apps:
   KBaseMatrices.MetaboliteMatrix:
     sdk_app: kbasematrices_indexer
@@ -79,88 +79,94 @@ global_mappings:
 
 # For each index alias, what are the versioned index names for the latest versions of each?
 latest_versions:
-  narrative: "narrative_1"
-  reads: "reads_1"
-  assembly: "assembly_1"
-  genome: "genome_1"
-  genome_features: "genome_features_2"
+  narrative: "narrative_2"
+  reads: "reads_2"
+  assembly: "assembly_2"
+  genome: "genome_2"
+  genome_features: "genome_features_3"
   pangenome: "pangenome_1"
   pangenome_orthologfamily: "pangenome_orthologfamily_1"
-  taxon: "taxon_1"
+  taxon: "taxon_2"
   tree: "tree_1"
   matrix: "matrix_1"
-  attribute_mapping: "attribute_ma pping_1"
+  attribute_mapping: "attribute_mapping_1"
   genomeset: "genomeset_1"
   indexing_errors: "indexing_errors_1"
   indexer_messages: "indexer_messages_1"
-  annotated_metagenome_assembly: "annotated_metagenome_assembly_1"
-  annotated_metagenome_assembly_features: "annotated_metagenome_assembly_features_1"
-  annotated_metagenome_assembly_version: "annotated_metagenome_assembly_version_1"
-  annotated_metagenome_assembly_features_version: "annotated_metagenome_assembly_features_version_1"
+  annotated_metagenome_assembly: "annotated_metagenome_assembly_2"
+  annotated_metagenome_assembly_features: "annotated_metagenome_assembly_features_2"
+  annotated_metagenome_assembly_version: "annotated_metagenome_assembly_version_2"
+  annotated_metagenome_assembly_features_version: "annotated_metagenome_assembly_features_version_2"
   sample_set: "sample_set_1"
   sample_set_version: "sample_set_version_1"
   sample: "sample_1"
 
-# Map from unversioned alias to versioned indexes
 aliases:
   default_search:
-    - "narrative_1"
-    - "reads_1"
-    - "assembly_1"
-    - "genome_1"
-    - "pangenome_1"
-    - "pangenome_orthologfamily_1"
-    - "taxon_1"
-    - "tree_1"
-    - "matrix_1"
-    - "attribute_mapping_1"
-    - "genomeset_1"
-    - "indexing_errors_1"
-    - "indexer_messages_1"
-    - "annotated_metagenome_assembly_1"
-    - "annotated_metagenome_assembly_features_1"
+    - narrative_2
+    - reads_2
+    - assembly_2
+    - genome_2
+    - pangenome_1
+    - pangenome_orthologfamily_1
+    - taxon_2
+    - tree_1
+    - matrix_1
+    - attribute_mapping_1
+    - genomeset_1
+    - annotated_metagenome_assembly_2
+    - annotated_metagenome_assembly_features_2
   narrative:
-    - "narrative_1"
+    - narrative_2
+    - narrative_1
   reads:
-    - "reads_1"
+    - reads_2
+    - reads_1
   assembly:
-    - "assembly_1"
+    - assembly_2
+    - assembly_1
   genome:
-    - "genome_1"
+    - genome_2
+    - genome_1
   genome_features:
-    - "genome_features_2"
+    - genome_features_3
+    - genome_features_2
   pangenome:
-    - "pangenome_1"
+    - pangenome_1
   pangenome_orthologfamily:
-    - "pangenome_orthologfamily_1"
+    - pangenome_orthologfamily_1
   taxon:
-    - "taxon_1"
+    - taxon_2
+    - taxon_1
   tree:
-    - "tree_1"
+    - tree_1
   matrix:
-    - "matrix_1"
+    - matrix_1
   attribute_mapping:
-    - "attribute_mapping_1"
+    - attribute_mapping_1
   genomeset:
-    - "genomeset_1"
+    - genomeset_1
   indexing_errors:
-    - "indexing_errors_1"
+    - indexing_errors_1
   indexer_messages:
-    - "indexer_messages_1"
+    - indexer_messages_1
   annotated_metagenome_assembly:
-    - "annotated_metagenome_assembly_1"
+    - annotated_metagenome_assembly_2
+    - annotated_metagenome_assembly_1
   annotated_metagenome_assembly_features:
-    - "annotated_metagenome_assembly_features_1"
+    - annotated_metagenome_assembly_features_1
   annotated_metagenome_assembly_version:
-    - "annotated_metagenome_assembly_version_1"
+    - annotated_metagenome_assembly_version_2
+    - annotated_metagenome_assembly_version_1
   annotated_metagenome_assembly_features_version:
-    - "annotated_metagenome_assembly_features_version_1"
+    - annotated_metagenome_assembly_features_version_2
+    - annotated_metagenome_assembly_features_version_1
   sample_set:
-    - "sample_set_1"
+    - sample_set_1
   sample_set_version:
-    - "sample_set_version_1"
+    - sample_set_version_1
   sample:
-    - "sample_1"
+    - sample_1
 
 # All ES type mappings
 mappings:
@@ -321,8 +327,8 @@ mappings:
         dynamic: true
       source: {type: keyword, copy_to: agg_fields}
       warnings: {type: text}
-      publication_titles: {type: text, copy_to: agg_fields}
-      publication_authors: {type: text, copy_to: agg_fields}
+      publication_titles: {type: text}
+      publication_authors: {type: text}
 
   "genome_features_2":
     global_mappings: [ws_subobject, ws_auth, ws_object]
@@ -832,3 +838,144 @@ mappings:
       top_of_casing_elevation_ft_amsl: {type: float, copy_to: all_sample_metadata_field}
       top_of_casing_stickup_ft: {type: float, copy_to: all_sample_metadata_field}
       well_casing_depth_ft_bgs: {type: float, copy_to: all_sample_metadata_field}
+
+# Types to always avoid indexing or importing
+ws_type_blacklist:
+  - KBaseExperiments.AmpliconSet
+  - KBaseExperiments.AttributeMapping
+  - KBaseExperiments.ClusterSet
+  - KBaseExperiments.CorrelationMatrix
+  - KBaseExperiments.Network
+  - KBaseExperiments.PCAMatrix
+  - KBaseGwasData.Associations
+  - KBaseGwasData.Variations
+  - KBaseGenomes.ContigSet
+  - KBaseGenomes.Feature
+  - KBaseGenomes.GenomeComparison
+  - KBaseGenomes.GenomeDomainData
+  - KBaseClassifier.GenomeCategorizer
+  - KBaseClassifier.GenomeClassifier
+  - KBaseClassifier.GenomeClassifierTrainingSet
+  - KBasePhenotypes.PhenotypeSet
+  - KBasePhenotypes.PhenotypeSimulationSet
+  - KBaseFeatureValues.AnalysisReport
+  - KBaseFeatureValues.DifferentialExpressionMatrix
+  - KBaseFeatureValues.EstimateKResult
+  - KBaseFeatureValues.ExpressionMatrix
+  - KBaseFeatureValues.FeatureClusters
+  - KBaseFeatureValues.SingleKnockoutFitnessMatrix
+  - KBaseGenomeAnnotations.TaxonLookup
+  - KBaseGenomeAnnotations.TaxonSet
+  - KBaseMetagenomes.BinnedContigs
+  - KBaseReport.Report
+  - DataPalette.DataPalette
+  - DataPalette.DataReference
+  - KBaseFile.AnnotationFile
+  - KBaseFile.AssemblyFile
+  - KBaseFile.FileRef
+  - KBaseRBTnSeq.Delta
+  - KBaseRBTnSeq.MappedReads
+  - KBaseRBTnSeq.Pool
+  - KBaseRBTnSeq.Strain
+  - ComparativeGenomics.DNAdiffOutput
+  - ComparativeGenomics.SeqCompOutput
+  - ComparativeGenomics.WholeGenomeAlignment
+  - KBaseNarrative.Cell
+  - KBaseNarrative.Metadata
+  - KBaseCollections.FBAModelList
+  - KBaseCollections.FBAModelSet
+  - KBaseCollections.FeatureList
+  - KBaseCollections.FeatureSet
+  - KBaseCollections.GenomeList
+  - KBaseCollections.GenomeSet
+  - KBaseAssembly.AssemblyInput
+  - KBaseAssembly.AssemblyReport
+  - KBaseAssembly.Handle
+  - KBaseAssembly.ReferenceAssembly
+  - KBaseGeneFamilies.DomainAnnotation
+  - KBaseGeneFamilies.DomainLibrary
+  - KBaseGeneFamilies.DomainModelSet
+  - Communities.Biom
+  - Communities.BiomAnnotationEntry
+  - Communities.BiomMatrix
+  - Communities.BiomMatrixEntry
+  - Communities.BiomMetagenome
+  - Communities.BiomMetagenomeEntry
+  - Communities.Collection
+  - Communities.Data
+  - Communities.DataHandle
+  - Communities.Drisee
+  - Communities.FunctionalMatrix
+  - Communities.FunctionalProfile
+  - Communities.Heatmap
+  - Communities.List
+  - Communities.Metadata
+  - Communities.Metagenome
+  - Communities.MetagenomeMatrix
+  - Communities.MetagenomeProfile
+  - Communities.MetagenomeSet
+  - Communities.MetagenomeSetElement
+  - Communities.PCoA
+  - Communities.PCoAMember
+  - Communities.Profile
+  - Communities.Project
+  - Communities.SequenceFile
+  - Communities.Statistics
+  - Communities.StatList
+  - Communities.StatMatrix
+  - Communities.StatsQC
+  - Communities.TaxonomicMatrix
+  - Communities.TaxonomicProfile
+  - KBaseSearch.Contig
+  - KBaseSearch.ContigSet
+  - KBaseSearch.Feature
+  - KBaseSearch.FeatureSet
+  - KBaseSearch.Genome
+  - KBaseSearch.GenomeSet
+  - KBaseSearch.IndividualFeature
+  - KBaseSearch.SearchFeatureSet
+  - KBaseSearch.Type2CommandConfig
+  - Empty.AHandle
+  - Empty.AType
+  - KBaseCommon.Location
+  - KBaseCommon.SourceInfo
+  - KBaseCommon.StrainInfo
+  - KBaseExpression.ExpressionPlatform
+  - KBaseExpression.ExpressionReplicateGroup
+  - KBaseExpression.ExpressionSample
+  - KBaseExpression.ExpressionSeries
+  - KBaseExpression.RNASeqDifferentialExpression
+  - KBaseExpression.RNASeqSample
+  - KBaseExpression.RNASeqSampleAlignment
+  - MAK.FloatDataTable
+  - MAK.FloatDataTableContainer
+  - MAK.MAKBicluster
+  - MAK.MAKBiclusterSet
+  - MAK.MAKInputData
+  - MAK.MAKParameters
+  - MAK.MAKResult
+  - MAK.StringDataTable
+  - MAK.StringDataTableContainer
+  - KBasePPI.Interaction
+  - KBasePPI.InteractionDataset
+  - GenomeComparison.ProteomeComparison
+  - KBaseTrees.MSA
+  - KBaseTrees.MSASet
+  - KBaseRegulation.Regulome
+  - Inferelator.GeneList
+  - Inferelator.InferelatorRunResult
+  - Cmonkey.CmonkeyRunResult
+  - BAMBI.BambiRunResult
+  - ProbabilisticAnnotation.ProbAnno
+  - ProbabilisticAnnotation.RxnProbs
+  - KBaseCommunities.Metagenome
+  - MEME.MastHit
+  - MEME.MastRunResult
+  - MEME.MemePSPM
+  - MEME.MemePSPMCollection
+  - MEME.MemeRunResult
+  - MEME.MemeSite
+  - MEME.TomtomRunResult
+  - KBaseNetworks.InteractionSet
+  - KBaseNetworks.Network
+  - KBaseSequences.SequenceSe

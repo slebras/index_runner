@@ -13,8 +13,12 @@ from src.index_runner.releng.del_obj import delete_object
 
 def run_importer(obj, ws_info, msg):
     start = time.time()
-    import_object(obj, ws_info)
-    logger.info(f"Imported an object into RE in {time.time() - start}s.")
+    type_, _ = obj['info'][2].split('-')  # 2nd var is version
+    if type_ in config()['global']['ws_type_blacklist']:
+        logger.info(f'Skipped RE import of blacklisted type {type_}')
+    else:
+        import_object(obj, ws_info)
+        logger.info(f"Imported an object into RE in {time.time() - start}s.")
 
 
 def delete_obj(msg):

@@ -23,6 +23,7 @@ _IDX = _PREFIX + ".*"
 _GLOBAL_MAPPINGS = config()['global']['global_mappings']
 _HEADERS = {"Content-Type": "application/json"}
 _MAPPINGS = config()['global']['mappings']
+_DEFAULT_SEARCH_ALIAS = 'default_search'
 
 
 def init_indexes():
@@ -167,9 +168,11 @@ def _init_generic_index(msg):
         full_type_name - string - eg. "Module.Type-X.Y"
     """
     (_, type_name, type_ver) = get_type_pieces(msg['full_type_name'])
-    index_name = type_name.lower()
+    index_name = type_name.lower() + '_0'
     mappings = {**_GLOBAL_MAPPINGS['ws_auth'], **_GLOBAL_MAPPINGS['ws_object']}
-    _init_index(index_name + '_0', mappings)
+    _init_index(index_name, mappings)
+    # Update the 'default_search' alias to include this index
+    _create_alias(_DEFAULT_SEARCH_ALIAS, index_name)
 
 
 def _write_to_elastic(data):

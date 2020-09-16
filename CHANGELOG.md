@@ -6,22 +6,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.9.2] - 2020-08-26
+## [1.9.7] - 2020-09-16
 ## Changed/Fixed
 - Added sample_set, sample_set_version, and sample indices to config.yaml
 - Updating the sample indexer to include support for multiple source WS objects
 
+## [1.9.5] - 2020-09-14
+### Changed
+- Moved the workspace type blacklist into spec/config.yaml
+- RE importer now checks against the type blacklist as well
+
+## [1.9.5] - 2020-09-14
+### Changed
+- Default indexes will automatically create an alias to "default_search"
+
+## [1.9.4] - 2020-09-11
+### Changed
+- Skip indexing of temporary narratives
+
+## [1.9.3] - 2020-09-08
+### Fixed
+- Updated configuration aliases to include most recent indexes under `default_search`
+
+## [1.9.2] - 2020-09-03
+### Changed
+- No longer copying publication title/author to agg_fields for genome_2
+- Add more thorough spec validation and testing
+
+### Fixed
+- Fix some latest version alias names in the spec
+- Fix a typo in the spec
+>>>>>>> develop
+
 ## [1.9.1] - 2020-08-25
-## Changed
+### Changed
 - Using Github Actions for CI instead of Travis
 - Added docker build and deployment to the github action
 
 ## [1.9.0] - 2020-08-24
-## Fixed
+### Fixed
 - Fetch the object type from the workspace when it is not provided by the kafka message
 
-## Changed
+### Changed
 - Clean up logger and WorkspaceClient imports and initialization
+
+### Added
+- Index static narrative data from the workspace info
 
 ## [1.8.1] - 2020-08-12
 ### Added
