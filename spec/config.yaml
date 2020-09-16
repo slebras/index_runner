@@ -466,8 +466,8 @@ mappings:
       original_source_file_name: {type: keyword}
       environment: {type: keyword}
       num_features: {type: integer}
-      publication_authors: {type: keyword, copy_to: agg_fields}
-      publication_titles: {type: keyword, copy_to: agg_fields}
+      publication_authors: {type: keyword}
+      publication_titles: {type: keyword}
       molecule_type: {type: keyword}
       assembly_ref: {type: keyword}
       notes: {type: text, copy_to: agg_fields}
@@ -486,8 +486,8 @@ mappings:
       original_source_file_name: {type: keyword}
       environment: {type: keyword}
       num_features: {type: integer}
-      publication_authors: {type: keyword, copy_to: agg_fields}
-      publication_titles: {type: keyword, copy_to: agg_fields}
+      publication_authors: {type: keyword}
+      publication_titles: {type: keyword}
       molecule_type: {type: keyword}
       assembly_ref: {type: keyword}
       notes: {type: text, copy_to: agg_fields}
@@ -550,8 +550,8 @@ mappings:
       original_source_file_name: {type: keyword}
       environment: {type: keyword}
       num_features: {type: integer}
-      publication_authors: {type: keyword, copy_to: agg_fields}
-      publication_titles: {type: keyword, copy_to: agg_fields}
+      publication_authors: {type: keyword}
+      publication_titles: {type: keyword}
       molecule_type: {type: keyword}
       assembly_ref: {type: keyword}
       notes: {type: text, copy_to: agg_fields}
@@ -570,8 +570,8 @@ mappings:
       original_source_file_name: {type: keyword}
       environment: {type: keyword}
       num_features: {type: integer}
-      publication_authors: {type: keyword, copy_to: agg_fields}
-      publication_titles: {type: keyword, copy_to: agg_fields}
+      publication_authors: {type: keyword}
+      publication_titles: {type: keyword}
       molecule_type: {type: keyword}
       assembly_ref: {type: keyword}
       notes: {type: text, copy_to: agg_fields}
