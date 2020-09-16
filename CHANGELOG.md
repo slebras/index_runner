@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.9.5] - 2020-09-14
 ### Changed
+- Moved the workspace type blacklist into spec/config.yaml
+- RE importer now checks against the type blacklist as well
+
+## [1.9.5] - 2020-09-14
+### Changed
 - Default indexes will automatically create an alias to "default_search"
 
 ## [1.9.4] - 2020-09-11
