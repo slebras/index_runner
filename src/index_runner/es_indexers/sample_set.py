@@ -2,6 +2,7 @@
 This indexer is for the Sample objects represented in the SampleService and
 the SampleSet object in the Workspace.
 """
+from src.utils.es_utils import _get_document
 from src.utils.config import config
 import json
 # import uuid
@@ -19,25 +20,6 @@ _VER_SAMPLE_SET_INDEX_NAME = 'sample_set_version_' + str(_SAMPLE_SET_INDEX_VERSI
 _SAMPLE_INDEX_VERSION = 1
 _SAMPLE_INDEX_NAME = 'sample_' + str(_SAMPLE_INDEX_VERSION)
 # _VER_SAMPLE_INDEX_NAME = 'sample_version_' + str(_SAMPLE_INDEX_VERSION)
-
-
-def _get_document(sample_document_id):
-    """ Get Sample document (if it exists) from Elasticsearch, otherwise return None
-    sample_document_id - "SMP::kbase_sample_id:kbase_sample_version"
-    """
-    es_url = config()['elasticsearch_url']
-    prefix = config()['elasticsearch_index_prefix']
-    es_url += f"/{prefix}.sample/_doc/{sample_document_id}"
-    resp = requests.get(url=es_url)
-    # if not resp.ok:
-    #     raise Exception(f"Not able to query {es_url} - {resp.text}")
-    respj = resp.json()
-    if respj.get('error'):
-        raise Exception(f"Query to {es_url} resulted in error - {respj['error']}")
-    if respj['found']:
-        return respj['_source']
-    else:
-        return None
 
 
 def _get_sample(sample_info):
@@ -145,7 +127,7 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
             sample = _get_sample(samp)
             sample_id += f":{sample['version']}"
         # check if sample already indexed
-        document = _get_document(sample_id)
+        document = _get_document("sample", sample_id)
         if document:
             # up date index to include this WS
             document['sample_set_ids'].append(ver_sample_set_id)
