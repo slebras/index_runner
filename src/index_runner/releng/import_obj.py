@@ -27,6 +27,10 @@ def import_object(obj, ws_info):
     # TODO handle the ws_latest_version_of edge -- some tricky considerations here
     # Save the ws_object document
     obj_info = obj['info']
+    type_, _ = obj_info[2].split('-')  # 2nd var is version
+    if type_ in config()['global']['ws_type_blacklist']:
+        logger.info(f'Skipped RE import of blacklisted type {type_}')
+        return
     wsid = obj_info[6]
     objid = obj_info[0]
     obj_key = f'{wsid}:{objid}'
@@ -46,7 +50,6 @@ def import_object(obj, ws_info):
     _save_owner_edge(obj_ver_key, obj_info)
     _save_referral_edge(obj_ver_key, obj)
     _save_prov_desc_edge(obj_ver_key, obj)
-    type_, _ = obj_info[2].split('-')  # 2nd var is version
     if type_ in _TYPE_PROCESSOR_MAP:
         # this could use a lot of memory. There's a bunch of code in the workspace for
         # dealing with this situation, but that'd have to be ported to Python and it's pretty
