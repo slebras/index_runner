@@ -134,33 +134,26 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
         else:
             if sample is None:
                 sample = _get_sample(samp)
-            # not sure on how we need to handle more than 1 node.
-            if len(sample['node_tree']) == 1:
-                meta_controlled = _flatten_meta(
-                    sample['node_tree'][0]['meta_controlled']
+            meta_controlled, meta_user = {}, {}
+            for idx, node in enumerate(sample['node_tree']):
+                meta_controlled = _combine_meta(
+                    meta_controlled,
+                    _flatten_meta(
+                        node['meta_controlled']
+                    ),
+                    idx
                 )
-                meta_user = _flatten_meta(
-                    sample['node_tree'][0]['meta_user']
+                meta_user = _combine_meta(
+                    meta_user,
+                    _flatten_meta(
+                        node['meta_user']
+                    ),
+                    idx
                 )
-                meta_controlled['node_id'] = sample['node_tree'][0]['id']
-            else:
-                meta_controlled, meta_user = {}, {}
-                for idx, node in enumerate(sample['node_tree']):
-                    meta_controlled = _combine_meta(
-                        meta_controlled,
-                        _flatten_meta(
-                            node['meta_controlled']
-                        ),
-                        idx
-                    )
-                    meta_user = _combine_meta(
-                        meta_user,
-                        _flatten_meta(
-                            node['meta_user']
-                        ),
-                        idx
-                    )
-                    meta_controlled['node_id'] = node['id']
+                if 'node_id' in meta_controlled:
+                    meta_controlled['node_id'].append(node['id'])
+                else:
+                    meta_controlled['node_id'] = [node['id']]
 
             document = {
                 "save_date": sample['save_date'],
