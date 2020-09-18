@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.7] - 2020-09-16
+## Changed/Fixed
+- Added sample_set, sample_set_version, and sample indices to config.yaml
+- Updating the sample indexer to include support for multiple source WS objects
+
 ## [1.9.5] - 2020-09-14
 ### Changed
 - Moved the workspace type blacklist into spec/config.yaml
