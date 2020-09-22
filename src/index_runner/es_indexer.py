@@ -211,8 +211,8 @@ def _update_by_query(query, script, config):
         url,
         params={
             'conflicts': 'proceed',
-            'wait_for_completion': True,
-            'refresh': True
+            'wait_for_completion': 'true',
+            'refresh': 'true',
         },
         data=json.dumps({
             'query': query,

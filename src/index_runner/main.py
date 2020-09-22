@@ -43,8 +43,10 @@ def _handle_msg(msg):
             logger.warning(f"Type {objtype} is in SKIP_TYPES, skipping")
             return
     if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
+        # Index a single workspace object
         obj = _fetch_obj_data(msg)
         ws_info = _fetch_ws_info(msg)
+        _reindex_narrative(ws_info)
         if not config()['skip_releng']:
             releng_importer.run_importer(obj, ws_info, msg)
         es_indexer.run_indexer(obj, ws_info, msg)
@@ -150,6 +152,19 @@ def _fetch_ws_info(msg):
         logger.error(f'Workspace response error: {err.resp_data}')
         raise err
     return ws_info
+
+
+def _reindex_narrative(ws_info: dict) -> None:
+    meta = ws_info[-1]
+    if not isinstance(meta, dict) or meta.get('narrative') != '1':
+        # This workspace is not a narrative
+        return
+    wsid = ws_info[0]
+    narr_info = config()['ws_client'].find_narrative(wsid=ws_info[0], admin=True)
+    objid = narr_info[0]
+    # Publish an event to reindex the narrative
+    ev = {'evtype': 'REINDEX', 'wsid': wsid, 'objid': objid}
+    kafka.produce(ev, callback=_delivery_report)
 
 
 def _log_err_to_es(msg, err=None):
