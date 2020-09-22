@@ -160,7 +160,7 @@ def _reindex_narrative(ws_info: dict) -> None:
         # This workspace is not a narrative
         return
     wsid = ws_info[0]
-    narr_info = config()['ws_client'].find_narrative(wsid=ws_info[0], admin=True)
+    narr_info = config()['ws_client'].find_narrative(wsid, admin=True)
     objid = narr_info[0]
     # Publish an event to reindex the narrative
     ev = {'evtype': 'REINDEX', 'wsid': wsid, 'objid': objid}
