@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.7] - 2020-09-22
+
+### Changed
+- Reindex the narrative (if present) on any indexing of an object
+
+### Fixed
+- Fixed a bug in a bulk update Elasticsearch request function
+
 ## [1.9.5] - 2020-09-14
 ### Changed
 - Moved the workspace type blacklist into spec/config.yaml
