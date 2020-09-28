@@ -307,7 +307,6 @@ class TestIndexers(unittest.TestCase):
             for (idx, msg_data) in enumerate(_index_ama(features_test_file_copy_path, test_data['obj']['data'],
                                                         ama_index, ver_ama_index, tmp_dir)):
                 self.assertEqual(msg_data, check_against[idx])
-
         finally:
             shutil.rmtree(tmp_dir)
 

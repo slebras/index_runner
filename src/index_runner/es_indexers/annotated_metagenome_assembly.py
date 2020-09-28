@@ -10,10 +10,9 @@ import os
 
 _NAMESPACE = "WS"
 _VER_NAMESPACE = "WSVER"
+# un-versioned indices
 _AMA_INDEX_VERSION = 2
-_AMA_FEATURES_INDEX_VERSION = 2
 _AMA_INDEX_NAME = "annotated_metagenome_assembly_" + str(_AMA_INDEX_VERSION)
-_AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features_" + str(_AMA_FEATURES_INDEX_VERSION)
 # version indices
 _VER_AMA_INDEX_VERSION = 2
 _VER_AMA_FEATURES_INDEX_VERSION = 2
@@ -73,7 +72,6 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
 
     for feat in features:
         id_ = feat.get('id')
-        feat_id = ama_id + f"::ama_ft::{id_}"
         ver_feat_id = ver_ama_id + f"::ama_ft::{id_}"
         # calculate gc content for each feature.
         # if feat.get('dna_sequence'):
@@ -86,7 +84,7 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
         else:
             contig_ids, starts, strands, stops = None, None, None, None
 
-        feat_index = {
+        ver_feat_index = {
             '_action': 'index',
             'doc': {
                 'id': id_,
@@ -105,20 +103,15 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
                 # 'aliases': feat.get('aliases'),
                 # 'gc_content': feat_gc_content,
                 # Parent ids below
-                'parent_id': ama_id,
+                'parent_id': ver_ama_id,
                 'annotated_metagenome_assembly_size': data.get('dna_size'),
                 'annotated_metagenome_assembly_num_features': data.get('num_features'),
                 'annotated_metagenome_assembly_num_contigs': data.get('num_contigs'),
                 'annotated_metagenome_assembly_gc_content': data.get('gc_content')
             },
-            'index': _AMA_FEATURES_INDEX_NAME,
-            'id': feat_id
+            'index': _VER_AMA_FEATURES_INDEX_NAME,
+            'id': ver_feat_id
         }
-        yield feat_index
-        ver_feat_index = dict(feat_index)
-        ver_feat_index['id'] = ver_feat_id
-        ver_feat_index['doc']['parent_id'] = ver_ama_id
-        ver_feat_index['index'] = _VER_AMA_FEATURES_INDEX_NAME
         yield ver_feat_index
     # remove unzipped file
     os.remove(features_file_path)
