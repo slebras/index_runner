@@ -1,3 +1,8 @@
+"""
+This indexer is for the Sample objects represented in the SampleService and
+the SampleSet object in the Workspace.
+"""
+from src.utils.es_utils import _get_document
 from src.utils.config import config
 import json
 # import uuid
@@ -112,18 +117,23 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
 
     for samp in data["samples"]:
         # query the sample service for sample
-        sample = _get_sample(samp)
-        sample_id = f"{_SAMPLE_NAMESPACE}::{sample['id']}:{sample['version']}"
-        # not sure on how we need to handle more than 1 node.
-        if len(sample['node_tree']) == 1:
-            meta_controlled = _flatten_meta(
-                sample['node_tree'][0]['meta_controlled']
-            )
-            meta_user = _flatten_meta(
-                sample['node_tree'][0]['meta_user']
-            )
-            meta_controlled['node_id'] = sample['node_tree'][0]['id']
+
+        sample_id = f"{_SAMPLE_NAMESPACE}::{samp['id']}"
+        if samp.get('version'):
+            sample_id += f":{samp['version']}"
+            sample = None
         else:
+            # get latest version of sample
+            sample = _get_sample(samp)
+            sample_id += f":{sample['version']}"
+        # check if sample already indexed
+        document = _get_document("sample", sample_id)
+        if document:
+            # up date index to include this WS
+            document['sample_set_ids'].append(ver_sample_set_id)
+        else:
+            if sample is None:
+                sample = _get_sample(samp)
             meta_controlled, meta_user = {}, {}
             for idx, node in enumerate(sample['node_tree']):
                 meta_controlled = _combine_meta(
@@ -140,18 +150,23 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
                     ),
                     idx
                 )
-                meta_controlled['node_id'] = node['id']
+                if 'node_id' in meta_controlled:
+                    meta_controlled['node_id'].append(node['id'])
+                else:
+                    meta_controlled['node_id'] = [node['id']]
 
-        sample_index = {
-            "_action": "index",
-            "doc": {
+            document = {
                 "save_date": sample['save_date'],
                 "sample_version": sample['version'],
                 "name": sample['name'],
-                "parent_id": sample_set_id,
+                "sample_set_ids": [ver_sample_set_id],
                 **meta_user,
                 **meta_controlled
-            },
+            }
+
+        sample_index = {
+            "_action": "index",
+            "doc": document,
             "index": _SAMPLE_INDEX_NAME,
             "id": sample_id
         }

@@ -10,8 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Reindex the narrative (if present) on any indexing of an object
+- Added `sample_set`, `sample_set_version`, and sample indices to config.yaml
+- Updating the sample indexer to include support for multiple source WS objects
 
-### Fixed
+## Fixed
 - Fixed a bug in a bulk update Elasticsearch request function
 
 ## [1.9.5] - 2020-09-14
@@ -21,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.9.5] - 2020-09-14
 ### Changed
-- Default indexes will automatically create an alias to "default_search"
+- Default indexes will automatically create an alias to `default_search`
 
 ## [1.9.4] - 2020-09-11
 ### Changed
