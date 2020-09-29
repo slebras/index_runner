@@ -11,8 +11,6 @@ latest_versions:
   annotated_metagenome_assembly_features_version: "annotated_metagenome_assembly_features_version_2"
 
 aliases:
-  default_search:
-    - annotated_metagenome_assembly_2
   annotated_metagenome_assembly:
     - annotated_metagenome_assembly_2
     - annotated_metagenome_assembly_1
