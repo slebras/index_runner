@@ -21,6 +21,28 @@ aliases:
     - annotated_metagenome_assembly_features_version_2
     - annotated_metagenome_assembly_features_version_1
 
+# Generic, global type mappings. These can be reused in any index mappings below.
+global_mappings:
+  ws_auth:
+    access_group: {type: integer}
+    is_public: {type: boolean}
+  ws_object:
+    agg_fields: {type: text} # Uses the copy_to property for a combined text search
+    timestamp: {type: date}
+    obj_name: {type: keyword, copy_to: agg_fields}
+    creation_date: {type: date}
+    shared_users: {type: keyword}
+    creator: {type: keyword, copy_to: agg_fields}
+    version: {type: integer}
+    obj_id: {type: integer}
+    copied: {type: keyword}
+    tags: {type: keyword, copy_to: agg_fields}
+    obj_type_version: {type: keyword}
+    obj_type_module: {type: keyword, copy_to: agg_fields}
+    obj_type_name: {type: keyword, copy_to: agg_fields}
+  ws_subobject:
+    parent_id: {type: keyword}
+
 mappings:
   "annotated_metagenome_assembly_1":
     global_mappings: [ws_auth, ws_object]
