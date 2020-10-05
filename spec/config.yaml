@@ -50,8 +50,7 @@ ws_subobjects:
   - "genome_features_2"
   - "pangenome_orthologfamily_1"
   - "attribute_mapping_1"
-  - "annotated_metagenome_assembly_features_1"
-  - "annotated_metagenome_assembly_features_version_1"
+  - "annotated_metagenome_assembly_features_version_2"
 # Genome features index name
 genome_features_current_index_name: genome_features
 
@@ -94,7 +93,6 @@ latest_versions:
   indexing_errors: "indexing_errors_1"
   indexer_messages: "indexer_messages_1"
   annotated_metagenome_assembly: "annotated_metagenome_assembly_2"
-  annotated_metagenome_assembly_features: "annotated_metagenome_assembly_features_2"
   annotated_metagenome_assembly_version: "annotated_metagenome_assembly_version_2"
   annotated_metagenome_assembly_features_version: "annotated_metagenome_assembly_features_version_2"
   sample_set: "sample_set_1"
@@ -115,7 +113,6 @@ aliases:
     - attribute_mapping_1
     - genomeset_1
     - annotated_metagenome_assembly_2
-    - annotated_metagenome_assembly_features_2
   narrative:
     - narrative_2
     - narrative_1
@@ -153,8 +150,6 @@ aliases:
   annotated_metagenome_assembly:
     - annotated_metagenome_assembly_2
     - annotated_metagenome_assembly_1
-  annotated_metagenome_assembly_features:
-    - annotated_metagenome_assembly_features_1
   annotated_metagenome_assembly_version:
     - annotated_metagenome_assembly_version_2
     - annotated_metagenome_assembly_version_1
@@ -501,50 +496,6 @@ mappings:
       molecule_type: {type: keyword}
       assembly_ref: {type: keyword}
       notes: {type: text, copy_to: agg_fields}
-
-  "annotated_metagenome_assembly_features_1":
-    global_mappings: [ws_subobject, ws_auth, ws_object]
-    properties:
-      id: {type: keyword}
-      type: {type: keyword, copy_to: agg_fields}
-      size: {type: integer}
-      contig_ids: {type: keyword, copy_to: agg_fields}
-      starts: {type: integer}
-      strands: {type: keyword}
-      stops: {type: integer}
-      functions: {type: keyword}
-      functional_descriptions: {type: keyword}
-      warnings: {type: keyword}
-      parent_gene: {type: keyword}
-      inference_data: {type: keyword}
-      dna_sequence: {type: text}
-      gc_content: {type: float}
-      annotated_metagenome_assembly_size: {type: integer}
-      annotated_metagenome_assembly_num_features: {type: integer}
-      annotated_metagenome_assembly_num_contigs: {type: integer}
-      annotated_metagenome_assembly_gc_content: {type: float}
-
-  "annotated_metagenome_assembly_features_2":
-    global_mappings: [ws_subobject, ws_auth, ws_object]
-    properties:
-      id: {type: keyword}
-      type: {type: keyword, copy_to: agg_fields}
-      size: {type: long}
-      contig_ids: {type: keyword, copy_to: agg_fields}
-      starts: {type: integer}
-      strands: {type: keyword}
-      stops: {type: integer}
-      functions: {type: text}
-      functional_descriptions: {type: text}
-      warnings: {type: text}
-      parent_gene: {type: keyword}
-      inference_data: {type: keyword}
-      dna_sequence: {type: keyword}
-      gc_content: {type: float}
-      annotated_metagenome_assembly_size: {type: long}
-      annotated_metagenome_assembly_num_features: {type: integer}
-      annotated_metagenome_assembly_num_contigs: {type: integer}
-      annotated_metagenome_assembly_gc_content: {type: float}
 
   "annotated_metagenome_assembly_version_1":
     global_mappings: [ws_auth, ws_object]
