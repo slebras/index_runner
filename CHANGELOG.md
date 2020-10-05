@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.8] - 2020-09-16
+## Changed/Fixed
+- Removing AMA information from config and adding ama_config file.
+- AMA features are now only indexed as versioned objects.
+
 ## [1.9.7] - 2020-09-16
 ## Changed/Fixed
 - Added sample_set, sample_set_version, and sample indices to config.yaml
