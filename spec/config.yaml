@@ -94,7 +94,6 @@ latest_versions:
   indexer_messages: "indexer_messages_1"
   annotated_metagenome_assembly: "annotated_metagenome_assembly_2"
   annotated_metagenome_assembly_version: "annotated_metagenome_assembly_version_2"
-  annotated_metagenome_assembly_features_version: "annotated_metagenome_assembly_features_version_2"
   sample_set: "sample_set_1"
   sample_set_version: "sample_set_version_1"
   sample: "sample_1"
@@ -153,9 +152,6 @@ aliases:
   annotated_metagenome_assembly_version:
     - annotated_metagenome_assembly_version_2
     - annotated_metagenome_assembly_version_1
-  annotated_metagenome_assembly_features_version:
-    - annotated_metagenome_assembly_features_version_2
-    - annotated_metagenome_assembly_features_version_1
   sample_set:
     - sample_set_1
   sample_set_version:
