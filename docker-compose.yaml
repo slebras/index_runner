@@ -38,8 +38,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_HEAP_OPTS: -Xmx512m -Xms512m
-    logging:
-      driver: none
+    logging: {driver: none}
 
   # Required for kafka
   zookeeper:
@@ -53,8 +52,7 @@ services:
       ZOOKEEPER_INIT_LIMIT: 5
       ZOOKEEPER_SYNC_LIMIT: 2
       ZOOKEEPER_SERVERS: zookeeper:12888:13888
-    logging:
-      driver: none
+    logging: {driver: none}
 
   elasticsearch:
     image: elasticsearch:7.5.0
@@ -66,17 +64,15 @@ services:
     ports:
       - "127.0.0.1:9200:9200"
       - "127.0.0.1:9300:9300"
-    logging:
-      driver: none
+    logging: {driver: none}
 
   # Relation Engine API
   re_api:
-    image: kbase/relation_engine_api:test-cleanup
+    image: kbase/relation_engine_api:0.0.10
     ports:
       - "127.0.0.1:5001:5000"
     environment:
       - WORKERS=2
-      - SPEC_RELEASE_PATH=/app/spec.tar.gz
       - KBASE_AUTH_URL=https://ci.kbase.us/services/auth/
       - KBASE_WORKSPACE_URL=https://ci.kbase.us/services/ws/
       - PYTHONUNBUFFERED=true
@@ -90,8 +86,7 @@ services:
   arangodb:
     image: arangodb:3.5
     ports:
-      - "127.0.0.1:8529:8529"
-      - "127.0.0.1:8530:8530"
+      - "127.0.0.1:8529:8529"  # API
+      - "127.0.0.1:8530:8530"  # dashboard
     command: sh -c "arangodb --starter.local"
-    logging:
-      driver: none
+    logging: {driver: none}
