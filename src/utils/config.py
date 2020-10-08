@@ -141,7 +141,7 @@ class Config:
         return self._cfg[key]
 
     def __str__(self):
-        return str(self._cfg)
+        return json.dumps(self._cfg, indent=2)
 
 
 def _fetch_global_config(config_url):

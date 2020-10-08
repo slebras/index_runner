@@ -172,7 +172,7 @@ def _init_generic_index(msg):
     mappings = {**_GLOBAL_MAPPINGS['ws_auth'], **_GLOBAL_MAPPINGS['ws_object']}
     _init_index(index_name, mappings)
     # Update the 'default_search' alias to include this index
-    _create_alias(_DEFAULT_SEARCH_ALIAS, index_name)
+    _create_alias(_DEFAULT_SEARCH_ALIAS, f"{_PREFIX}.{index_name}")
 
 
 def _write_to_elastic(data):

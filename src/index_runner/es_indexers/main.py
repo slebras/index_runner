@@ -48,7 +48,7 @@ def index_obj(obj_data, ws_info, msg_data):
             'no_data': 1
         })
     except WorkspaceResponseError as err:
-        logger.error('Workspace response error:', err.resp_data)
+        ws_utils.log_error(err)
         raise err
     obj_data_v1 = obj_data_v1['data'][0]
     # Dispatch to a specific type handler to produce the search document

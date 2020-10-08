@@ -12,6 +12,8 @@ def init_logger(logger: logging.Logger):
     """
     Initialize log settings. Mutates the `logger` object. Writes to stdout.
     """
+    # Make the urllib3 logging less noisy
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
     # Set the log level
     level = os.environ.get('LOGLEVEL', 'DEBUG').upper()
     logger.setLevel(level)

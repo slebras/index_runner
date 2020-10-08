@@ -6,7 +6,6 @@ Generally handles every message synchronously. Duplicate the service to get more
 from kbase_workspace_client.exceptions import WorkspaceResponseError
 import atexit
 import hashlib
-import logging
 import json
 import os
 import signal
@@ -14,10 +13,9 @@ import time
 
 from src.index_runner import event_loop
 from src.utils.config import config
-from src.utils.logger import init_logger
 from src.utils.logger import logger
 from src.utils.service_utils import wait_for_dependencies
-from src.utils.ws_utils import get_obj_type
+from src.utils.ws_utils import get_obj_type, log_error
 import src.index_runner.es_indexer as es_indexer
 import src.index_runner.releng_importer as releng_importer
 import src.utils.es_utils as es_utils
@@ -46,7 +44,7 @@ def _handle_msg(msg):
         # Index a single workspace object
         obj = _fetch_obj_data(msg)
         ws_info = _fetch_ws_info(msg)
-        _reindex_narrative(ws_info)
+        _reindex_narrative(obj, ws_info)
         if not config()['skip_releng']:
             releng_importer.run_importer(obj, ws_info, msg)
         es_indexer.run_indexer(obj, ws_info, msg)
@@ -126,7 +124,7 @@ def _fetch_obj_data(msg):
             'objects': [{'ref': obj_ref}]
         })
     except WorkspaceResponseError as err:
-        logger.error(f'Workspace response error: {err.resp_data}')
+        log_error(err)
         # Workspace is deleted; ignore the error
         if (err.resp_data and isinstance(err.resp_data, dict)
                 and err.resp_data['error'] and isinstance(err.resp_data['error'], dict)
@@ -154,10 +152,14 @@ def _fetch_ws_info(msg):
     return ws_info
 
 
-def _reindex_narrative(ws_info: dict) -> None:
+def _reindex_narrative(obj, ws_info: dict) -> None:
+    obj_type = obj['info'][2]
+    if 'Narrative' in obj_type:
+        return
     meta = ws_info[-1]
     if not isinstance(meta, dict) or meta.get('narrative') != '1':
         # This workspace is not a narrative
+        logger.debug(f"The workspace is not a narrative")
         return
     wsid = ws_info[0]
     narr_info = config()['ws_client'].find_narrative(wsid, admin=True)
@@ -189,11 +191,6 @@ def _delivery_report(err, msg):
 
 
 def main():
-    # Set up the logger
-    # Make the urllib debug logs less noisy
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    init_logger(logger)
-
     # Initialize and run the Kafka consumer
     topics = [
         config()['topics']['workspace_events'],

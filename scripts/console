@@ -1,0 +1,5 @@
+#!/bin/sh
+
+export $(cat tests/test.env | xargs)
+test -f .env && export $(cat .env | xargs)
+poetry check && poetry run ipython

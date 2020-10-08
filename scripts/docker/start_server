@@ -4,7 +4,6 @@ set -o xtrace
 # To be run within the docker container
 # This is the entrypoint script for the Dockerfile
 
-docker-compose down -v
-docker-compose pull
-docker-compose build
-docker-compose up app
+export PYTHONPATH=/app
+cd /app
+python -m src.index_runner.main
