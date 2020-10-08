@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.9.10] - 2020-10-08
+## [1.9.9] - 2020-10-08
 ### Changed
 - Reindex the narrative (if present) on any indexing of an object
 
