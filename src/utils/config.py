@@ -99,6 +99,7 @@ class Config:
         if msg_log_index_name in global_config['latest_versions']:
             msg_log_index_name = global_config['latest_versions'][msg_log_index_name]
         self._cfg = {
+            'service_wizard_url': service_wizard_url,
             'skip_releng': os.environ.get('SKIP_RELENG'),
             'skip_features': os.environ.get('SKIP_FEATURES'),
             'skip_indices': skip_indices,

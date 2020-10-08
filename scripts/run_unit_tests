@@ -3,6 +3,10 @@ set -e
 set -o xtrace
 export PYTHONPATH=.
 # Set all env vars
+# Load private variables from .env if present
+[ -f .env ] && export $(cat .env | xargs)
+# Load test variables from tests/test.env
 export $(cat tests/test.env | xargs)
-path=${@:-"tests/unit"}
-poetry run pytest -vv $path
+# Allow users to set test args
+args=${@:-"tests/unit"}
+poetry run pytest $args

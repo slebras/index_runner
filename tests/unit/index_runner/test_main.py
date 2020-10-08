@@ -5,6 +5,9 @@ from tests.helpers import set_env
 from src.index_runner.main import _handle_msg
 from src.utils.config import config
 
+# Allow requests to the service wizard (which happens in config)
+responses.add_passthru(config()['service_wizard_url'])
+
 
 def test_handle_msg_skip_types():
     """

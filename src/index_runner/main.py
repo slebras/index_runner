@@ -158,8 +158,7 @@ def _reindex_narrative(obj, ws_info: dict) -> None:
         return
     meta = ws_info[-1]
     if not isinstance(meta, dict) or meta.get('narrative') != '1':
-        # This workspace is not a narrative
-        logger.debug(f"The workspace is not a narrative")
+        logger.debug("This workspace is not a narrative")
         return
     wsid = ws_info[0]
     narr_info = config()['ws_client'].find_narrative(wsid, admin=True)
