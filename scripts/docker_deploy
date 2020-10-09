@@ -1,6 +1,5 @@
 #!/bin/sh
-set -e
-set -o xtrace
+set -euo xtrace
 
 ver=$(cat VERSION)
 export IMAGE_NAME="kbase/index_runner2:$ver"

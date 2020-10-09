@@ -1,6 +1,5 @@
 #!/bin/sh
-set -e
-set -o xtrace
+set -euo xtrace
 # To be run within the docker container
 # This is the entrypoint script for the Dockerfile
 

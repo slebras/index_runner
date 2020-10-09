@@ -1,6 +1,6 @@
 #!/bin/sh
-set -e
-set -o xtrace
+# Run unit tests only
+set -euo xtrace
 export PYTHONPATH=.
 # Set all env vars
 # Load private variables from .env if present
