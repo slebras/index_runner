@@ -40,4 +40,4 @@ RUN ln -s /app/src/admin_tools/indexer_admin /usr/local/bin/indexer_admin
 COPY . /app
 
 ENTRYPOINT ["/usr/local/bin/dockerize"]
-CMD ["/app/scripts/start_server"]
+CMD ["/app/scripts/docker/start_server"]

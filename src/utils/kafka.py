@@ -1,9 +1,8 @@
-'''
+"""
 Helper methods for recieving and sending messages from and to Kafka.
-'''
-
+"""
 from confluent_kafka import Consumer, Producer
-from typing import List
+from typing import List, Any, Callable
 import json
 
 from src.utils.logger import logger
@@ -41,13 +40,20 @@ def close_consumer(consumer: Consumer) -> None:
     logger.info("Closed the Kafka consumer")
 
 
-def produce(data, topic=config()['topics']['admin_events'], callback=None) -> None:
+def produce(
+        data: Any,
+        topic: str = config()['topics']['admin_events'],
+        callback: Callable = None) -> None:
     """
-    Produce a new event message on a Kafka topic and block at most 60s for it to get published.
+    Produce a new event message on a Kafka topic and block for it to get published.
 
-    :param data: the data to send to Kafka. Must be JSONable.
-    :param topic: the topic where the data will be sent.
-    :param callback: a callable provided to the confluent Kafka Producer class.
+    If the produce fails, it will be retried at most _KAFKA_PRODUCE_RETRIES
+    tries (defaults to 5).
+
+    Args:
+        data: the data to send to Kafka. Must be JSONable.
+        topic: the topic where the data will be sent.
+        callback: a callable provided to the confluent Kafka Producer class.
     """
     producer = Producer({'bootstrap.servers': config()['kafka_server']})
     tries = 0

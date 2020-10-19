@@ -1,8 +1,9 @@
 from kbase_workspace_client.exceptions import WorkspaceResponseError
+import logging
 
 from src.utils.config import config
 from src.utils.logger import logger
-from src.utils.ws_utils import get_type_pieces
+from src.utils.ws_utils import get_type_pieces, log_error
 
 _REF_DATA_WORKSPACES = []  # type: list
 
@@ -18,7 +19,7 @@ def check_object_deleted(ws_id, obj_id):
     try:
         narr_data_obj_info = config()['ws_client'].admin_req("listObjects", {'ids': [ws_id]})
     except WorkspaceResponseError as err:
-        logger.warning(f"Workspace response error: {err.resp_data}")
+        log_error(err, logging.WARNING)
         narr_data_obj_info = []
     # Make sure obj_id is not in list of object ids (this means it is deleted)
     obj_ids = [obj[0] for obj in narr_data_obj_info]

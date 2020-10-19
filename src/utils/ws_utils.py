@@ -1,6 +1,9 @@
+from kbase_workspace_client.exceptions import WorkspaceResponseError
 from typing import Optional
+import logging
 
 from src.utils.config import config
+from src.utils.logger import logger
 
 
 def get_type_pieces(type_str):
@@ -29,3 +32,9 @@ def get_obj_type(msg: dict) -> Optional[str]:
         })
         return info['infos'][0][2]
     return None
+
+
+def log_error(ws_err: WorkspaceResponseError, level: int = logging.ERROR):
+    """Log a workspace response error"""
+    err_str = ws_err.resp_data['error']['message']
+    logger.log(level, f'Workspace response error: {err_str}')
