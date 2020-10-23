@@ -4,4 +4,4 @@ set -euo xtrace
 # This is the entrypoint script for the Dockerfile
 export PYTHONPATH=/app
 cd /app
-python -m src.index_runner.main
+poetry run python -m src.index_runner.main
