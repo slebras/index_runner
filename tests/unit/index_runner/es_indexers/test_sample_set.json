@@ -1,0 +1,177 @@
+{
+    "obj1": {
+        "info": [
+            44,
+            "test_sample_set",
+            "KBaseSets.SampleSet-1.0",
+            "2016-10-05T17:11:40+0000",
+            1,
+            "kbasetest",
+            44444,
+            "KBaseExampleData",
+            "abaa39d622962856b799c3eb32de2c2f",
+            447,
+            {
+                "sequencing_tech": "Illumina",
+                "single_genome": "1"
+            }
+        ],
+        "data": {
+            "description": "Pamela's Sesar sample data",
+            "samples": [
+                {"id": "1", "name": "PB-Low-5", "version": 1}
+            ]
+        }
+    },
+    "ws_info1": [44444, "username:narrative_1553621013004", "username", "2019-04-05T22:17:00+0000", 12, "n", "r", "unlocked", {"searchtags": "narrative", "is_temporary": "false", "narrative": "1", "data_palette_id": "2", "cell_count": "1", "narrative_nice_name": "wat"}],
+    "sample_service_resp1": {
+        "version": "1.1",
+        "result": [{
+            "id": "8948a78f-9b3b-477b-8502-fc6fc952a394",
+            "user": "slebras",
+            "name": "PB-Low-5",
+            "node_tree": [
+                {
+                    "id": "IEAWH0001",
+                    "type": "BioReplicate",
+                    "parent": null,
+                    "meta_controlled": {
+                        "id": {
+                            "value": "IEAWH0001"
+                        },
+                        "name": {
+                            "value": "PB-Low-5"
+                        },
+                        "material": {
+                            "value": "Soil"
+                        },
+                        "latitude": {
+                            "units": "degrees",
+                            "value": 33.3375
+                        },
+                        "longitude": {
+                            "units": "degrees",
+                            "value": 81.71861111
+                        }
+                    },
+                    "meta_user": {
+                        "latitude": {
+                            "units": "degrees",
+                            "value": 33.3375
+                        },
+                        "collection_date": {
+                            "units": "day",
+                            "value": "2019-06-26 00:00:00"
+                        },
+                        "longitude": {
+                            "units": "degrees",
+                            "value": 81.71861111
+                        },
+                        "material": {
+                            "value": "Soil"
+                        },
+                        "current_archive_contact": {
+                            "value": "pweisenhorn@anl.gov"
+                        },
+                        "location_description": {
+                            "value": "Savannah River Site"
+                        },
+                        "collection_method": {
+                            "value": "Coring > Syringe"
+                        },
+                        "primary_physiographic_feature": {
+                            "value": "Hollow"
+                        },
+                        "field_program_cruise": {
+                            "value": "Argonne Wetlands Hydrobiogeochemistry SFA"
+                        },
+                        "coordinate_precision?": {
+                            "value": 30
+                        },
+                        "navigation_type": {
+                            "value": "GPS"
+                        },
+                        "relation_type": {
+                            "value": "grouped"
+                        },
+                        "name_of_physiographic_feature": {
+                            "value": "Tims Branch watershed"
+                        },
+                        "current_archive": {
+                            "value": "Argonne National Lab"
+                        },
+                        "locality_description": {
+                            "value": "Pine Backwater"
+                        },
+                        "purpose": {
+                            "value": "Microbial Characterization 1"
+                        },
+                        "collector_chief_scientist": {
+                            "value": "Pamela Weisenhorn"
+                        },
+                        "related_identifiers": {
+                            "value": "IEAWH0002"
+                        }
+                    }
+                }
+            ],
+            "save_date": 1591823661642,
+            "version": 1
+        }]
+    },
+    "expected_result1": [
+        {
+            "_action": "index",
+            "doc": {
+                "description": "Pamela's Sesar sample data",
+                "sample_ids": ["1"],
+                "sample_names": ["PB-Low-5"],
+                "sample_versions": [1]
+            },
+            "index": "sample_set_1",
+            "id": "WS::44444:44"
+        },
+        {
+            "_action": "index",
+            "doc": {
+                "description": "Pamela's Sesar sample data",
+                "sample_ids": ["1"],
+                "sample_names": ["PB-Low-5"],
+                "sample_versions": [1]
+            },
+            "index": "sample_set_version_1",
+            "id": "WSVER::44444:44:1"
+        },
+        {
+            "_action": "index",
+            "doc": {
+                "save_date": 1591823661642,
+                "sample_version": 1,
+                "name": ["PB-Low-5"],
+                "sample_set_ids": ["WSVER::44444:44:1"],
+                "latitude": ["33.3375;degrees"],
+                "collection_date": ["2019-06-26 00:00:00;day"],
+                "longitude": ["81.71861111;degrees"],
+                "material": ["Soil"],
+                "current_archive_contact": ["pweisenhorn@anl.gov"],
+                "location_description": ["Savannah River Site"],
+                "collection_method": ["Coring > Syringe"],
+                "primary_physiographic_feature": ["Hollow"],
+                "field_program_cruise": ["Argonne Wetlands Hydrobiogeochemistry SFA"],
+                "coordinate_precision?": ["30"],
+                "navigation_type": ["GPS"],
+                "relation_type": ["grouped"],
+                "name_of_physiographic_feature": ["Tims Branch watershed"],
+                "current_archive": ["Argonne National Lab"],
+                "locality_description": ["Pine Backwater"],
+                "purpose": ["Microbial Characterization 1"],
+                "collector_chief_scientist": ["Pamela Weisenhorn"],
+                "related_identifiers": ["IEAWH0002"],
+                "id": ["IEAWH0001"],
+                "node_id": ["IEAWH0001"]
+            },
+            "index": "sample_1",
+            "id": "SMP::1:1"
+        }
+    ]
+}
