@@ -3,22 +3,21 @@ import unittest
 import tests.helpers as helpers
 
 _TEST_EVENT = {
-   "wsid": 33192,
-   "ver": 2,
+   "wsid": 55825,
+   "ver": 15,
    "perm": None,
    "evtype": "NEW_VERSION",
-   "objid": 23,
-   "time": 1578439639664,
-   "objtype": "KBaseGenomeAnnotations.Assembly-6.0",
-   "permusers": [],
+   "objid": 2,
+   "time": 101,
    "user": "jayrbolton"
 }
 
 
 class TestIntegration(unittest.TestCase):
     """
-    Integration test to confirm that the pieces of the system are successfully interconnected.
-    We can produce a message to a kafka topic and something gets saved to ES and Arango.
+    Integration test to confirm that the pieces of the system are successfully
+    interconnected. We produce a message to a kafka topic and confirm something
+    gets saved to ES and Arango.
 
     To test more detailed functionality of indexers/importers, write separate
     unit tests. Including them here will be too slow.
@@ -26,7 +25,7 @@ class TestIntegration(unittest.TestCase):
     maxDiff = None
 
     def test_integration(self):
-        # Produce an event on Kafka
+        # Produce the new object event on Kafka
         helpers.produce(_TEST_EVENT)
         wsid = _TEST_EVENT['wsid']  # type: ignore
         objid = _TEST_EVENT['objid']  # type: ignore
