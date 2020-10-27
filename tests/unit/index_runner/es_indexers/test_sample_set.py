@@ -6,7 +6,7 @@ from src.index_runner.es_indexers.sample_set import index_sample_set
 from src.utils.config import config
 
 # Load test data
-with open(os.path.join(os.path.dirname(__file__), 'test_sample_set.json')) as fd:
+with open(os.path.join(os.path.dirname(__file__), 'data/sample_set.json')) as fd:
     data = json.load(fd)
 
 
