@@ -3,21 +3,21 @@ import json
 import tempfile
 import shutil
 
+from src.index_runner.es_indexers.annotated_metagenome_assembly import _index_ama
+
 _DIR = os.path.dirname(os.path.realpath(__file__))
+
+# Load test data
+with open(os.path.join(_DIR, 'data/ama.json')) as fd:
+    data = json.load(fd)
+with open(os.path.join(_DIR, 'data/ama_check_against.json')) as fd:
+    check_against = json.load(fd)
 
 
 def test_annotated_metagenome_assembly_indexer():
-    # the annotated_meganome_assembly 'check_against' data is really big, so we keep it in an external file
-    event_data_str = "annotated_metagenome_assembly_save"
-    with open(os.path.join(_DIR, 'test_data/annotated_metagenome_assembly_check_against.json')) as fd:
-        check_against = json.load(fd)
-    print(f'Testing {event_data_str} indexer...')
-    json_data_path = f"{event_data_str}_{event_data['wsid']}_{event_data['objid']}.json"
-    with open(os.path.join(_DIR, 'test_data', json_data_path)) as fd:
-        test_data = json.load(fd)
-
-    features_test_file = os.path.join(_DIR, "test_data", "features.json.gz")
-    info = test_data['obj']['info']
+    # the annotated_metagenome_assembly 'check_against' data is really big, so we keep it in an external file
+    features_test_file = os.path.join(_DIR, "data", "features.json.gz")
+    info = data['obj']['info']
     workspace_id = info[6]
     object_id = info[0]
     version = info[4]
@@ -26,11 +26,10 @@ def test_annotated_metagenome_assembly_indexer():
 
     try:
         tmp_dir = tempfile.mkdtemp()
-        features_test_file_copy_path = os.path.join(tmp_dir, "features.json.gz")
-        shutil.copy(features_test_file, features_test_file_copy_path)
-        for (idx, msg_data) in enumerate(_index_ama(features_test_file_copy_path, test_data['obj']['data'],
-                                                    ama_index, ver_ama_index, tmp_dir)):
+        features_path = os.path.join(tmp_dir, "features.json.gz")
+        shutil.copy(features_test_file, features_path)
+        results = _index_ama(features_path, data['obj']['data'], ama_index, ver_ama_index, tmp_dir)
+        for (idx, msg_data) in enumerate(results):
             assert msg_data == check_against[idx]
     finally:
         shutil.rmtree(tmp_dir)
-
