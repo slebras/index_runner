@@ -146,12 +146,6 @@ class TestIndexers(unittest.TestCase):
         }]
         self._default_obj_test('genomeset_save', index_from_sdk, check_against)
 
-    def test_genome_indexer(self):
-        # The genome `check_against` data is really big, so we keep it in an external file
-        with open(os.path.join(_DIR, 'test_data/genome_check_against.json')) as fd:
-            check_against = json.load(fd)
-        self._default_obj_test('genome_save', index_genome, check_against)
-
     def test_pangenome_indexer(self):
         # The pangenome `check_against` data is really big, so we keep it in an external file
         with open(os.path.join(_DIR, 'test_data/pangenome_check_against.json')) as fd:
