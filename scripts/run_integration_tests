@@ -2,4 +2,8 @@
 # Run service-dependent slower integration tests
 set -euo xtrace
 docker-compose down && docker-compose up -d
-docker-compose exec -T app sh -c "PYTHONPATH=/app python -m tests.wait_for_deps && poetry run pytest tests/integration"
+export PYTHONPATH=.
+export $(cat tests/test.env | xargs)
+[ -f .env ] && export $(cat .env | xargs)
+poetry run python tests/wait_for_deps.py
+poetry run pytest tests/integration

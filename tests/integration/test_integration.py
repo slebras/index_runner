@@ -19,7 +19,7 @@ _TEST_EVENT = {
 }
 
 
-def test_integration(self):
+def test_integration():
     # Produce the new object event on Kafka
     helpers.produce(_TEST_EVENT)
     wsid = _TEST_EVENT['wsid']  # type: ignore
