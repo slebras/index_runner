@@ -146,28 +146,6 @@ class TestIndexers(unittest.TestCase):
         }]
         self._default_obj_test('genomeset_save', index_from_sdk, check_against)
 
-    def test_pangenome_indexer(self):
-        # The pangenome `check_against` data is really big, so we keep it in an external file
-        with open(os.path.join(_DIR, 'test_data/pangenome_check_against.json')) as fd:
-            check_against = json.load(fd)
-        self._default_obj_test('pangenome_save', index_pangenome, check_against)
-
-    def test_tree_indexer(self):
-        check_against = [{
-            '_action': 'index',
-            'index': 'tree_1',
-            'id': 'WS::39794:10',
-            'doc': {
-                "tree_name": None,
-                "type": "SpeciesTree",
-                "labels": [{
-                    "node_id": "user1",
-                    "label": "Rhodobacter CACIA 14H1"
-                }]
-            }
-        }]
-        self._default_obj_test('tree_save', index_tree, check_against)
-
     def test_taxon_indexer(self):
         check_against = [{
             '_action': 'index',
