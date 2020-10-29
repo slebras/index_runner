@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.9.9] - 2020-10-08
 ### Changed
 - Reindex the narrative (if present) on any indexing of an object
-
+- Testing now uses CI as an effort to migrate away from server response mocks
 
 ## [1.9.8] - 2020-09-16
 ### Changed/Fixed
