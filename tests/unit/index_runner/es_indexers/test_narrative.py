@@ -3,18 +3,23 @@ Tests for the narrative indexer
 """
 import json
 import os
+import pytest
+import responses
 
+from src.utils.config import config
 from src.index_runner.es_indexers.narrative import index_narrative
 
 _DIR = os.path.dirname(os.path.realpath(__file__))
 
+# Load test data
+with open(os.path.join(_DIR, 'data', 'narrative.json')) as fd:
+    data = json.load(fd)
 
-def test_basic_valid(self):
+
+def test_basic_valid():
     """Test the happy case."""
-    with open(os.path.join(_DIR, 'test_data', 'narrative_obj_valid.json')) as fd:
-        narr_obj = json.load(fd)
-    with open(os.path.join(_DIR, 'test_data', 'narrative_wsinfo_valid.json')) as fd:
-        ws_info = json.load(fd)
+    narr_obj = data['obj_valid']
+    ws_info = data['wsinfo_valid']
     results = list(index_narrative(narr_obj, ws_info, {}))
     assert len(results) == 1
     result = results[0]
@@ -27,11 +32,11 @@ def test_basic_valid(self):
     assert doc['creator'] == 'jayrbolton'
     assert doc['owner'] == 'jayrbolton'
     assert doc['modified_at'] > 0
-    self.assertEqual(doc['cells'], [
+    doc['cells'] == [
         {'desc': '', 'cell_type': 'code_cell'},
         {'desc': 'Align Reads using Bowtie2 v2.3.2', 'cell_type': 'kbase_app'},
         {'desc': 'Echo test', 'cell_type': 'kbase_app'},
-    ])
+    ]
     assert len(doc['data_objects']) > 0
     for obj in doc['data_objects']:
         assert obj['name']
@@ -41,45 +46,42 @@ def test_basic_valid(self):
     assert doc['static_narrative_ref'] == '/33192/56/'
 
 
-def test_temporary_narr(self):
+def test_temporary_narr():
     """Test that temporary narratives get skipped."""
-    with open(os.path.join(_DIR, 'test_data', 'narrative_obj_temporary.json')) as fd:
-        narr_obj = json.load(fd)
-    with open(os.path.join(_DIR, 'test_data', 'narrative_wsinfo_temporary.json')) as fd:
-        ws_info = json.load(fd)
+    narr_obj = data['obj_temporary']
+    ws_info = data['wsinfo_temporary']
     results = list(index_narrative(narr_obj, ws_info, {}))
     assert len(results) == 0
 
 
-def test_narratorial(self):
+@responses.activate
+def test_narratorial():
     """Test that a narratorial gets flagged as such."""
-    with open(os.path.join(_DIR, 'test_data', 'narrative_obj_narratorial.json')) as fd:
-        narr_obj = json.load(fd)
-    with open(os.path.join(_DIR, 'test_data', 'narrative_wsinfo_narratorial.json')) as fd:
-        ws_info = json.load(fd)
+    mock_resp = {
+        "result": [[]]
+    }
+    responses.add(responses.POST, config()['workspace_url'], json=mock_resp)
+    narr_obj = data['obj_narratorial']
+    ws_info = data['wsinfo_narratorial']
     results = list(index_narrative(narr_obj, ws_info, {}))
     assert len(results) == 1
     result = results[0]
-    self.assertEqual(result['doc']['is_narratorial'], True)
+    assert result['doc']['is_narratorial']
 
 
-def test_fail_no_obj_metadata(self):
+def test_fail_no_obj_metadata():
     """Test that a narrative index fails without obj metadata."""
-    with open(os.path.join(_DIR, 'test_data', 'narrative_obj_no_metadata.json')) as fd:
-        narr_obj = json.load(fd)
-    with open(os.path.join(_DIR, 'test_data', 'narrative_wsinfo_valid.json')) as fd:
-        ws_info = json.load(fd)
-    with self.assertRaises(RuntimeError) as ctx:
+    narr_obj = data["obj_no_metadata"]
+    ws_info = data["wsinfo_valid"]
+    with pytest.raises(RuntimeError) as ctx:
         list(index_narrative(narr_obj, ws_info, {}))
-    assert 'no metadata' in str(ctx.exception)
+    assert 'no metadata' in str(ctx.value)
 
 
-def test_fail_no_ws_metadata(self):
+def test_fail_no_ws_metadata():
     """Test that a narrative index fails without workspace metadata."""
-    with open(os.path.join(_DIR, 'test_data', 'narrative_obj_valid.json')) as fd:
-        narr_obj = json.load(fd)
-    with open(os.path.join(_DIR, 'test_data', 'narrative_wsinfo_no_metadata.json')) as fd:
-        ws_info = json.load(fd)
-    with self.assertRaises(RuntimeError) as ctx:
+    narr_obj = data["obj_valid"]
+    ws_info = data["wsinfo_no_metadata"]
+    with pytest.raises(RuntimeError) as ctx:
         list(index_narrative(narr_obj, ws_info, {}))
-    assert 'no metadata' in str(ctx.exception)
+    assert 'no metadata' in str(ctx.value)

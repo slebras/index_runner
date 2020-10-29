@@ -90,7 +90,7 @@
         "copy_source_inaccessible": 1,
         "extracted_ids": { "handle": [ "KBH_55378" ] }
     },
-    "expected_result1": {
+    "expected_result1": [{
         "_action": "index",
         "id": "WS::15:44",
         "index": "reads_2",
@@ -104,5 +104,5 @@
             "interleaved": true,
             "single_genome": true
         }
-    }
+    }]
 }
