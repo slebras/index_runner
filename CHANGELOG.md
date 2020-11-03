@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [1.9.10] - 2020-11-02
+### Added
+- Save the index runner app version in every Elasticsearch document we save
+
 ### Fixed
 - Fix the signal handlers in the main index runner process
 
