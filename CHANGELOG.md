@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.10] - 2020-11-02
+### Fixed
+- Fix the signal handlers in the main index runner process
+
 ## [1.9.9] - 2020-10-08
 ### Changed
 - Reindex the narrative (if present) on any indexing of an object

@@ -189,6 +189,16 @@ def _delivery_report(err, msg):
         logger.info(f'Message delivered to {msg.topic()}')
 
 
+def _exit_handler(consumer):
+    def handler(signum, stack_frame):
+        kafka.close_consumer(consumer)
+
+    def handler_noargs():
+        kafka.close_consumer(consumer)
+
+    return (handler, handler_noargs)
+
+
 def main():
     # Initialize and run the Kafka consumer
     topics = [
@@ -196,9 +206,10 @@ def main():
         config()['topics']['admin_events']
     ]
     consumer = kafka.init_consumer(topics)
-    atexit.register(lambda signum, stack_frame: kafka.close_consumer(consumer))
-    signal.signal(signal.SIGTERM, lambda signum, stack_frame: kafka.close_consumer(consumer))
-    signal.signal(signal.SIGINT, lambda signum, stack_frame: kafka.close_consumer(consumer))
+    (handler, handler_noargs) = _exit_handler(consumer)
+    atexit.register(handler_noargs)
+    signal.signal(signal.SIGTERM, handler)
+    signal.signal(signal.SIGINT, handler)
 
     # Run the main thread
     event_loop.start_loop(
