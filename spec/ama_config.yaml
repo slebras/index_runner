@@ -23,6 +23,8 @@ aliases:
 
 # Generic, global type mappings. These can be reused in any index mappings below.
 global_mappings:
+  all:
+    index_runner_ver: {type: keyword}
   ws_auth:
     access_group: {type: integer}
     is_public: {type: boolean}

@@ -98,6 +98,8 @@ class Config:
         msg_log_index_name = os.environ.get('MSG_LOG_INDEX_NAME', 'indexer_messages')
         if msg_log_index_name in global_config['latest_versions']:
             msg_log_index_name = global_config['latest_versions'][msg_log_index_name]
+        with open('VERSION') as fd:
+            app_version = fd.read().strip()
         self._cfg = {
             'service_wizard_url': service_wizard_url,
             'skip_releng': os.environ.get('SKIP_RELENG'),
@@ -136,6 +138,7 @@ class Config:
             'allow_types': _get_comma_delimited_env('ALLOW_TYPES'),
             'max_handler_failures': int(os.environ.get('MAX_HANDLER_FAILURES', 3)),
             'ws_client': WorkspaceClient(url=kbase_endpoint, token=ws_token),
+            'app_version': app_version,
         }
 
     def __getitem__(self, key):
