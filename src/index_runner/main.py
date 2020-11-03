@@ -191,9 +191,12 @@ def _delivery_report(err, msg):
 
 def _exit_handler(consumer):
     def handler(signum, stack_frame):
-        logger.debug(f"Exiting with signum: {signum}")
-        return kafka.close_consumer(consumer)
-    return handler
+        kafka.close_consumer(consumer)
+
+    def handler_noargs():
+        kafka.close_consumer(consumer)
+
+    return (handler, handler_noargs)
 
 
 def main():
@@ -203,8 +206,8 @@ def main():
         config()['topics']['admin_events']
     ]
     consumer = kafka.init_consumer(topics)
-    handler = _exit_handler(consumer)
-    atexit.register(handler)
+    (handler, handler_noargs) = _exit_handler(consumer)
+    atexit.register(handler_noargs)
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
 
