@@ -17,7 +17,8 @@ _TEST_EVENT = {
    "evtype": "NEW_VERSION",
    "objid": 2,
    "time": 101,
-   "user": "jayrbolton"
+   "user": "jayrbolton",
+   "index_runner_ver": ["1.9.10"],
 }
 
 
