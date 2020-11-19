@@ -1,32 +1,12 @@
 # KBase Index Runner / Knowledge Engine
 
-This is a background service that listens to events from the KBase Workspace and automatically generates graph data and search indexes to enrich the workspace object data.
+This is a background service that listens to events from the KBase Workspace
+and automatically generates graph data and search indexes to enrich the
+workspace object data.
 
-## Architecture
-
-The index runner uses a hierarchy of parallel processes:
-
-```
-ParentProcess
-KafkaConsumer------------+
-|                        |
-|                        |
-v                        v
-ElasticsearchIndexer     RelationEngineImporter
-|
-|
-v
-ElasticsearchWriter
-```
-
-* The parent process for the app runs a Kafka event consumer
-* The parent process spawns child workers -- ElasticsearchIndexer and RelationEngineImporter
-  * The ElasticsearchIndexer receives workspace events and generates index documents for ES
-  * The ElasticsearchIndexer spawns a child worker called ElasticsearchWriter
-    * ElasticsearchWriter receives index documents from ElasticsearchIndexer and saves them in bulk to ES
-  * The RelationEngineImporter receives workspace events and saves vertices and edges in ArangoDB via the RE API
-
-Each of the above modules (ElasticsearchIndexer, ElasticsearchWriter, and RelationEngineImporter) represents a "worker group", or a collection of processes that receive work from a fair-share queue. The number of workers in each group can be scaled up and down individually using environment variables.
+It consumes event from a Kafka topic and sends data into ArangoDB and
+Elasticsearch. It is designed to have the service replicated in Rancher. Be
+sure to partition the topic to at least the number of running workers.
 
 ## Development
 
@@ -41,6 +21,42 @@ Run the tests (servers need not be running, and will be shut down if they are):
 ```sh
 make test
 ```
+
+Note that `docker-compose run`, and therefore `make test`, will only build a Docker image for the
+application if no image exists, and therefore `Dockerfile` changes will not be included in any
+tests. To include `Dockerfile` changes in tests, do one of the following, in order of
+destructiveness:
+
+1. `docker-compose build` will build any images with changed `Dockerfile`s using the build cache.
+2. Delete the `index_runner_deluxe_app` image. `make test` will then rebuild the application image
+   from scratch.
+3. `make reset`. This will remove all test images and rebuild them from scratch.
+
+## Config
+
+You can set the following env vars:
+
+* `SKIP_RELENG` - skip imports into the relation engine (ArangoDB)
+* `SKIP_FEATURES` - skip any importing or indexing of genome features
+* `SKIP_INDICES` - comma-separated list of index names that the service will not write into.
+* `ELASTICSEARCH_HOST` - host name of the elasticsearch server to use (do not prepend protocol)
+* `ELASTICSEARCH_PORT` - port to use for the elasticsearch server
+* `KBASE_ENDPOINT` - URL of kbase API services (default is "https://ci.kbase.us/services")
+* `WS_URL` - URL of the workspace API (default is to append "/ws" to KBASE_ENDPOINT)
+* `CATALOG_URL` - URL of the catalog API (default is to append "/catalog" to KBASE_ENDPOINT)
+* `RE_URL` - URL of the relation engine API (default is to append "/relation_engine_api" to KBASE_ENDPOINT)
+* `GLOBAL_CONFIG_URL` - Optional URL of a specific index_runner_spec configuration file to use. Set this to use a specific config release that will not automatically update.
+* `GITHUB_RELEASE_URL` - Optional URL of the latest release information for the index_runner_spec. Defaults to "https://api.github.com/repos/kbase/index_runner_spec/releases/latest". Use this setting to have the config file automatically keep up-to-date with the latest config changes. Ignored if GLOBAL_CONFIG_URL is provided.
+* `GITHUB_TOKEN` - Optional Github token (https://github.com/settings/tokens) to use when fetching config updates. Avoids any Github API usage limit errors.
+* `WORKSPACE_TOKEN` - Required KBase authentication token for accessing the workspace API
+* `MOUNT_DIR` - Directory that can be used for local files when running SDK indexer apps (defaults to current working directory).
+* `RE_API_TOKEN` - Required KBase auth token for accessing the relation engine API
+* `KAFKA_SERVER` - URL of the Kafka server
+* `KAFKA_CLIENTGROUP` - Name of the Kafka client group that the consumer will join
+* `ERROR_INDEX_NAME` - Name of the index in which we store errors (defaults to "indexing_errors")
+* `ELASTICSEARCH_INDEX_PREFIX` - Name of the prefix to use for all indexes (defaults to "search2")
+* `KAFKA_WORKSPACE_TOPIC` - Name of the topic to consume workspace events from (defaults to "workspaceevents")
+* `KAFKA_ADMIN_TOPIC` - Name of the topic to consume indexer admin events from (defaults to "indexeradminevents")
 
 ## Admininstration
 
@@ -105,6 +121,12 @@ Note: this outputs ALL upas to stdout. You might want to pipe this into a file.
 indexer_admin err_upas
 ```
 
+_Index all objects of a certain type_
+
+```sh
+indexer_admin reindex_type --type "KBaseNarrative.Narrative"
+```
+
 ### Deployment
 
 Build the image:
@@ -122,15 +144,18 @@ docker push kbase/index_runner2:{VERSION}
 ### Project anatomy
 
 * The main process and entrypoint for the app lives in `./src/index_runner/main.py`
-* The workspace events consumer is in `./src/index_runner/workspace_consumer.py`
-* The elasticsearch updates consumer is in `./src/index_runner/elasticsearch_consumer.py`
+* The entrypoint for ES indexing is in `./src/index_runner/es_indexer.py`
+  * Local elasticsearch indexers live in `./src/index_runner/es_indexers`
+* The entrypoint for Arango imports is in `./src/index_runner/releng_importer.py`
+  * Type-specific RE importers are found in `./src/index_runner/releng`
 
-## KBase Search Stack
+## KBase Relation Engine/Knowledge Engine Stack
 
-* [Index Runner](https://github.com/kbaseIncubator/index_runner_deluxe) - Kafka consumer to construct indexes and documents.
-* [Elasticsearch Writer](https://github.com/kbaseIncubator/elasticsearch_writer<Paste>) - Kafka consumer to bulk update documents in ES.
+* [Index Runner](https://github.com/kbaseIncubator/index_runner_deluxe) - Kafka worker to construct indexes and documents and save them to Elasticsearch and Arango.
 * [Search API](https://github.com/kbaseIncubator/search_api_deluxe) - HTTP API for performing search queries.
 * [Search Config](https://github.com/kbaseIncubator/search_config) - Global search configuration.
+* [Relation Engine API](https://github.com/kbase/relation_engine_api) - HTTP API for querying the relation engine
+* [Relation Engine Spec](https://github.com/kbase/relation_engine_spec) -  specifications for types, queries, views, etc in the graph database
 
 ## Creating an SDK indexer application
 

@@ -1,6 +1,6 @@
 _NAMESPACE = "WS"
 _TREE_INDEX_VERSION = 1
-_TREE_INDEX_NAME = 'tree:' + str(_TREE_INDEX_VERSION)
+_TREE_INDEX_NAME = 'tree_' + str(_TREE_INDEX_VERSION)
 
 
 def index_tree(obj_data, ws_info, obj_data_v1):

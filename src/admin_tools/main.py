@@ -1,8 +1,10 @@
 import requests
 import sys
+import re
 import json
 import argparse
 from confluent_kafka import Producer
+from kbase_workspace_client import WorkspaceClient
 
 from src.utils.config import config
 
@@ -19,7 +21,7 @@ def _get_count(args):
     rj = resp.json()
     if not resp.ok:
         raise RuntimeError(json.dumps(rj, indent=2))
-    print('Total errors:', rj['hits']['total'])
+    print('Total errors:', rj['hits']['total']['value'])
 
 
 def _get_count_by_type(args):
@@ -44,6 +46,7 @@ def _get_upas(args):
     resp = requests.post(
         _ERR_SEARCH_URL,
         params={'scroll': '1m'},
+        headers={'Content-Type': 'application/json'},
         data=json.dumps({
             'size': 100,
             '_source': ['wsid', 'objid', 'error']
@@ -58,6 +61,7 @@ def _get_upas(args):
     while scrolling:
         resp = requests.post(
             _ES_URL + '/_search/scroll',
+            headers={'Content-Type': 'application/json'},
             data=json.dumps({
                 'scroll': '1m',
                 'scroll_id': scroll_id
@@ -86,15 +90,17 @@ def _pad(left, right, amount=17):
 
 def _reindex(args):
     id_pieces = args.ref.split('/')
-    if len(id_pieces) > 2:
-        raise ValueError("--ref value should be in the format '1/2' or '1'")
-    reindexing_obj = len(id_pieces) == 2
+    if len(id_pieces) > 3:
+        raise ValueError("--ref value should be in the format '1/2', '1/2/3', or '1'")
+    reindexing_obj = len(id_pieces) >= 2
     if reindexing_obj:
-        ev = {'evtype': 'INDEX_NONEXISTENT', 'wsid': id_pieces[0], 'objid': id_pieces[1]}
+        ev = {'evtype': 'INDEX_NONEXISTENT', 'wsid': int(id_pieces[0]), 'objid': int(id_pieces[1])}
+        if len(id_pieces) == 3:
+            ev['ver'] = int(id_pieces[2])
         if args.overwrite:
             ev['evtype'] = 'REINDEX'
     else:
-        ev = {'evtype': 'INDEX_NONEXISTENT_WS', 'wsid': id_pieces[0]}
+        ev = {'evtype': 'INDEX_NONEXISTENT_WS', 'wsid': int(id_pieces[0])}
         if args.overwrite:
             ev['evtype'] = 'REINDEX_WS'
     print('Producing...')
@@ -107,15 +113,43 @@ def _reindex_ws_range(args):
         evtype = 'REINDEX_WS'
     count = 0
     for wsid in range(args.min, args.max + 1):
-        _produce({'evtype': evtype, 'wsid': wsid})
+        _produce({'evtype': evtype, 'wsid': int(wsid)})
         count += 1
     print(f'Produced {count} total events.')
 
 
-def _produce(data, topic=config()['topics']['indexer_admin_events']):
+def _reindex_ws_type(args):
+    """
+    Reindex all objects in the entire workspace server based on a type name.
+    """
+    if not re.match(r'^.+\..+-\d+\.\d+$', args.type):
+        sys.stderr.write('Enter the full type name, such as "KBaseGenomes.Genome-17.0"')
+        sys.exit(1)
+    # - Iterate over all workspaces
+    #   - For each workspace, list objects
+    #   - For each obj matching args.type, produce a reindex event
+    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+    evtype = 'INDEX_NONEXISTENT'
+    if args.overwrite:
+        evtype = 'REINDEX'
+    for wsid in range(args.start, args.stop + 1):
+        wsid = int(wsid)
+        try:
+            infos = ws_client.generate_obj_infos(wsid, admin=True)
+            for obj_info in infos:
+                obj_type = obj_info[2]
+                if obj_type == args.type:
+                    _produce({'evtype': evtype, 'wsid': wsid, 'objid': int(obj_info[0])})
+        except Exception as err:
+            print(f'Error fetching object infos for workspace {wsid}: {err}')
+            continue
+    print('..done!')
+
+
+def _produce(data, topic=config()['topics']['admin_events']):
     producer = Producer({'bootstrap.servers': config()['kafka_server']})
     producer.produce(topic, json.dumps(data), callback=_delivery_report)
-    producer.poll(60)
+    producer.flush()
 
 
 def _delivery_report(err, msg):
@@ -149,7 +183,7 @@ if __name__ == '__main__':
     reindex.add_argument(
         '--ref',
         '-r',
-        help='Workspace ID or "ws_id/obj_id" to reindex (eg. "1", "1/2")',
+        help='Workspace ID or object ID to reindex (eg. "1", "1/2", or "1/2/3")',
         required=True,
         type=str
     )
@@ -161,8 +195,47 @@ if __name__ == '__main__':
         action='store_true'
     )
     reindex.set_defaults(func=_reindex)
+    # -- reindex type command
+    reindex_type = subparsers.add_parser(
+        'reindex_type',
+        help='Reindex all latest versions of objects with a specific type',
+    )
+    reindex_type.add_argument(
+        '--type',
+        '-t',
+        help='Full type name, such as "KBaseGenomes.Genome-17.0"',
+        required=True,
+        action='store'
+    )
+    reindex_type.add_argument(
+        '--overwrite',
+        help='Index and overwrite existing documents. Defaults to false.',
+        required=False,
+        default=False,
+        action='store_true'
+    )
+    reindex_type.add_argument(
+        '--start',
+        help='ID of workspace to start indexing.',
+        required=False,
+        default=1,
+        type=int,
+        action='store'
+    )
+    reindex_type.add_argument(
+        '--stop',
+        help='ID of workspace to stop indexing (inclusive).',
+        required=False,
+        type=int,
+        default=50000,
+        action='store'
+    )
+    reindex_type.set_defaults(func=_reindex_ws_type)
     # -- reindex range command
-    reindex_range = subparsers.add_parser('reindex_range', help='Reindex a range of workspace ids with a min and max.')
+    reindex_range = subparsers.add_parser(
+        'reindex_range',
+        help='Reindex a range of workspace ids with a min and max.'
+    )
     reindex_range.add_argument(
         '--min',
         help='Minimum workspace ID to start indexing on. Defaults to 1.',
@@ -173,7 +246,7 @@ if __name__ == '__main__':
     )
     reindex_range.add_argument(
         '--max',
-        help='Max workspace ID to start indexing on.',
+        help='Max workspace ID to end indexing on. Inclusive.',
         type=int,
         required=True,
         action='store'

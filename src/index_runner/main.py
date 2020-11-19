@@ -1,120 +1,203 @@
 """
-This is the entrypoint for running the app. A parent supervisor process that
-launches and monitors child processes.
-
-Architecture:
-    Nodes:
-        - index_runner -- consumes workspace and admin indexing events from kafka, runs indexers.
-        - es_writer -- receives updates from index_runner and bulk-updates elasticsearch.
-    The index_runner and es_writer run in separate workers with message queues in between.
+Main entrypoint for the app and the Kafka topic consumer.
+Sends work to the es_indexer or the releng_importer.
+Generally handles every message synchronously. Duplicate the service to get more parallelism.
 """
 import logging
-import os
 import json
 import time
-import requests
-from confluent_kafka import Consumer, KafkaError
+import os
+import atexit
+import signal
+import hashlib
+from kbase_workspace_client import WorkspaceClient
+from kbase_workspace_client.exceptions import WorkspaceResponseError
 
+from src.index_runner import event_loop
+import src.utils.kafka as kafka
+from src.utils.logger import init_logger
+import src.utils.es_utils as es_utils
+import src.utils.re_client as re_client
+import src.index_runner.es_indexer as es_indexer
+import src.index_runner.releng_importer as releng_importer
 from src.utils.config import config
-from src.utils.worker_group import WorkerGroup
-from src.index_runner.es_indexer import ESIndexer
-from src.index_runner.releng_importer import RelengImporter
 from src.utils.service_utils import wait_for_dependencies
+
+logger = logging.getLogger('IR')
+ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
+
+
+def _handle_msg(msg):
+    event_type = msg.get('evtype')
+    if not event_type:
+        logger.warning(f"Missing 'evtype' in event: {msg}")
+        return
+    if event_type in ['REINDEX', 'NEW_VERSION', 'COPY_OBJECT', 'RENAME_OBJECT']:
+        obj = _fetch_obj_data(msg)
+        ws_info = _fetch_ws_info(msg)
+        if not config()['skip_releng']:
+            releng_importer.run_importer(obj, ws_info, msg)
+        es_indexer.run_indexer(obj, ws_info, msg)
+    elif event_type == 'REINDEX_WS' or event_type == 'CLONE_WORKSPACE':
+        # Reindex all objects in a workspace, overwriting existing data
+        for objinfo in ws_client.generate_obj_infos(msg['wsid'], admin=True):
+            objid = objinfo[0]
+            kafka.produce({'evtype': 'REINDEX', 'wsid': msg['wsid'], 'objid': objid},
+                          callback=_delivery_report)
+    elif event_type == 'INDEX_NONEXISTENT_WS':
+        # Reindex all objects in a workspace without overwriting any existing data
+        for objinfo in ws_client.generate_obj_infos(msg['wsid'], admin=True):
+            objid = objinfo[0]
+            kafka.produce({'evtype': 'INDEX_NONEXISTENT', 'wsid': msg['wsid'], 'objid': objid},
+                          callback=_delivery_report)
+    elif event_type == 'INDEX_NONEXISTENT':
+        # Import to RE if we are not skipping RE and also it does not exist in the db
+        re_required = not config()['skip_releng'] and not re_client.check_doc_existence(msg['wsid'], msg['objid'])
+        # Index in elasticsearch if it does not exist there by ID
+        es_required = not es_utils.check_doc_existence(msg['wsid'], msg['objid'])
+        if not re_required and not es_required:
+            # Skip any indexing/importing of this object
+            return
+        # We need to either index or import the object
+        obj = _fetch_obj_data(msg)
+        ws_info = _fetch_ws_info(msg)
+        if re_required:
+            releng_importer.run_importer(obj, ws_info, msg)
+        if es_required:
+            es_indexer.run_indexer(obj, ws_info, msg)
+    elif event_type == 'OBJECT_DELETE_STATE_CHANGE':
+        # Delete the object on RE and ES. Synchronous for now.
+        es_indexer.delete_obj(msg)
+        if not config()['skip_releng']:
+            releng_importer.delete_obj(msg)
+    elif event_type == 'WORKSPACE_DELETE_STATE_CHANGE':
+        # Delete everything in RE and ES under this workspace
+        es_indexer.delete_ws(msg)
+        if not config()['skip_releng']:
+            releng_importer.delete_ws(msg)
+    elif event_type == 'SET_GLOBAL_PERMISSION':
+        # Set the `is_public` permissions for a workspace
+        es_indexer.set_perms(msg)
+        if not config()['skip_releng']:
+            releng_importer.set_perms(msg)
+    elif event_type == 'RELOAD_ELASTIC_ALIASES':
+        # Reload aliases on ES from the global config file
+        es_indexer.reload_aliases()
+    else:
+        logger.warning(f"Unrecognized event {event_type}.")
+        return
+
+
+def _log_msg_to_elastic(msg):
+    """
+    Save every message consumed from Kafka to an Elasticsearch index for logging purposes.
+    """
+    # The key is a hash of the message data body
+    # The index document is the error string plus the message data itself
+    ts = msg.get('time', int(time.time() * 1000))
+    es_indexer._write_to_elastic([{
+        'index': config()['msg_log_index_name'],
+        'id': ts,
+        'doc': msg
+    }])
+
+
+def _fetch_obj_data(msg):
+    if not msg.get('wsid') or not msg.get('objid'):
+        raise RuntimeError(f'Cannot get object ref from msg: {msg}')
+    obj_ref = f"{msg['wsid']}/{msg['objid']}"
+    if msg.get('ver'):
+        obj_ref += f"/{msg['ver']}"
+    try:
+        obj_data = ws_client.admin_req('getObjects', {
+            'objects': [{'ref': obj_ref}]
+        })
+    except WorkspaceResponseError as err:
+        logger.error(f'Workspace response error: {err.resp_data}')
+        # Workspace is deleted; ignore the error
+        if (err.resp_data and isinstance(err.resp_data, dict)
+                and err.resp_data['error'] and isinstance(err.resp_data['error'], dict)
+                and err.resp_data['error'].get('code') == -32500):
+            return
+        else:
+            raise err
+    result = obj_data['data'][0]
+    if not obj_data or not obj_data['data'] or not obj_data['data'][0]:
+        logger.error(obj_data)
+        raise RuntimeError("Invalid object result from the workspace")
+    return result
+
+
+def _fetch_ws_info(msg):
+    if not msg.get('wsid'):
+        raise RuntimeError(f'Cannot get workspace info from msg: {msg}')
+    try:
+        ws_info = ws_client.admin_req('getWorkspaceInfo', {
+            'id': msg['wsid']
+        })
+    except WorkspaceResponseError as err:
+        logger.error(f'Workspace response error: {err.resp_data}')
+        raise err
+    return ws_info
+
+
+def _log_err_to_es(msg, err=None):
+    """Log an indexing error in an elasticsearch index."""
+    # The key is a hash of the message data body
+    # The index document is the error string plus the message data itself
+    _id = hashlib.blake2b(json.dumps(msg).encode('utf-8')).hexdigest()
+    es_indexer._write_to_elastic([
+        {
+            'index': config()['error_index_name'],
+            'id': _id,
+            'doc': {'error': str(err), **msg}
+        }
+    ])
+
+
+def _delivery_report(err, msg):
+    if err is not None:
+        logger.error(f'Message delivery failed:\n{err}')
+    else:
+        logger.info(f'Message delivered to {msg.topic()}')
 
 
 def main():
-    """
-    - Multiple processes run Kafka consumers under the same topic and client group
-    - Each Kafka consumer pushes work to one or more es_indexers or releng_importers
-
-    Work is sent from the Kafka consumer to the es_writer or releng_importer via ZMQ sockets.
-    """
-    # Wait for dependency services (ES and RE) to be live
-    wait_for_dependencies(timeout=180)
-    logging.info('Services started! Now starting the app..')
-    # Initialize worker group of ESIndexer
-    es_indexers = WorkerGroup(ESIndexer, (), count=config()['workers']['num_es_indexers'])
-    # Initialize a worker group of RelengImporter
-    releng_importers = WorkerGroup(RelengImporter, (), count=config()['workers']['num_re_importers'])
-    # All worker groups to send kafka messages to
-    receivers = [es_indexers, releng_importers]
-
-    # used to check update every minute
-    last_updated_minute = int(time.time()/60)
-    _CONFIG_TAG = _query_for_config_tag()
-
-    # Initialize and run the Kafka consumer
-    consumer = _set_consumer()
-
-    while True:
-        msg = consumer.poll(timeout=0.5)
-        if msg is None:
-            continue
-        curr_min = int(time.time()/60)
-        if curr_min > last_updated_minute:
-            config_tag = _query_for_config_tag()
-            # update minute here
-            last_updated_minute = curr_min
-            if config_tag is not None and config_tag != _CONFIG_TAG:
-                _CONFIG_TAG = config_tag
-                # send message to es_indexers to update config.
-                es_indexers.queue.put(('ws_event', {
-                    'evtype': "RELOAD_ELASTIC_ALIASES",
-                    "msg": f"updating to tag {_CONFIG_TAG}"
-                }))
-        if msg.error():
-            if msg.error().code() == KafkaError._PARTITION_EOF:
-                logging.info('End of stream.')
-            else:
-                logging.error(f"Kafka message error: {msg.error()}")
-            continue
-        val = msg.value().decode('utf-8')
-        try:
-            data = json.loads(val)
-        except ValueError as err:
-            logging.error(f'JSON parsing error: {err}')
-            logging.error(f'Message content: {val}')
-        for receiver in receivers:
-            receiver.queue.put(('ws_event', data))
-
-
-def _query_for_config_tag():
-    """using github release api (https://developer.github.com/v3/repos/releases/) find
-    out if there is new version of the config."""
-    github_release_url = config()['github_release_url']
-    resp = requests.get(url=github_release_url)
-    if not resp.ok:
-        return None
-        # raise RuntimeError("not able to get github config release")
-    data = resp.json()
-    return data['tag_name']
-
-
-def _set_consumer():
-    """"""
-    consumer = Consumer({
-        'bootstrap.servers': config()['kafka_server'],
-        'group.id': config()['kafka_clientgroup'],
-        'auto.offset.reset': 'earliest',
-        'enable.auto.commit': True
-    })
-    topics = [
-        config()['topics']['workspace_events'],
-        config()['topics']['admin_events']
-    ]
-    logging.info(f"Subscribing to: {topics}")
-    logging.info(f"Client group: {config()['kafka_clientgroup']}")
-    logging.info(f"Kafka server: {config()['kafka_server']}")
-    consumer.subscribe(topics)
-    return consumer
-
-
-if __name__ == '__main__':
     # Set up the logger
     # Make the urllib debug logs less noisy
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    # Set out own log level from the env
-    level = os.environ.get('LOGLEVEL', 'DEBUG').upper()
-    logging.basicConfig(level=level)
+    init_logger(logger)
+
+    # Initialize and run the Kafka consumer
+    topics = [
+            config()['topics']['workspace_events'],
+            config()['topics']['admin_events']
+        ]
+    consumer = kafka.init_consumer(topics)
+    atexit.register(lambda signum, stack_frame: kafka.close_consumer(consumer))
+    signal.signal(signal.SIGTERM, lambda signum, stack_frame: kafka.close_consumer(consumer))
+    signal.signal(signal.SIGINT, lambda signum, stack_frame: kafka.close_consumer(consumer))
+
     # Run the main thread
+    event_loop.start_loop(
+        consumer,
+        _handle_msg,
+        on_success=_log_msg_to_elastic,
+        on_failure=_log_err_to_es,
+        on_config_update=es_indexer.reload_aliases,
+        logger=logger)
+
+
+if __name__ == '__main__':
+    # Remove the ready indicator file if it has been written on a previous boot
+    if os.path.exists(config()['proc_ready_path']):
+        os.remove(config()['proc_ready_path'])
+    # Wait for dependency services (ES and RE) to be live
+    wait_for_dependencies(timeout=180)
+    # Database initialization
+    es_indexer.init_indexes()
+    es_indexer.reload_aliases()
+    # Touch a temp file indicating the daemon is ready
+    with open(config()['proc_ready_path'], 'w') as fd:
+        fd.write('')
     main()

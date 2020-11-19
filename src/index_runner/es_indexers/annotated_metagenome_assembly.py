@@ -1,6 +1,8 @@
 # KBaseMetagenomes.AnnotatedMetagenomeAssembly indexer
 from src.index_runner.es_indexers.indexer_utils import mean, handle_id_to_file
+from src.utils.config import config
 
+import tempfile
 import json
 import gzip
 import shutil
@@ -10,18 +12,16 @@ _NAMESPACE = "WS"
 _VER_NAMESPACE = "WSVER"
 _AMA_INDEX_VERSION = 1
 _AMA_FEATURES_INDEX_VERSION = 1
-_AMA_INDEX_NAME = "annotated_metagenome_assembly:" + str(_AMA_INDEX_VERSION)
-_AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features:" + str(_AMA_FEATURES_INDEX_VERSION)
+_AMA_INDEX_NAME = "annotated_metagenome_assembly_" + str(_AMA_INDEX_VERSION)
+_AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features_" + str(_AMA_FEATURES_INDEX_VERSION)
 # version indices
 _VER_AMA_INDEX_VERSION = 1
 _VER_AMA_FEATURES_INDEX_VERSION = 1
-_VER_AMA_INDEX_NAME = "annotated_metagenome_assembly_version:" + str(_VER_AMA_INDEX_VERSION)
-_VER_AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features_version:" + str(_VER_AMA_FEATURES_INDEX_VERSION)
-
-_DIR = os.path.dirname(os.path.realpath(__file__))
+_VER_AMA_INDEX_NAME = "annotated_metagenome_assembly_version_" + str(_VER_AMA_INDEX_VERSION)
+_VER_AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features_version_" + str(_VER_AMA_FEATURES_INDEX_VERSION)
 
 
-def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
+def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
     """"""
     publication_titles = [pub[2] for pub in data.get('publications', [])]
     publication_authors = [pub[5] for pub in data.get('publications', [])]
@@ -53,12 +53,17 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
     }
     ama_index['id'] = ama_id
     yield ama_index
-    ama_index['id'] = ver_ama_id
-    ama_index['index'] = _VER_AMA_INDEX_NAME
-    yield ama_index
+    ver_ama_index = dict(ama_index)
+    ver_ama_index['id'] = ver_ama_id
+    ver_ama_index['index'] = _VER_AMA_INDEX_NAME
+    yield ver_ama_index
+
+    if config()['skip_features']:
+        # Indexing of AMA features is turned off in the env
+        return
 
     # unzip gzip file.
-    features_file_path = _DIR + "/features.json"
+    features_file_path = os.path.join(tmp_dir, ver_ama_id.replace(':', "_") + ".json")
     with gzip.open(features_file_gz_path, "rb") as f_in:
         with open(features_file_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
@@ -110,10 +115,11 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
             'id': feat_id
         }
         yield feat_index
-        feat_index['id'] = ver_feat_id
-        feat_index['doc']['parent_id'] = ver_ama_id
-        feat_index['index'] = _VER_AMA_FEATURES_INDEX_NAME
-        yield feat_index
+        ver_feat_index = dict(feat_index)
+        ver_feat_index['id'] = ver_feat_id
+        ver_feat_index['doc']['parent_id'] = ver_ama_id
+        ver_feat_index['index'] = _VER_AMA_FEATURES_INDEX_NAME
+        yield ver_feat_index
     # remove unzipped file
     os.remove(features_file_path)
 
@@ -131,7 +137,6 @@ def index_annotated_metagenome_assembly(obj_data, ws_info, obj_data_v1):
     workspace_id = info[6]
     object_id = info[0]
     version = info[4]
-
     ama_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
     ver_ama_id = f"{_VER_NAMESPACE}::{workspace_id}:{object_id}:{version}"
 
@@ -139,12 +144,14 @@ def index_annotated_metagenome_assembly(obj_data, ws_info, obj_data_v1):
         raise Exception("AnnotatedMetagenomeAssembly object does not have features_handle_ref"
                         " field. Can not index features to ElasticSearch.")
 
-    # Download features file
     features_handle_ref = data.get('features_handle_ref')
-    features_file_gz_path = _DIR + "/features.json.gz"
-    handle_id_to_file(features_handle_ref, features_file_gz_path)
+    try:
+        # Download features file
+        tmp_dir = tempfile.mkdtemp()
+        features_file_gz_path = os.path.join(tmp_dir, ver_ama_id.replace(':', "_") + ".json.gz")
+        handle_id_to_file(features_handle_ref, features_file_gz_path)
 
-    for doc in _index_ama(features_file_gz_path, data, ama_id, ver_ama_id):
-        yield doc
-    # remove zipped file
-    os.remove(features_file_gz_path)
+        for doc in _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
+            yield doc
+    finally:
+        shutil.rmtree(tmp_dir)

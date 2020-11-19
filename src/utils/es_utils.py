@@ -9,7 +9,7 @@ _PREFIX = config()['elasticsearch_index_prefix']
 _ES_URL = "http://" + config()['elasticsearch_host'] + ":" + str(config()['elasticsearch_port'])
 
 
-def does_doc_exist(wsid, objid):
+def check_doc_existence(wsid, objid):
     """Check if a document exists on elasticsearch based on workspace and object id."""
     _id = f"WS::{wsid}:{objid}"
     resp = requests.post(
@@ -20,5 +20,6 @@ def does_doc_exist(wsid, objid):
     )
     if not resp.ok:
         raise RuntimeError(f"Unexpected elasticsearch server error:\n{resp.text}")
-    total = resp.json()['hits']['total']
+    resp_json = resp.json()
+    total = resp_json['hits']['total']['value']
     return total > 0

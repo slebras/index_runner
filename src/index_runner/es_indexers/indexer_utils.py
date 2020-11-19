@@ -5,7 +5,7 @@ from kbase_workspace_client.exceptions import WorkspaceResponseError
 from src.utils.config import config
 from src.utils.ws_utils import get_type_pieces
 
-logging.getLogger(__name__)
+logger = logging.getLogger('IR')
 
 _REF_DATA_WORKSPACES = []  # type: list
 
@@ -20,18 +20,13 @@ def check_object_deleted(ws_id, obj_id):
     """
     ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
     try:
-        narr_data_obj_info = ws_client.admin_req("listObjects", {
-            'ids': [ws_id]
-        })
+        narr_data_obj_info = ws_client.admin_req("listObjects", {'ids': [ws_id]})
     except WorkspaceResponseError as err:
-        logging.error("Workspace response error: ", err.resp_data)
-        # NOTE: not sure if we want to raise err here, worth thinking about
-        raise err
-    # make sure obj_id is not in list of object ids of workspace (this means its deleted)
-    if obj_id not in [obj[0] for obj in narr_data_obj_info]:
-        return True
-    else:
-        return False
+        logger.warning(f"Workspace response error: {err.resp_data}")
+        narr_data_obj_info = []
+    # Make sure obj_id is not in list of object ids (this means it is deleted)
+    obj_ids = [obj[0] for obj in narr_data_obj_info]
+    return obj_id not in obj_ids
 
 
 def is_workspace_public(ws_id):
@@ -73,42 +68,13 @@ def get_shared_users(ws_id):
             'workspaces': [{'id': ws_id}]
         })['perms'][0]
     except WorkspaceResponseError as err:
-        logging.error("Workspace response error: ", err.resp_data)
+        logger.error("Workspace response error: ", err.resp_data)
         raise err
     shared_users = []
     for username, user_perms in obj_perm.items():
         if user_perms in ['a', 'r', 'w'] and username != '*':
             shared_users.append(username)
     return shared_users
-
-
-def fetch_objects_in_workspace(ws_id, include_narrative=False):
-    """
-    Get a list of dicts with keys 'type' and 'name' corresponding to all data
-    objects in the requested workspace.
-    Args:
-        ws_id - a workspace id
-    """
-    ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
-    try:
-        narr_data_obj_info = ws_client.admin_req("listObjects", {
-            "ids": [ws_id]
-        })
-    except WorkspaceResponseError as err:
-        logging.error("Workspace response error: ", err.resp_data)
-        raise err
-    if include_narrative:
-        narrative_data = [
-            {"obj_id": obj[0], "name": obj[1], "obj_type": obj[2], "ver": obj[4]}
-            for obj in narr_data_obj_info
-        ]
-    else:
-        narrative_data = [
-            {"name": obj[1], "obj_type": obj[2]}
-            for obj in narr_data_obj_info
-            if 'KBaseNarrative' not in str(obj[2])
-        ]
-    return narrative_data
 
 
 def _get_tags(ws_info):
@@ -160,17 +126,6 @@ def handle_id_to_file(handle_id, dest_path):
     ws_client = WorkspaceClient(url=config()['kbase_endpoint'], token=config()['ws_token'])
     shock_id = ws_client.handle_to_shock(handle_id)
     ws_client.download_shock_file(shock_id, dest_path)
-
-
-def get_upa_from_msg_data(msg_data):
-    """Get the UPA workspace reference from a Kafka workspace event payload."""
-    ws_id = msg_data.get('wsid')
-    if not ws_id:
-        raise RuntimeError(f'Event data missing the "wsid" field for workspace ID: {msg_data}')
-    obj_id = msg_data.get('objid')
-    if not obj_id:
-        raise RuntimeError(f'Event data missing the "objid" field for object ID: {msg_data}')
-    return f"{ws_id}/{obj_id}"
 
 
 def mean(array):

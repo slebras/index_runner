@@ -2,7 +2,7 @@ from src.index_runner.es_indexers.indexer_utils import mean
 
 _NAMESPACE = "WS"
 _ASSEMBLY_INDEX_VERSION = 1
-_ASSEMBLY_INDEX_NAME = 'assembly:' + str(_ASSEMBLY_INDEX_VERSION)
+_ASSEMBLY_INDEX_NAME = 'assembly_' + str(_ASSEMBLY_INDEX_VERSION)
 
 
 def index_assembly(obj_data, ws_info, obj_data_v1):
@@ -17,11 +17,11 @@ def index_assembly(obj_data, ws_info, obj_data_v1):
     # get mean contig length
     if data.get('contigs'):
         # we do not include the contig if it does not store the requisite field
-        mean_contig_length = mean([contig.get('length') for contig_id, contig
+        mean_contig_length = mean([contig.get('length') for _, contig
                                    in data['contigs'].items() if contig.get('length')])
-        percent_complete_contigs = mean([contig.get('is_complete') for contig_id, contig
+        percent_complete_contigs = mean([contig.get('is_complete') for _, contig
                                          in data['contigs'].items() if contig.get('is_complete')])
-        percent_circle_contigs = mean([contig.get('is_circ') for contig_id, contig
+        percent_circle_contigs = mean([contig.get('is_circ') for _, contig
                                        in data['contigs'].items() if contig.get('is_circ')])
     else:
         mean_contig_length, percent_complete_contigs, percent_circle_contigs = None, None, None

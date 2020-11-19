@@ -4,6 +4,7 @@ Relation engine API client functions.
 import json
 import re
 import requests
+import logging
 
 from src.utils.config import config
 
@@ -12,6 +13,8 @@ from src.utils.config import config
 MAX_ADB_INTEGER = 2**53 - 1
 
 _ADB_KEY_DISALLOWED_CHARS_REGEX = re.compile(r"[^a-zA-Z0-9_\-:\.@\(\)\+,=;\$!\*'%]")
+
+logger = logging.getLogger('IR')
 
 
 # should this live somewhere else?
@@ -88,9 +91,10 @@ def get_doc(coll, key):
     return resp.json()
 
 
-def check_doc_existence(_id):
+def check_doc_existence(wsid, objid):
     """Check if a doc exists in RE already by full ID."""
-    (coll, key) = _id.split('/')
+    coll = 'ws_object'
+    key = f"{wsid}:{objid}"
     query = """
     for d in @@coll filter d._key == @key limit 1 return 1
     """
@@ -131,7 +135,7 @@ def get_edge(coll, from_key, to_key):
     return resp.json()
 
 
-def save(coll_name, docs, on_duplicate='update', display_errors=False):
+def save(coll_name, docs, on_duplicate='update'):
     """
     Bulk-save documents to the relation engine database
     API docs: https://github.com/kbase/relation_engine_api
@@ -140,7 +144,6 @@ def save(coll_name, docs, on_duplicate='update', display_errors=False):
         docs - single dict or list of dicts to save into the collection as json documents
         on_duplicate - what to do on a unique key collision. One of 'update', 'replace' 'ignore',
             'error'.
-        display_errors - include error information if insert errors occur.
     """
     if isinstance(docs, dict):
         docs = [docs]
@@ -148,8 +151,7 @@ def save(coll_name, docs, on_duplicate='update', display_errors=False):
     # convert the docs into a string, where each obj is separated by a linebreak
     payload = '\n'.join([json.dumps(d) for d in docs])
     params = {'collection': coll_name, 'on_duplicate': on_duplicate}
-    if display_errors:
-        params['display_errors'] = '1'
+    params['display_errors'] = '1'
     resp = requests.put(
         url,
         data=payload,
@@ -158,4 +160,23 @@ def save(coll_name, docs, on_duplicate='update', display_errors=False):
     )
     if not resp.ok:
         raise RuntimeError(f'Error response from RE API: {resp.text}')
+    return resp.json()
+
+
+def execute_query(query, params=None):
+    """
+    Execute an arbitrary query in the database.
+    NOTE: be sure to guard against AQL injection when using this function.
+    """
+    if not params:
+        params = {}
+    params['query'] = query
+    url = config()['re_api_url'] + '/api/v1/query_results'
+    resp = requests.post(
+        url,
+        data=json.dumps(params),
+        headers={'Authorization': config()['re_api_token']}
+    )
+    if not resp.ok:
+        raise RuntimeError(resp.text)
     return resp.json()

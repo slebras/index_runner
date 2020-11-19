@@ -6,7 +6,7 @@ import requests
 import logging
 from src.utils.config import config
 
-logging.getLogger(__name__)
+logger = logging.getLogger('IR')
 
 
 def wait_for_dependencies(elasticsearch=True, re_api=True, timeout=60):
@@ -19,18 +19,22 @@ def wait_for_dependencies(elasticsearch=True, re_api=True, timeout=60):
     """
     start = int(time.time())
     if elasticsearch:
-        _wait_for_service(config()['elasticsearch_url'], 'elasticsearch', start, timeout)
+        es_url = config()['elasticsearch_url'] + '/_cluster/health'
+        params = {'wait_for_status': 'yellow', 'timeout': '60s'}
+        _wait_for_service(es_url, 'elasticsearch', start, timeout, params=params)
     if re_api:
         _wait_for_service(config()['re_api_url'] + '/', 'relation engine api', start, timeout)
 
 
-def _wait_for_service(url, name, start_time, timeout):
+def _wait_for_service(url, name, start_time, timeout, params=None):
     while True:
         try:
-            requests.get(url).raise_for_status()
+            logger.info(f'Waiting for {name} service...')
+            requests.get(url, params=params).raise_for_status()
+            logger.info(f'{name} is up!')
             break
-        except Exception:
-            logging.info(f'Waiting for {name} service...')
+        except Exception as err:
+            logger.debug(f'Unable to connect to {name}: {err}')
             time.sleep(5)
             if (int(time.time()) - start_time) > timeout:
                 raise RuntimeError(f"Failed to connect to all services in {timeout}s. Timed out on {name}.")

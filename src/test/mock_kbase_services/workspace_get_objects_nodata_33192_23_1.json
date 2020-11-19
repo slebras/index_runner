@@ -1,0 +1,107 @@
+{
+  "methods": ["POST"],
+  "path": "/ws",
+  "headers": {"Authorization": "valid_admin_token"},
+  "body": {
+    "version": "1.1",
+    "method": "Workspace.administer",
+    "params": [{
+      "command": "getObjects",
+      "params": {"objects": [{"ref": "33192/23/1"}], "no_data": 1}
+    }]
+  },
+  "response": {
+    "status": "200",
+    "body": {
+      "version": "1.1",
+      "result": [
+        {
+          "data": [
+            {
+              "info": [
+                23,
+                "GCF_000762265.1_assembly",
+                "KBaseGenomeAnnotations.Assembly-6.0",
+                "2020-01-09T19:04:59+0000",
+                1,
+                "jayrbolton",
+                33192,
+                "jayrbolton:narrative_1528306445083",
+                "f9dbc6acf1176660b67bfb43ddcc79f5",
+                857,
+                {
+                  "GC content": "0.4134",
+                  "Size": "2449987",
+                  "N Contigs": "1",
+                  "MD5": "3113b0e9d69510c2f02d223d053b14d5"
+                }
+              ],
+              "path": [
+                "33192/23/1"
+              ],
+              "provenance": [
+                {
+                  "time": "2019-12-10T21:46:37+0000",
+                  "epoch": 1576014397000,
+                  "service": "refseq_importer",
+                  "service_ver": "local-dev",
+                  "method": "run_local_tests",
+                  "method_params": [],
+                  "input_ws_objects": [],
+                  "resolved_ws_objects": [],
+                  "external_data": [],
+                  "subactions": [
+                    {
+                      "name": "refseq_importer",
+                      "ver": "local-dev",
+                      "code_url": "https://localhost",
+                      "commit": "local-docker-image"
+                    },
+                    {
+                      "name": "GenomeFileUtil",
+                      "ver": "0.9.0-release",
+                      "code_url": "https://github.com/kbaseapps/GenomeFileUtil",
+                      "commit": "bc04d8647baa1b348db293774d8a79d4622134cc"
+                    },
+                    {
+                      "name": "DataFileUtil",
+                      "ver": "0.1.2-release",
+                      "code_url": "https://github.com/kbaseapps/DataFileUtil",
+                      "commit": "df0bb6568008983c1daf6966cf8cebf54f0a0d80"
+                    },
+                    {
+                      "name": "AssemblyUtil",
+                      "ver": "1.1.0-release",
+                      "code_url": "https://github.com/kbaseapps/AssemblyUtil",
+                      "commit": "afd3f360f4fb30143bca41cf58c1977d8ab45e8b"
+                    },
+                    {
+                      "name": "WsLargeDataIO",
+                      "ver": "0.0.3-beta",
+                      "code_url": "https://github.com/kbaseapps/WsLargeDataIO",
+                      "commit": "8d76a294f3877be83cce9b51daebe541acc107d3"
+                    }
+                  ],
+                  "custom": {},
+                  "description": "KBase SDK method run via the KBase Execution Engine"
+                }
+              ],
+              "creator": "jayrbolton",
+              "orig_wsid": 45320,
+              "created": "2019-12-10T21:50:08+0000",
+              "epoch": 1576014608185,
+              "refs": [],
+              "copied": "45320/13/1",
+              "copy_source_inaccessible": 0,
+              "extracted_ids": {
+                "handle": [
+                  "KBH_480528"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

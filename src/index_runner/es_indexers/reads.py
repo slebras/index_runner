@@ -2,7 +2,7 @@ from src.utils.get_path import get_path
 
 _NAMESPACE = "WS"
 _READS_INDEX_VERSION = 1
-_READS_INDEX_NAME = 'reads:' + str(_READS_INDEX_VERSION)
+_READS_INDEX_NAME = 'reads_' + str(_READS_INDEX_VERSION)
 
 
 def index_reads(obj_data, ws_info, obj_data_v1):
