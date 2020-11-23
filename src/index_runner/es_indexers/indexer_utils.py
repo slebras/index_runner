@@ -83,6 +83,36 @@ def _get_tags(ws_info):
         return []
 
 
+def merge_default_fields(indexer_ret, defaults):
+    """
+    merge defualt fields into existing default fields (if they exist)
+    """
+    if 'doc' not in indexer_ret:
+        raise ValueError(f"indexer return data should have 'doc' dictionary {indexer_ret}")
+    for field in defaults:
+        if field in indexer_ret['doc']:
+            if type(defaults[field]) is list:
+                for val in defaults[field]:
+                    if type(indexer_ret['doc'][field]) is list:
+                        if val not in indexer_ret['doc'][field]:
+                            indexer_ret['doc'][field].append(val)
+                    else:
+                        if val != indexer_ret['doc'][field]:
+                            existing_value = indexer_ret['doc'][field]
+                            indexer_ret['doc'][field] = [existing_value, val]
+            else:
+                if type(indexer_ret['doc'][field]) is list:
+                    if defaults[field] not in indexer_ret['doc'][field]:
+                        indexer_ret['doc'][field].append(defaults[field])
+                else:
+                    if defaults[field] != indexer_ret['doc'][field]:
+                        existing_value = indexer_ret['doc'][field]
+                        indexer_ret['doc'][field] = [existing_value, defaults[field]]
+        else:
+            indexer_ret['doc'][field] = defaults[field]
+    return indexer_ret
+
+
 def default_fields(obj_data, ws_info, obj_data_v1):
     """
     Produce data for fields that are present in any workspace object document on elasticsearch.
