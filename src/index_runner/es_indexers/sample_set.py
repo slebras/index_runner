@@ -134,7 +134,8 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
         else:
             if sample is None:
                 sample = _get_sample(samp)
-            meta_controlled, meta_user = {}, {}
+            meta_controlled = {}
+            # meta_user = {}
             for idx, node in enumerate(sample['node_tree']):
                 meta_controlled = _combine_meta(
                     meta_controlled,
@@ -143,13 +144,13 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
                     ),
                     idx
                 )
-                meta_user = _combine_meta(
-                    meta_user,
-                    _flatten_meta(
-                        node['meta_user']
-                    ),
-                    idx
-                )
+                # meta_user = _combine_meta(
+                #     meta_user,
+                #     _flatten_meta(
+                #         node['meta_user']
+                #     ),
+                #     idx
+                # )
                 if 'node_id' in meta_controlled:
                     meta_controlled['node_id'].append(node['id'])
                 else:
@@ -160,7 +161,7 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
                 "sample_version": sample['version'],
                 "name": sample['name'],
                 "sample_set_ids": [ver_sample_set_id],
-                **meta_user,
+                # **meta_user,
                 **meta_controlled
             }
 
