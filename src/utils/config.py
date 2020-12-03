@@ -18,7 +18,7 @@ _CONFIG_SINGLETON = None
 
 
 def _get_sample_service_url(sw_url, ss_release):
-    """"""
+    """Fetch the latest URL for the sample service using the ServiceWizard"""
     payload = {
         "method": "ServiceWizard.get_service_status",
         "id": '',
@@ -37,7 +37,7 @@ def _get_sample_service_url(sw_url, ss_release):
 
 
 def config(force_reload=False):
-    """wrapper for get config that reloads config every 'config_timeout' seconds"""
+    """Wrapper for fetching the config with an optional reload."""
     global _CONFIG_SINGLETON
     if not _CONFIG_SINGLETON:
         # could do this on module load, but let's delay until actually requested
