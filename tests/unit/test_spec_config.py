@@ -1,8 +1,14 @@
+import importlib
+import jsonschema
 import yaml
 
 with open('spec/config.yaml') as fd:
     spec = yaml.safe_load(fd)
-    print('YAML successfully parsed')
+
+with open('spec/elasticsearch_modules.yaml') as fd:
+    es_modules = yaml.safe_load(fd)
+
+print('YAML successfully parsed')
 
 
 def test_sdk_index_names():
@@ -37,3 +43,22 @@ def test_mappings():
         for name in global_mappings:
             assert name in spec['global_mappings']
         assert 'properties' in val
+
+
+def test_elasticsearch_module_schema():
+    """
+    Validate the schema for elasticsearch indexer module config.
+    """
+    schema = es_modules['elasticsearch_schema']
+    data = es_modules['elasticsearch']
+    jsonschema.validate(data, schema)
+
+
+def test_elasticsearch_module_paths():
+    """
+    Validate all the file paths in the elasticsearch module config.
+    """
+    for mod in es_modules['elasticsearch']:
+        path = mod['source'].strip()
+        mod = importlib.import_module(path)
+        assert mod.main
