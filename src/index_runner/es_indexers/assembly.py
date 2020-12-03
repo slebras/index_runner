@@ -1,11 +1,7 @@
 from src.index_runner.es_indexers.indexer_utils import mean
 
-_NAMESPACE = "WS"
-_ASSEMBLY_INDEX_VERSION = 2
-_ASSEMBLY_INDEX_NAME = 'assembly_' + str(_ASSEMBLY_INDEX_VERSION)
 
-
-def index_assembly(obj_data, ws_info, obj_data_v1):
+def main(obj_data, ws_info, obj_data_v1, conf):
     """
     Currently Handles the follownig workspace types:
          KBaseGenomeAnnotations.Assembly-6.0
@@ -41,6 +37,6 @@ def index_assembly(obj_data, ws_info, obj_data_v1):
             "external_source_id": data.get('external_source_id', None),
             "external_source": data.get('external_source', None),
         },
-        'index': _ASSEMBLY_INDEX_NAME,
-        'id': f"{_NAMESPACE}::{workspace_id}:{object_id}",
+        'index': conf['index_name'],
+        'id': f"{conf['namespace']}::{workspace_id}:{object_id}",
     }
