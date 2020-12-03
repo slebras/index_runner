@@ -1,0 +1,100 @@
+# Mapping of workspace type names to python indexer modules.
+# Validate this config with `scripts/run_unit_tests`
+
+# Schema for the below mappings
+elasticsearch_schema:
+  type: array
+  items:
+    type: object
+    required: [source, module, type, config]
+    properties:
+      source:
+        type: string
+        description: File path from the repo root to the python module
+      module:
+        type: string
+        description: KBase type module name
+      type:
+        type: string
+        description: KBase type name
+      version:
+        type: string
+        description: Optional type version
+      config:
+        type: object
+        description: Any additional configuration data to be passed into the indexer
+
+# Actual mappings of kbase types to elasticsearch indexer modules
+# NOTE: higher up in the list gets higher preference for ambiguous mappings
+elasticsearch:
+  - module: KBaseNarrative
+    type: Narrative
+    source: src.index_runner.es_indexers.narrative
+    config:
+      index_name: narrative_2
+      namespace: WS
+  - module: KBaseFile
+    type: PairedEndLibrary
+    source: src.index_runner.es_indexers.reads
+    config:
+      index_name: reads_2
+      namespace: WS
+  - module: KBaseFile
+    type: SingleEndLibrary
+    source: src.index_runner.es_indexers.reads
+    config:
+      index_name: reads_2
+      namespace: WS
+  - module: KBaseGenomeAnnotations
+    type: Taxon
+    source: src.index_runner.es_indexers.taxon
+    config:
+      index_name: taxon_2
+      namespace: WS
+  - module: KBaseGenomeAnnotations
+    type: Assembly
+    source: src.index_runner.es_indexers.assembly
+    config:
+      index_name: assembly_2
+      namespace: WS
+  - module: KBaseGenomes
+    type: Genome
+    source: src.index_runner.es_indexers.genome
+    config:
+      namespace: WS
+      index_name: genome_2
+      features_index_name: genome_features_3
+  - module: KBaseGenomes
+    type: Pangenome
+    source: src.index_runner.es_indexers.pangenome
+    config:
+      namespace: WS
+      pangenome_index_name: pangenome_1
+      pangenome_ortholog_family_index_name: pangenome_orthologfamily_1
+  - module: KBaseMetagenomes
+    type: AnnotatedMetagenomeAssembly
+    source: src.index_runner.es_indexers.annotated_metagenome_assembly
+    config:
+      ver_namespace: WSVER
+      index_name: annotated_metagenome_assembly_2
+      # Versioned index config
+      ver_index_name: annotated_metagenome_assembly_version_2
+      ver_features_index_name: annotated_metagenome_assembly_features_version_2
+  - module: KBaseSets
+    type: SampleSet
+    source: src.index_runner.es_indexers.sample_set
+    config:
+      namespace: WS
+      ver_namespace: WSVER
+      sample_namespace: SMP
+      sample_set_index_name: sample_set_1
+      ver_sample_set_index_name: sample_set_version_1
+      sample_index_name: sample_1
+      ver_sample_index_name: sample_version_1
+  - module: KBaseTrees
+    type: Tree
+    version: '1.0'
+    source: src.index_runner.es_indexers.tree
+    config:
+      index_name: tree_1
+      namespace: WS
