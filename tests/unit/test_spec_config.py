@@ -49,8 +49,8 @@ def test_elasticsearch_module_schema():
     """
     Validate the schema for elasticsearch indexer module config.
     """
-    schema = es_modules['elasticsearch_schema']
-    data = es_modules['elasticsearch']
+    schema = es_modules['indexers_schema']
+    data = es_modules['indexers']
     jsonschema.validate(data, schema)
 
 
@@ -58,7 +58,7 @@ def test_elasticsearch_module_paths():
     """
     Validate all the file paths in the elasticsearch module config.
     """
-    for mod in es_modules['elasticsearch']:
+    for mod in es_modules['indexers']:
         path = mod['source'].strip()
         mod = importlib.import_module(path)
         assert mod.main

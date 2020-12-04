@@ -2,7 +2,7 @@
 # Validate this config with `scripts/run_unit_tests`
 
 # Schema for the below mappings
-elasticsearch_schema:
+indexers_schema:
   type: array
   items:
     type: object
@@ -26,7 +26,7 @@ elasticsearch_schema:
 
 # Actual mappings of kbase types to elasticsearch indexer modules
 # NOTE: higher up in the list gets higher preference for ambiguous mappings
-elasticsearch:
+indexers:
   - module: KBaseNarrative
     type: Narrative
     source: src.index_runner.es_indexers.narrative
