@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.11] - 2020-12-03
+### Added
+- Centralize the configuration for Elasticsearch indexer modules into
+  `spec/elasticsearch_modules.yaml`
+
 ## [1.9.10] - 2020-11-02
 ### Added
 - Save the index runner app version in every Elasticsearch document we save
