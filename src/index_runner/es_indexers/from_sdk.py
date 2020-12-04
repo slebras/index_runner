@@ -197,7 +197,7 @@ def _get_sub_obj_index(indexer_app_vars):
     return sub_obj_index
 
 
-def index_from_sdk(obj_data, ws_info, obj_data_v1):
+def index_from_sdk(obj_data, ws_info, obj_data_v1, conf):
     """Index from an sdk application"""
     type_module, type_name, type_version = ws_utils.get_type_pieces(obj_data['info'][2])
 

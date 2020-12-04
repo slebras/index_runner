@@ -86,11 +86,11 @@ def _find_indexer(type_module, type_name, type_version):
     return (generic_indexer(), {})
 
 
-def generic_indexer(conf):
+def generic_indexer():
     """
     Indexes any type based on a common set of generic fields.
     """
-    def fn(obj_data, ws_info, obj_data_v1):
+    def fn(obj_data, ws_info, obj_data_v1, conf):
         workspace_id = obj_data['info'][6]
         object_id = obj_data['info'][0]
         obj_type = obj_data['info'][2]
