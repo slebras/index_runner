@@ -89,28 +89,30 @@ def merge_default_fields(indexer_ret, defaults):
     """
     if 'doc' not in indexer_ret:
         raise ValueError(f"indexer return data should have 'doc' dictionary {indexer_ret}")
-    for field in defaults:
-        if field in indexer_ret['doc']:
-            if type(defaults[field]) is list:
-                for val in defaults[field]:
-                    if type(indexer_ret['doc'][field]) is list:
-                        if val not in indexer_ret['doc'][field]:
-                            indexer_ret['doc'][field].append(val)
-                    else:
-                        if val != indexer_ret['doc'][field]:
-                            existing_value = indexer_ret['doc'][field]
-                            indexer_ret['doc'][field] = [existing_value, val]
-            else:
-                if type(indexer_ret['doc'][field]) is list:
-                    if defaults[field] not in indexer_ret['doc'][field]:
-                        indexer_ret['doc'][field].append(defaults[field])
-                else:
-                    if defaults[field] != indexer_ret['doc'][field]:
-                        existing_value = indexer_ret['doc'][field]
-                        indexer_ret['doc'][field] = [existing_value, defaults[field]]
-        else:
-            indexer_ret['doc'][field] = defaults[field]
+    indexer_ret['doc'] = _val_to_sets(indexer_ret['doc'])
+    defaults = _val_to_sets(defaults)
+    # Merge all the sets inside each dict
+    for key, val in defaults.items():
+        orig_val = indexer_ret['doc'].get(key, set())
+        # Merge the default values with the original values
+        indexer_ret['doc'][key] = list(val.union(orig_val))
+    # Clean up any extra lists/sets wrapping scalar vals
+    for key, val in indexer_ret['doc'].items():
+        if isinstance(val, set):
+            val = list(val)
+            indexer_ret['doc'][key] = val
+        if len(val) == 1:
+            indexer_ret['doc'][key] = val[0]
     return indexer_ret
+
+
+def _val_to_sets(dict_obj: dict) -> dict:
+    '''
+    '''
+    ret = dict(dict_obj)  # clone
+    for key, val in dict_obj.items():
+        ret[key] = set(val if isinstance(val, list) else [val])
+    return ret
 
 
 def default_fields(obj_data, ws_info, obj_data_v1):
