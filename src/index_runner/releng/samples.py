@@ -2,11 +2,11 @@
 Create a link for SampleSet
 '''
 import time
+import hashlib as _hashlib
+import datetime as _datetime
 # from collections import defaultdict as _defaultdict
-# import datetime as _datetime
 # import itertools as _itertools
 
-from src.utils.config import config
 from src.utils.logger import logger
 from src.utils.re_client import stored_query as _stored_query
 from src.utils.re_client import save as _save
@@ -52,7 +52,8 @@ def process_sample_set(obj_ver_key, obj_data):
     created_timestamp = _now_epoch_ms() + 20 * len(edges)  # allow 20 ms to transport & save each edge
     for e in edges:
         e['created'] = created_timestamp
-    logger.info(f'Writing {len(edges)} sample -> ontology edges for samples in SampleSet {sample['id']}')
+    logger.info(f'Writing {len(edges)} sample -> ontology edges '
+                f'for samples in SampleSet {obj_ver_key}')
     # save link in bulk operation
     _save(SAMPLE_ONTOLOGY_COLL, edges)
 
@@ -65,13 +66,19 @@ def _get_sample_version_uuid(sample):
     '''
     :param sample - sample object as defined in SampleService
     '''
-    sample_doc = _get_doc(SAMPLE_COLL, sample['id'])
+    sample_id = sample['id']
+    sample_doc = _get_doc(SAMPLE_COLL, sample_id)
     maxver = len(sample_doc['vers'])
     version = sample.get('version', maxver)
     if version > maxver:
-        raise ValueError(f'No version "{version}" for sample {sample['id']}. Current max version={maxver}')
+        raise ValueError(f'No version "{version}" for sample {sample_id}. Current max version={maxver}')
     sample_version_uuid = sample_doc['vers'][version - 1]
     return sample_version_uuid
+
+
+# see: https://github.com/kbase/sample_service/blob/695bb800cb3babe2084e93c260affcd10018d3e7/lib/SampleService/core/storage/arango_sample_storage.py#L696  # noqa: E501
+def _md5(string):
+    return _hashlib.md5(string.encode("utf-8")).hexdigest()  # noqa: B303
 
 
 def _generate_link_information(sample, sample_version_uuid, edges, term_bank):
@@ -84,12 +91,13 @@ def _generate_link_information(sample, sample_version_uuid, edges, term_bank):
     # iterate through the sample nodes
     for node in sample['node_tree']:
         node_id = node['id']
-        node_uuid = hashlib.md5(node_id)
+        # used as part of _key for node in arango
+        node_uuid = _md5(node_id)
         node_key = f"{sample['id']}_{sample_version_uuid}_{node_uuid}"
         node_doc_id = f"{SAMPLE_NODE_COLL}/{node_key}"
         # find terms we know are ontology terms
         for metadata_term, ontology in SAMPLE_ONTOLOGY_VALIDATED_TERMS:
-            if node['meta_controlled'].get(metadata_term)
+            if node['meta_controlled'].get(metadata_term):
                 # for now, this is the only way that ontology_terms are stored
                 ontology_id = node['meta_controlled'][metadata_term]['value']
                 if term_bank.get(ontology_id):
@@ -112,7 +120,7 @@ def _generate_link_information(sample, sample_version_uuid, edges, term_bank):
                 edge = {
                     "_from": node_doc_id,
                     "_to": ontology_doc_id,
-                    "_key": f"{node_uuid}_{ontology_doc_key}",  # placeholder _key for now.
+                    "_key": _clean_key(f"{node_uuid}_{ontology_doc_key}"),  # placeholder _key for now.
                     "createdby": "_system",  # Should be owner of sample (?)
                     "expired": _MAX_ADB_INTEGER,
                     "sample_id": sample['id'],

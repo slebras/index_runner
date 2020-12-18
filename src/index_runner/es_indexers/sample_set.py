@@ -2,11 +2,8 @@
 This indexer is for the Sample objects represented in the SampleService and
 the SampleSet object in the Workspace.
 """
-import json
 # import uuid
-import requests
 from src.utils.es_utils import _get_document
-from src.utils.config import config
 from src.utils.sample_utils import get_sample as _get_sample
 
 _NAMESPACE = "WS"

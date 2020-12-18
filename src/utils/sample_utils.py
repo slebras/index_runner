@@ -3,7 +3,7 @@ import requests
 from src.utils.config import config
 
 
-def _get_sample(sample_info):
+def get_sample(sample_info):
     """ Get sample from SampleService
     sample_info - dict containing 'id' and 'version' of a sample
     """
