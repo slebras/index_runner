@@ -3,7 +3,6 @@
 
 from src.index_runner.releng.samples import _generate_link_information
 from src.index_runner.releng.samples import _md5
-from src.utils.logger import logger
 
 # _DIR = os.path.dirname(os.path.realpath(__file__))
 
