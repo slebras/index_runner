@@ -25,9 +25,9 @@ SAMPLE_ONTOLOGY_COLL = 'sample_ontology_link'
 # This should be information retrieved from the 'metadata_validation.yml'
 # file in the sample_service_validator_config
 SAMPLE_ONTOLOGY_VALIDATED_TERMS = [
-    ('biome', 'envo_ontology'),
-    ('feature', 'envo_ontology'),
-    ('ENIGMA:material', 'envo_ontology')
+    ('biome', 'ENVO_terms'),
+    ('feature', 'ENVO_terms'),
+    ('ENIGMA:material', 'ENVO_terms')
 ]
 
 
@@ -96,7 +96,7 @@ def _generate_link_information(sample, sample_version_uuid, edges, term_bank):
         node_key = f"{sample['id']}_{sample_version_uuid}_{node_uuid}"
         node_doc_id = f"{SAMPLE_NODE_COLL}/{node_key}"
         # find terms we know are ontology terms
-        for metadata_term, ontology in SAMPLE_ONTOLOGY_VALIDATED_TERMS:
+        for metadata_term, ontology_collection in SAMPLE_ONTOLOGY_VALIDATED_TERMS:
             if node['meta_controlled'].get(metadata_term):
                 # for now, this is the only way that ontology_terms are stored
                 ontology_id = node['meta_controlled'][metadata_term]['value']
@@ -107,6 +107,7 @@ def _generate_link_information(sample, sample_version_uuid, edges, term_bank):
                     adb_resp = _stored_query('ontology_get_terms', {
                        'ids': [str(ontology_id)],
                        'ts': int(time.time() * 1000),
+                       '@onto_terms': ontology_collection
                     })
                     adb_results = adb_resp['results']
                     if not adb_results:
