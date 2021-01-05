@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.11] - 2021-01-05
+### Added
+- Sample relation engine indexer. indexes based on SampleSet.
+
 ## [1.9.10] - 2020-11-02
 ### Fixed
 - Fix the signal handlers in the main index runner process

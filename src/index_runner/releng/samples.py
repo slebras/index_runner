@@ -4,6 +4,7 @@ Create a link for SampleSet
 import time
 import hashlib as _hashlib
 import datetime as _datetime
+from typing import List, Dict
 # from collections import defaultdict as _defaultdict
 # import itertools as _itertools
 
@@ -31,15 +32,15 @@ SAMPLE_ONTOLOGY_VALIDATED_TERMS = [
 ]
 
 
-def process_sample_set(obj_ver_key, obj_data):
+def process_sample_set(obj_ver_key: str, obj_data: dict) -> None:
     """
-    :param obj_ver_key - object version key
-    :param obj_data - object data
+    obj_ver_key: object version key
+    obj_data: object data
     """
     # term_bank dictionary for storing arango document information about
     # already encountered terms. mapping of ontology_term -> arango "_id" field
-    term_bank = {}
-    edges = []
+    term_bank: Dict[str, str] = {}
+    edges: List[dict] = []
     # iterate per sample
     for sample_info in obj_data['data']['samples']:
         # retrieve the sample metadata
@@ -58,13 +59,13 @@ def process_sample_set(obj_ver_key, obj_data):
     _save(SAMPLE_ONTOLOGY_COLL, edges)
 
 
-def _now_epoch_ms():
+def _now_epoch_ms() -> int:
     return int(_datetime.datetime.now(tz=_datetime.timezone.utc).timestamp()) * 1000
 
 
-def _get_sample_version_uuid(sample):
+def _get_sample_version_uuid(sample: dict) -> str:
     '''
-    :param sample - sample object as defined in SampleService
+    sample: sample object as defined in SampleService
     '''
     sample_id = sample['id']
     sample_doc = _get_doc(SAMPLE_COLL, sample_id)
@@ -77,16 +78,16 @@ def _get_sample_version_uuid(sample):
 
 
 # see: https://github.com/kbase/sample_service/blob/695bb800cb3babe2084e93c260affcd10018d3e7/lib/SampleService/core/storage/arango_sample_storage.py#L696  # noqa: E501
-def _md5(string):
+def _md5(string: str) -> str:
     return _hashlib.md5(string.encode("utf-8")).hexdigest()  # noqa: B303
 
 
-def _generate_link_information(sample, sample_version_uuid, edges, term_bank):
+def _generate_link_information(sample: dict, sample_version_uuid: str, edges: list, term_bank: dict):
     '''
-    :param sample - sample object as defined in SampleService
-    :param sample_version_uuid - uuid identifier for sample version document
-    :param edges - list to append new edge documents to
-    :param term_bank - dictionary of ontology_id stored in samples to ontology document id in arango
+    sample: sample object as defined in SampleService
+    sample_version_uuid: uuid identifier for sample version document
+    edges: list to append new edge documents to
+    term_bank: dictionary of ontology_id stored in samples to ontology document id in arango
     '''
     # iterate through the sample nodes
     for node in sample['node_tree']:
