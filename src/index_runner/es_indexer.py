@@ -35,6 +35,7 @@ def init_indexes():
         if mapping.get('global_mappings'):
             for g_map in mapping['global_mappings']:
                 global_mappings.update(_GLOBAL_MAPPINGS[g_map])
+        global_mappings.update(_GLOBAL_MAPPINGS.get('all', {}))
         _init_index(index, {**mapping['properties'], **global_mappings})
 
 
@@ -196,13 +197,26 @@ def _write_to_elastic(data):
             }
         })
         json_body += '\n'
-        json_body += json.dumps(datum['doc'])
+        doc = _global_doc_defaults(datum['doc'])
+        json_body += json.dumps(doc)
         json_body += '\n'
     # Save the documents using the elasticsearch http api
+    print(f'writing {json_body}')
     resp = requests.post(f"{_ES_URL}/_bulk", data=json_body, headers={"Content-Type": "application/json"})
     if not resp.ok:
         # Unsuccessful save to elasticsearch.
         raise RuntimeError(f"Error saving to elasticsearch:\n{resp.text}")
+
+
+def _global_doc_defaults(doc: dict):
+    """
+    Set defaults in any doc we save to elasticsearch
+    Args:
+        doc - data we are saving to elastic
+    Mutates doc
+    """
+    doc['index_runner_ver'] = config()['app_version'],
+    return doc
 
 
 def _update_by_query(query, script, config):
@@ -265,7 +279,6 @@ def _put_mapping(index_name, mapping):
     """
     Create or update the type mapping for a given index.
     """
-    # type_name = config()['global']['es_type_global_name']
     url = f"{_ES_URL}/{index_name}/_mapping"
     resp = requests.put(
         url,
