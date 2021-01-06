@@ -2,14 +2,8 @@
 from src.index_runner.es_indexers.indexer_utils import mean
 from src.utils.config import config
 
-_NAMESPACE = "WS"
-_GENOME_INDEX_VERSION = 2
-_GENOME_FEATURE_INDEX_VERSION = 3
-_GENOME_INDEX_NAME = 'genome_' + str(_GENOME_INDEX_VERSION)
-_GENOME_FEATURE_INDEX_NAME = 'genome_features_' + str(_GENOME_FEATURE_INDEX_VERSION)
 
-
-def index_genome(obj_data, ws_info, obj_data_v1):
+def main(obj_data, ws_info, obj_data_v1, conf):
     """
     Currently indexes following workspace types:
         ci:              KBaseGenomes.Genome-13.0+
@@ -34,7 +28,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
     publication_titles = [pub[2] for pub in data.get('publications', [])]
     publication_authors = [pub[5] for pub in data.get('publications', [])]
     genome_scientific_name = data.get('scientific_name', None)
-    genome_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
+    genome_id = f"{conf['namespace']}::{workspace_id}:{object_id}"
     genome_index = {
         '_action': 'index',
         'doc': {
@@ -60,7 +54,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
             'source': data.get('source', None),
             'warnings': data.get('warnings', None)
         },
-        'index': _GENOME_INDEX_NAME,
+        'index': conf['index_name'],
         'id': genome_id
     }
     yield genome_index
@@ -108,7 +102,7 @@ def index_genome(obj_data, ws_info, obj_data_v1):
                     'genome_feature_count': len(data.get('features', [])),
                     'genome_gc_content': data.get('gc_content')
                 },
-                'index': _GENOME_FEATURE_INDEX_NAME,
+                'index': conf['features_index_name'],
                 'id': genome_id + f'::ft::{feature_id}'
             }
             yield feature_index

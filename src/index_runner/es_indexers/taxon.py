@@ -1,9 +1,6 @@
-_NAMESPACE = "WS"
-_TAXON_INDEX_VERSION = 2
-_TAXON_INDEX_NAME = 'taxon_' + str(_TAXON_INDEX_VERSION)
 
 
-def index_taxon(obj_data, ws_info, obj_data_v1):
+def main(obj_data, ws_info, obj_data_v1, conf):
     """
     Currently indexes following workspace types:
         KBaseGenomeAnnotations.Taxon-1.0
@@ -25,6 +22,6 @@ def index_taxon(obj_data, ws_info, obj_data_v1):
             'genetic_code': data.get('genetic_code', None),
             'aliases': data.get('aliases', [])
         },
-        'index': _TAXON_INDEX_NAME,
-        'id': f"{_NAMESPACE}::{workspace_id}:{object_id}"
+        'index': conf['index_name'],
+        'id': f"{conf['namespace']}::{workspace_id}:{object_id}"
     }

@@ -1,7 +1,7 @@
 import os
 import json
 
-from src.index_runner.es_indexers.genome import index_genome
+from src.utils.get_es_module import get_es_module
 
 _DIR = os.path.dirname(__file__)
 
@@ -10,10 +10,12 @@ with open(os.path.join(_DIR, 'data/genome.json')) as fd:
     data = json.load(fd)
 with open(os.path.join(_DIR, 'data/genome_check_against.json')) as fd:
     check_against = json.load(fd)
+# Load module config
+(indexer, conf) = get_es_module('KBaseGenomes', 'Genome')
 
 
 def test_genome_valid1():
     """Valid indexing test"""
-    results = index_genome(data['obj1'], data['ws_info1'], data['obj1'])
+    results = indexer(data['obj1'], data['ws_info1'], data['obj1'], conf)
     for (idx, result) in enumerate(list(results)):
         assert result == check_against[idx]

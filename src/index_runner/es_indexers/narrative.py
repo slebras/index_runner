@@ -7,13 +7,10 @@ from src.utils.config import config
 from src.utils.formatting import ts_to_epoch
 from src.utils.get_path import get_path
 
-_NAMESPACE = "WS"
 _MARKDOWNER = Markdown()
-_NARRATIVE_INDEX_VERSION = 2
-_NARRATIVE_INDEX_NAME = 'narrative_' + str(_NARRATIVE_INDEX_VERSION)
 
 
-def index_narrative(obj_data, ws_info, obj_data_v1):
+def main(obj_data, ws_info, obj_data_v1, conf):
     """
     Index a narrative object on save.
     We index the latest narratives for:
@@ -60,8 +57,8 @@ def index_narrative(obj_data, ws_info, obj_data_v1):
             'static_narrative_saved': ws_metadata.get('static_narrative_saved'),
             'static_narrative_ref': ws_metadata.get('static_narrative'),
         },
-        'index': _NARRATIVE_INDEX_NAME,
-        'id': f'{_NAMESPACE}::{ws_id}:{obj_id}',
+        'index': conf['index_name'],
+        'id': f"{conf['namespace']}::{ws_id}:{obj_id}",
     }
     yield result
 

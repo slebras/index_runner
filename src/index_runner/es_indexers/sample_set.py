@@ -6,18 +6,6 @@ the SampleSet object in the Workspace.
 from src.utils.es_utils import _get_document
 from src.utils.sample_utils import get_sample as _get_sample
 
-_NAMESPACE = "WS"
-_VER_NAMESPACE = "WSVER"
-_SAMPLE_NAMESPACE = "SMP"
-# versioned and non-versioned index have same version
-_SAMPLE_SET_INDEX_VERSION = 1
-_SAMPLE_SET_INDEX_NAME = 'sample_set_' + str(_SAMPLE_SET_INDEX_VERSION)
-_VER_SAMPLE_SET_INDEX_NAME = 'sample_set_version_' + str(_SAMPLE_SET_INDEX_VERSION)
-# versioned and non-versioned index have same version
-_SAMPLE_INDEX_VERSION = 1
-_SAMPLE_INDEX_NAME = 'sample_' + str(_SAMPLE_INDEX_VERSION)
-# _VER_SAMPLE_INDEX_NAME = 'sample_version_' + str(_SAMPLE_INDEX_VERSION)
-
 
 def _flatten_meta(meta, prefix=None):
     """ Flattens metadata fields in a Sample object. Fields are concatenated into a
@@ -56,7 +44,7 @@ def _combine_meta(meta, flattened_meta, idx):
     return meta
 
 
-def index_sample_set(obj_data, ws_info, obj_data_v1):
+def main(obj_data, ws_info, obj_data_v1, conf):
     """Indexer for KBaseSets.SampleSet object type"""
     info = obj_data['info']
     if not obj_data.get('data'):
@@ -65,8 +53,8 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
     workspace_id = info[6]
     object_id = info[0]
     version = info[4]
-    sample_set_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
-    ver_sample_set_id = f"{_VER_NAMESPACE}::{workspace_id}:{object_id}:{version}"
+    sample_set_id = f"{conf['namespace']}::{workspace_id}:{object_id}"
+    ver_sample_set_id = f"{conf['ver_namespace']}::{workspace_id}:{object_id}:{version}"
 
     sample_set_index = {
         "_action": "index",
@@ -76,19 +64,19 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
             "sample_names": [s['name'] for s in data['samples']],
             "sample_versions": [s['version'] for s in data['samples']]
         },
-        "index": _SAMPLE_SET_INDEX_NAME,
+        "index": conf['sample_set_index_name'],
         "id": sample_set_id
     }
     yield sample_set_index
     ver_sample_set_index = dict(sample_set_index)
-    ver_sample_set_index['index'] = _VER_SAMPLE_SET_INDEX_NAME
+    ver_sample_set_index['index'] = conf['ver_sample_set_index_name']
     ver_sample_set_index['id'] = ver_sample_set_id
     yield ver_sample_set_index
 
     for samp in data["samples"]:
         # query the sample service for sample
 
-        sample_id = f"{_SAMPLE_NAMESPACE}::{samp['id']}"
+        sample_id = f"{conf['sample_namespace']}::{samp['id']}"
         if samp.get('version'):
             sample_id += f":{samp['version']}"
             sample = None
@@ -137,7 +125,7 @@ def index_sample_set(obj_data, ws_info, obj_data_v1):
         sample_index = {
             "_action": "index",
             "doc": document,
-            "index": _SAMPLE_INDEX_NAME,
+            "index": conf['sample_index_name'],
             "id": sample_id
         }
         yield sample_index

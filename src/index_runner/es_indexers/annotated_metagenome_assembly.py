@@ -8,19 +8,8 @@ import gzip
 import shutil
 import os
 
-_NAMESPACE = "WS"
-_VER_NAMESPACE = "WSVER"
-# un-versioned indices
-_AMA_INDEX_VERSION = 2
-_AMA_INDEX_NAME = "annotated_metagenome_assembly_" + str(_AMA_INDEX_VERSION)
-# version indices
-_VER_AMA_INDEX_VERSION = 2
-_VER_AMA_FEATURES_INDEX_VERSION = 2
-_VER_AMA_INDEX_NAME = "annotated_metagenome_assembly_version_" + str(_VER_AMA_INDEX_VERSION)
-_VER_AMA_FEATURES_INDEX_NAME = "annotated_metagenome_assembly_features_version_" + str(_VER_AMA_FEATURES_INDEX_VERSION)
 
-
-def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
+def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir, conf):
     """"""
     publication_titles = [pub[2] for pub in data.get('publications', [])]
     publication_authors = [pub[5] for pub in data.get('publications', [])]
@@ -47,14 +36,14 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
             # list<Ontology_event> ontology_events;
             # mapping<string, mapping<string, string>> ontologies_present;
         },
-        'index': _AMA_INDEX_NAME,
+        'index': conf['index_name'],
         'id': ama_id
     }
     ama_index['id'] = ama_id
     yield ama_index
     ver_ama_index = dict(ama_index)
     ver_ama_index['id'] = ver_ama_id
-    ver_ama_index['index'] = _VER_AMA_INDEX_NAME
+    ver_ama_index['index'] = conf['ver_index_name']
     yield ver_ama_index
 
     if config()['skip_features']:
@@ -109,15 +98,15 @@ def _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
                 'annotated_metagenome_assembly_num_contigs': data.get('num_contigs'),
                 'annotated_metagenome_assembly_gc_content': data.get('gc_content')
             },
-            'index': _VER_AMA_FEATURES_INDEX_NAME,
-            'id': ver_feat_id
+            'index': conf['ver_features_index_name'],
+            'id': ver_feat_id,
         }
         yield ver_feat_index
     # remove unzipped file
     os.remove(features_file_path)
 
 
-def index_annotated_metagenome_assembly(obj_data, ws_info, obj_data_v1):
+def main(obj_data, ws_info, obj_data_v1, conf):
     """
     Currently indexes following workspace types:
         ci:              KBaseMetagenomes.AnnotatedMetagenomeAssembly-1.0
@@ -130,8 +119,8 @@ def index_annotated_metagenome_assembly(obj_data, ws_info, obj_data_v1):
     workspace_id = info[6]
     object_id = info[0]
     version = info[4]
-    ama_id = f"{_NAMESPACE}::{workspace_id}:{object_id}"
-    ver_ama_id = f"{_VER_NAMESPACE}::{workspace_id}:{object_id}:{version}"
+    ama_id = f"{conf['namespace']}::{workspace_id}:{object_id}"
+    ver_ama_id = f"{conf['ver_namespace']}::{workspace_id}:{object_id}:{version}"
 
     if not data.get('features_handle_ref'):
         raise Exception("AnnotatedMetagenomeAssembly object does not have features_handle_ref"
@@ -144,7 +133,7 @@ def index_annotated_metagenome_assembly(obj_data, ws_info, obj_data_v1):
         features_file_gz_path = os.path.join(tmp_dir, ver_ama_id.replace(':', "_") + ".json.gz")
         handle_id_to_file(features_handle_ref, features_file_gz_path)
 
-        for doc in _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir):
+        for doc in _index_ama(features_file_gz_path, data, ama_id, ver_ama_id, tmp_dir, conf):
             yield doc
     finally:
         shutil.rmtree(tmp_dir)
