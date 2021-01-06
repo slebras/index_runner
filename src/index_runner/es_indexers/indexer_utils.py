@@ -85,34 +85,59 @@ def _get_tags(ws_info):
 
 def merge_default_fields(indexer_ret, defaults):
     """
-    merge defualt fields into existing default fields (if they exist)
+    Merge default fields into existing default fields (if they exist)
+    All compound values are wrapped in lists without unique values
+    Singletons are not wrapped in lists, while null vals are None
     """
     if 'doc' not in indexer_ret:
         raise ValueError(f"indexer return data should have 'doc' dictionary {indexer_ret}")
-    indexer_ret['doc'] = _val_to_sets(indexer_ret['doc'])
-    defaults = _val_to_sets(defaults)
-    # Merge all the sets inside each dict
+    indexer_ret['doc'] = _vals_to_lists(indexer_ret['doc'])
+    defaults = _vals_to_lists(defaults)
+    # Merge each list inside each dict
     for key, val in defaults.items():
-        orig_val = indexer_ret['doc'].get(key, set())
-        # Merge the default values with the original values
-        indexer_ret['doc'][key] = list(val.union(orig_val))
-    # Clean up any extra lists/sets wrapping scalar vals
-    for key, val in indexer_ret['doc'].items():
-        if isinstance(val, set):
-            val = list(val)
+        if key not in indexer_ret['doc']:
             indexer_ret['doc'][key] = val
+        elif val not in indexer_ret['doc'][key]:
+            # Concat the default values to the original values
+            indexer_ret['doc'][key] += val
+    # Remove any extra layers of wrapped lists
+    # Also, only keep unique values in each list
+    for key, val in indexer_ret['doc'].items():
+        # Remove duplicates
+        indexer_ret['doc'][key] = _remove_dupes(val)
+        val = indexer_ret['doc'][key]
         if len(val) == 1:
             indexer_ret['doc'][key] = val[0]
+        elif len(val) == 0:
+            indexer_ret['doc'][key] = None
     return indexer_ret
 
 
-def _val_to_sets(dict_obj: dict) -> dict:
-    '''
-    '''
+def _vals_to_lists(dict_obj: dict) -> dict:
+    """
+    Wrap all non-list values in a dict inside lists.
+    """
     ret = dict(dict_obj)  # clone
     for key, val in dict_obj.items():
-        ret[key] = set(val if isinstance(val, list) else [val])
+        if val is None:
+            ret[key] = []
+        elif not isinstance(val, list):
+            ret[key] = [val]
     return ret
+
+
+def _remove_dupes(ls: list) -> list:
+    """Remove duplicate values from a list."""
+    try:
+        # Try the more efficient method first
+        return list(set(ls))
+    except TypeError:
+        # Fall back to a slower method
+        ret = []
+        for v in ls:
+            if v not in ret:
+                ret.append(v)
+        return ret
 
 
 def default_fields(obj_data, ws_info, obj_data_v1):

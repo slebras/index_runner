@@ -12,7 +12,8 @@ def get_es_module(type_module, type_name, type_version=None):
     for entry in es_modules['indexers']:
         module_match = entry['module'] == type_module
         name_match = entry['type'] == type_name
-        ver_match = type_version is None or entry['version'] == type_version
+        entry_ver = entry.get('version')
+        ver_match = type_version is None or entry_ver is None or entry_ver == type_version
         if module_match and name_match and ver_match:
             # Dynamically load the module
             path = entry['source']
