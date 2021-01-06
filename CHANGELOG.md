@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.13] - 2021-01-05
+### Added
+- Sample relation engine indexer. indexes based on SampleSet.
+
 ## [1.9.12] - 2020-12-03
 ### Added
 - Centralize the configuration for Elasticsearch indexer modules into

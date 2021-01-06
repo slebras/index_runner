@@ -2,6 +2,7 @@
 Take object info from the workspace and import various vertices and edges into Arangodb.
 """
 from src.index_runner.releng import genome
+from src.index_runner.releng import samples
 from src.utils.ws_utils import get_type_pieces
 from src.utils.re_client import save
 from src.utils.config import config
@@ -16,7 +17,8 @@ from src.utils.formatting import (
 # need version specific processors here? Or expect the processor to handle all versions?
 # could also have an includes field to reduce the amount of data fetched from the ws
 _TYPE_PROCESSOR_MAP = {
-    'KBaseGenomes.Genome': genome.process_genome
+    'KBaseGenomes.Genome': genome.process_genome,
+    'KBaseSets.SampleSet': samples.process_sample_set
 }
 
 
