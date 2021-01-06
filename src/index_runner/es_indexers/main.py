@@ -66,7 +66,8 @@ def index_obj(obj_data, ws_info, msg_data):
                 continue
             if '_no_defaults' not in indexer_ret:
                 # Inject all default fields into the index document.
-                indexer_ret['doc'].update(defaults)
+                # indexer_ret['doc'].update(defaults)
+                indexer_ret = indexer_utils.merge_default_fields(indexer_ret, defaults)
         yield indexer_ret
 
 
