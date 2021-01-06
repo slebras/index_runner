@@ -1,11 +1,7 @@
 from src.utils.get_path import get_path
 
-_NAMESPACE = "WS"
-_READS_INDEX_VERSION = 2
-_READS_INDEX_NAME = 'reads_' + str(_READS_INDEX_VERSION)
 
-
-def index_reads(obj_data, ws_info, obj_data_v1):
+def main(obj_data, ws_info, obj_data_v1, conf):
     '''
     Indexes both singleend reads and pairedend reads
     '''
@@ -47,6 +43,6 @@ def index_reads(obj_data, ws_info, obj_data_v1):
             'interleaved': interleaved,
             'single_genome': single_genome,
         },
-        'index': _READS_INDEX_NAME,
-        'id': f'{_NAMESPACE}::{workspace_id}:{object_id}'
+        'index': conf['index_name'],
+        'id': f"{conf['namespace']}::{workspace_id}:{object_id}"
     }

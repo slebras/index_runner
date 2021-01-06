@@ -7,20 +7,22 @@ import pytest
 import responses
 
 from src.utils.config import config
-from src.index_runner.es_indexers.narrative import index_narrative
+from src.utils.get_es_module import get_es_module
 
 _DIR = os.path.dirname(os.path.realpath(__file__))
 
 # Load test data
 with open(os.path.join(_DIR, 'data', 'narrative.json')) as fd:
     data = json.load(fd)
+# Load module config
+(indexer, conf) = get_es_module('KBaseNarrative', 'Narrative')
 
 
 def test_basic_valid():
     """Test the happy case."""
     narr_obj = data['obj_valid']
     ws_info = data['wsinfo_valid']
-    results = list(index_narrative(narr_obj, ws_info, {}))
+    results = list(indexer(narr_obj, ws_info, {}, conf))
     assert len(results) == 1
     result = results[0]
     assert result['_action'] == 'index'
@@ -50,7 +52,7 @@ def test_temporary_narr():
     """Test that temporary narratives get skipped."""
     narr_obj = data['obj_temporary']
     ws_info = data['wsinfo_temporary']
-    results = list(index_narrative(narr_obj, ws_info, {}))
+    results = list(indexer(narr_obj, ws_info, {}, conf))
     assert len(results) == 0
 
 
@@ -63,7 +65,7 @@ def test_narratorial():
     responses.add(responses.POST, config()['workspace_url'], json=mock_resp)
     narr_obj = data['obj_narratorial']
     ws_info = data['wsinfo_narratorial']
-    results = list(index_narrative(narr_obj, ws_info, {}))
+    results = list(indexer(narr_obj, ws_info, {}, conf))
     assert len(results) == 1
     result = results[0]
     assert result['doc']['is_narratorial']
@@ -74,7 +76,7 @@ def test_fail_no_obj_metadata():
     narr_obj = data["obj_no_metadata"]
     ws_info = data["wsinfo_valid"]
     with pytest.raises(RuntimeError) as ctx:
-        list(index_narrative(narr_obj, ws_info, {}))
+        list(indexer(narr_obj, ws_info, {}, conf))
     assert 'no metadata' in str(ctx.value)
 
 
@@ -83,5 +85,5 @@ def test_fail_no_ws_metadata():
     narr_obj = data["obj_valid"]
     ws_info = data["wsinfo_no_metadata"]
     with pytest.raises(RuntimeError) as ctx:
-        list(index_narrative(narr_obj, ws_info, {}))
+        list(indexer(narr_obj, ws_info, {}, conf))
     assert 'no metadata' in str(ctx.value)

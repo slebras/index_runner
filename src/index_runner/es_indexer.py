@@ -215,7 +215,7 @@ def _global_doc_defaults(doc: dict):
         doc - data we are saving to elastic
     Mutates doc
     """
-    doc['index_runner_ver'] = config()['app_version'],
+    doc['index_runner_ver'] = config()['app_version']
     return doc
 
 

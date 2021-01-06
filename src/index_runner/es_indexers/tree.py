@@ -1,9 +1,6 @@
-_NAMESPACE = "WS"
-_TREE_INDEX_VERSION = 1
-_TREE_INDEX_NAME = 'tree_' + str(_TREE_INDEX_VERSION)
 
 
-def index_tree(obj_data, ws_info, obj_data_v1):
+def main(obj_data, ws_info, obj_data_v1, conf):
     """
     Compatible with:
         KBaseTrees.Tree-1.0
@@ -22,6 +19,6 @@ def index_tree(obj_data, ws_info, obj_data_v1):
                 for key, val in data.get('default_node_labels', {}).items()
             ],
         },
-        'index': _TREE_INDEX_NAME,
-        'id': f"{_NAMESPACE}::{workspace_id}:{object_id}"
+        'index': conf['index_name'],
+        'id': f"{conf['namespace']}::{workspace_id}:{object_id}"
     }
