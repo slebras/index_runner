@@ -69,11 +69,14 @@ def _get_sample_version_uuid(sample: dict) -> str:
     '''
     sample_id = sample['id']
     sample_doc = _get_doc(SAMPLE_COLL, sample_id)
-    maxver = len(sample_doc['vers'])
-    version = sample.get('version', maxver)
-    if version > maxver:
-        raise ValueError(f'No version "{version}" for sample {sample_id}. Current max version={maxver}')
-    sample_version_uuid = sample_doc['vers'][version - 1]
+    try:
+        maxver = len(sample_doc['vers'])
+        version = sample.get('version', maxver)
+        if version > maxver:
+            raise ValueError(f'No version "{version}" for sample {sample_id}. Current max version={maxver}')
+        sample_version_uuid = sample_doc['vers'][version - 1]
+    except KeyError:
+        raise KeyError(f"sample document does not have 'vers'. Sample Document: {sample_doc}.")
     return sample_version_uuid
 
 
