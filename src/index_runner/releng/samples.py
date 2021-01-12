@@ -68,7 +68,9 @@ def _get_sample_version_uuid(sample: dict) -> str:
     sample: sample object as defined in SampleService
     '''
     sample_id = sample['id']
-    sample_doc = _get_doc(SAMPLE_COLL, sample_id)
+    sample_doc = _get_doc(SAMPLE_COLL, sample_id).get('results')
+    if not sample_doc:
+        logger.warning(f"No RE document found with key {sample_id}. cannot create ontology-sample linkds.")
     try:
         maxver = len(sample_doc['vers'])
         version = sample.get('version', maxver)
