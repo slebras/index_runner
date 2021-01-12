@@ -30,7 +30,6 @@ def test_merge_same_scalar():
         }
     }
     indexer_ret = indexer_utils.merge_default_fields(indexer_doc, defaults)
-    assert type(indexer_ret['doc']['key']) == str
     assert indexer_ret['doc']['key'] == "1"
 
 
@@ -83,8 +82,6 @@ def test_merge_add_new_field():
         }
     }
     indexer_ret = indexer_utils.merge_default_fields(indexer_doc, defaults)
-    assert type(indexer_ret['doc']['key']) == str
-    assert type(indexer_ret['doc']['key2']) == str
     assert indexer_ret['doc']['key'] == "1"
     assert indexer_ret['doc']['key2'] == "2"
 

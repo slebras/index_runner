@@ -91,39 +91,28 @@ def merge_default_fields(indexer_ret, defaults):
     """
     if 'doc' not in indexer_ret:
         raise ValueError(f"indexer return data should have 'doc' dictionary {indexer_ret}")
-    indexer_ret['doc'] = _vals_to_lists(indexer_ret['doc'])
-    defaults = _vals_to_lists(defaults)
     # Merge each list inside each dict
-    for key, val in defaults.items():
-        if key not in indexer_ret['doc']:
-            indexer_ret['doc'][key] = val
-        elif val not in indexer_ret['doc'][key]:
-            # Concat the default values to the original values
-            indexer_ret['doc'][key] += val
-    # Remove any extra layers of wrapped lists
-    # Also, only keep unique values in each list
-    for key, val in indexer_ret['doc'].items():
-        # Remove duplicates
-        indexer_ret['doc'][key] = _remove_dupes(val)
-        val = indexer_ret['doc'][key]
-        if len(val) == 1:
-            indexer_ret['doc'][key] = val[0]
-        elif len(val) == 0:
-            indexer_ret['doc'][key] = None
-    return indexer_ret
-
-
-def _vals_to_lists(dict_obj: dict) -> dict:
-    """
-    Wrap all non-list values in a dict inside lists.
-    """
-    ret = dict(dict_obj)  # clone
-    for key, val in dict_obj.items():
+    for key, default_val in defaults.items():
+        val = indexer_ret['doc'].get(key)
+        val_is_list = isinstance(val, list)
+        def_is_list = isinstance(default_val, list)
         if val is None:
-            ret[key] = []
-        elif not isinstance(val, list):
-            ret[key] = [val]
-    return ret
+            val = default_val
+        elif val_is_list and def_is_list:
+            val = _remove_dupes(val + default_val)
+        elif val_is_list and default_val not in val:
+            val.append(default_val)
+        elif def_is_list and val not in default_val:
+            default_val.append(val)
+            val = default_val
+        elif not val_is_list and not def_is_list and val != default_val:
+            val = [val, default_val]
+        indexer_ret['doc'][key] = val
+    # Remove duplicates
+    for key, val in indexer_ret['doc'].items():
+        if isinstance(val, list):
+            indexer_ret['doc'][key] = _remove_dupes(val)
+    return indexer_ret
 
 
 def _remove_dupes(ls: list) -> list:
