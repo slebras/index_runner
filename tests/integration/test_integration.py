@@ -18,7 +18,7 @@ _TEST_EVENT = {
    "objid": 2,
    "time": 101,
    "user": "jayrbolton",
-   "index_runner_ver": ["1.9.10"],
+   "index_runner_ver": config()['app_version'],
 }
 
 
@@ -32,7 +32,7 @@ def test_integration():
     es_doc = helpers.get_es_doc_blocking(es_id)
     re_doc = helpers.wait_for_re_doc('ws_object', re_key)
     assert es_doc['_id'] == es_id
-    assert es_doc['_source']['index_runner_ver'][0] == config()['app_version']
+    assert es_doc['_source']['index_runner_ver'] == config()['app_version']
     assert re_doc['workspace_id'] == wsid
     assert re_doc['object_id'] == objid
     log_doc = helpers.get_es_doc_blocking(_TEST_EVENT['time'])

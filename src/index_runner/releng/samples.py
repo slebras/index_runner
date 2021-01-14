@@ -83,9 +83,8 @@ def _get_sample_version_uuid(sample: dict) -> str:
     return sample_version_uuid
 
 
-# see: https://github.com/kbase/sample_service/blob/695bb800cb3babe2084e93c260affcd10018d3e7/lib/SampleService/core/storage/arango_sample_storage.py#L696  # noqa: E501
-def _md5(string: str) -> str:
-    return _hashlib.md5(string.encode("utf-8")).hexdigest()  # noqa: B303
+def _hash(string: str) -> str:
+    return _hashlib.md5(string.encode("utf-8")).hexdigest()  # nosec
 
 
 def _generate_link_information(sample: dict, sample_version_uuid: str, edges: list, term_bank: dict):
@@ -99,7 +98,7 @@ def _generate_link_information(sample: dict, sample_version_uuid: str, edges: li
     for node in sample['node_tree']:
         node_id = node['id']
         # used as part of _key for node in arango
-        node_uuid = _md5(node_id)
+        node_uuid = _hash(node_id)
         node_key = f"{sample['id']}_{sample_version_uuid}_{node_uuid}"
         node_doc_id = f"{SAMPLE_NODE_COLL}/{node_key}"
         # find terms we know are ontology terms

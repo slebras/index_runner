@@ -2,7 +2,7 @@
 # import json
 
 from src.index_runner.releng.samples import _generate_link_information
-from src.index_runner.releng.samples import _md5
+from src.index_runner.releng.samples import _hash
 
 # _DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -27,7 +27,7 @@ def test_generate_sample_set_edges():
     }
     _generate_link_information(sample, sample_version_uuid, edges, term_bank)
     assert len(edges) == 2
-    node_id = _md5("node_id")
+    node_id = _hash("node_id")
     for e in edges:
         assert "_from" in e
         assert "_to" in e
