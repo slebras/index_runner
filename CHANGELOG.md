@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.9.13] - 2021-01-05
 ### Added
 - Sample relation engine indexer. indexes based on SampleSet.
+- introducing bug fixes
 
 ## [1.9.12] - 2020-12-03
 ### Added
