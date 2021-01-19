@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.15] - 2021-01-14
+### Fixed
+- bug fixes for sampleset relation engine indexer
+
 ## [1.9.14] - 2021-01-12
 ### Fixed
 - Bugfixes related to setting default field values for new ES docs.
