@@ -9,6 +9,8 @@ latest_versions:
   annotated_metagenome_assembly: "annotated_metagenome_assembly_2"
   annotated_metagenome_assembly_version: "annotated_metagenome_assembly_version_2"
   annotated_metagenome_assembly_features_version: "annotated_metagenome_assembly_features_version_2"
+  indexer_messages: "indexer_messages_1"
+  indexing_errors: "indexing_errors_1"
 
 aliases:
   annotated_metagenome_assembly:
@@ -20,6 +22,10 @@ aliases:
   annotated_metagenome_assembly_features_version:
     - annotated_metagenome_assembly_features_version_2
     - annotated_metagenome_assembly_features_version_1
+  indexer_messages:
+    - indexer_messages_1
+  indexing_errors:
+    - indexing_errors_1
 
 # Generic, global type mappings. These can be reused in any index mappings below.
 global_mappings:
@@ -46,6 +52,25 @@ global_mappings:
     parent_id: {type: keyword}
 
 mappings:
+  "indexing_errors_1":
+    properties:
+      evtype: {type: keyword}
+      wsid: {type: integer}
+      objid: {type: integer}
+      error: {type: text}
+
+  "indexer_messages_1":
+    properties:
+      user: {type: keyword}
+      wsid: {type: integer}
+      objid: {type: integer}
+      ver: {type: integer}
+      time: {type: date}
+      evtype: {type: keyword}
+      objtype: {type: keyword}
+      perm: {type: keyword}
+      permusers: {type: keyword}
+
   "annotated_metagenome_assembly_1":
     global_mappings: [ws_auth, ws_object]
     properties:
