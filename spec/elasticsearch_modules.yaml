@@ -75,6 +75,7 @@ indexers:
     type: AnnotatedMetagenomeAssembly
     source: src.index_runner.es_indexers.annotated_metagenome_assembly
     config:
+      namespace: WS
       ver_namespace: WSVER
       index_name: annotated_metagenome_assembly_2
       # Versioned index config
