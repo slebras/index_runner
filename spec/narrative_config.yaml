@@ -1,0 +1,81 @@
+# Mapping of KBase type names to index names
+ws_type_to_indexes:
+  KBaseNarrative.Narrative: narrative
+
+# For each index alias, what are the versioned index names for the latest versions of each?
+latest_versions:
+  narrative: "narrative_2"
+
+aliases:
+  narrative:
+    - narrative_2
+    - narrative_1
+
+# Generic, global type mappings. These can be reused in any index mappings below.
+global_mappings:
+  all:
+    index_runner_ver: {type: keyword}
+  ws_auth:
+    access_group: {type: integer}
+    is_public: {type: boolean}
+  ws_object:
+    agg_fields: {type: text} # Uses the copy_to property for a combined text search
+    timestamp: {type: date}
+    obj_name: {type: keyword, copy_to: agg_fields}
+    creation_date: {type: date}
+    shared_users: {type: keyword}
+    creator: {type: keyword, copy_to: agg_fields}
+    version: {type: integer}
+    obj_id: {type: integer}
+    copied: {type: keyword}
+    tags: {type: keyword, copy_to: agg_fields}
+    obj_type_version: {type: keyword}
+    obj_type_module: {type: keyword, copy_to: agg_fields}
+    obj_type_name: {type: keyword, copy_to: agg_fields}
+  ws_subobject:
+    parent_id: {type: keyword}
+
+# All ES type mappings
+mappings:
+  "narrative_1":
+    global_mappings: [ws_auth, ws_object]
+    properties:
+      narrative_title: {type: text, copy_to: agg_fields}
+      data_objects:
+        type: nested
+        properties:
+          name: {type: keyword, copy_to: agg_fields}
+          obj_type: {type: keyword, copy_to: agg_fields}
+      cells:
+        type: object
+        properties:
+          desc: {type: text, copy_to: agg_fields}
+          cell_type: {type: keyword}
+      total_cells: {type: short}
+
+  "narrative_2":
+    global_mappings: [ws_auth, ws_object]
+    properties:
+      narrative_title:
+        type: text
+        copy_to: agg_fields
+        fields:
+          raw:
+            type: keyword
+      owner: {type: keyword, copy_to: agg_fields}
+      is_temporary: {type: boolean}
+      is_narratorial: {type: boolean}
+      modified_at: {type: date}
+      data_objects:
+        type: nested
+        properties:
+          name: {type: keyword, copy_to: agg_fields}
+          obj_type: {type: keyword, copy_to: agg_fields}
+      cells:
+        type: object
+        properties:
+          desc: {type: text, copy_to: agg_fields}
+          cell_type: {type: keyword}
+      total_cells: {type: short}
+      static_narrative_ref: {type: keyword}
+      static_narrative_saved: {type: date}
