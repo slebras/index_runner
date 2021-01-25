@@ -201,7 +201,6 @@ def _write_to_elastic(data):
         json_body += json.dumps(doc)
         json_body += '\n'
     # Save the documents using the elasticsearch http api
-    print(f'writing {json_body}')
     resp = requests.post(f"{_ES_URL}/_bulk", data=json_body, headers={"Content-Type": "application/json"})
     if not resp.ok:
         # Unsuccessful save to elasticsearch.
