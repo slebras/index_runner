@@ -6,7 +6,6 @@ name: Run tests
 on:
   push:
     branches: [ develop, master ]
-  pull_request:
   pull_request_target:
 
 jobs:
