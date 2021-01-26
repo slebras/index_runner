@@ -158,6 +158,21 @@ def set_perms(msg):
     )
 
 
+def set_user_perms(msg):
+    """
+    Set user permissions for a workspace. Handles the SET_PERMISSION event.
+    This only updates the `shared_users` field for the workspace/narrative.
+    """
+    wsid = int(msg['wsid'])
+    perms = config()['ws_client'].admin_req('getPermissionsMass', {
+        'workspaces': [{"id": wsid}]
+    })
+    shared_users = perms['perms'][0].keys()
+    update = f"ctx._source.shared_users={list(shared_users)}"
+    resp = _update_by_query({'term': {'access_group': wsid}}, update, config())
+    return resp
+
+
 # -- Utils
 
 def _init_generic_index(msg):
@@ -235,6 +250,7 @@ def _update_by_query(query, script, config):
     )
     if not resp.ok:
         raise RuntimeError(f'Error updating by query:\n{resp.text}')
+    return resp
 
 
 def _create_alias(alias_name, index_names):

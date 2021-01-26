@@ -26,9 +26,8 @@ def test_handle_msg_skip_types2():
     """
     with set_env(SKIP_TYPES='xyz'):
         config(force_reload=True)
-        with pytest.raises(RuntimeError) as ctx:
-            _handle_msg({'objtype': 'abc', 'evtype': 'x'})
-    assert str(ctx.value) == "Unrecognized event x."
+        res = _handle_msg({'objtype': 'abc', 'evtype': 'x'})
+    assert res is None
 
 
 def test_handle_msg_allow_types():
