@@ -90,13 +90,14 @@ def _handle_msg(msg):
         es_indexer.set_perms(msg)
         if not config()['skip_releng']:
             releng_importer.set_perms(msg)
+    elif event_type == 'SET_PERMISSION':
+        # Share the narrative with users
+        es_indexer.set_user_perms(msg)
     elif event_type == 'RELOAD_ELASTIC_ALIASES':
         # Reload aliases on ES from the global config file
         es_indexer.reload_aliases()
     else:
-        msg = f"Unrecognized event {event_type}."
-        logger.error(msg)
-        raise RuntimeError(msg)
+        logger.warning(f"Unrecognized event {event_type}.")
 
 
 def _log_msg_to_elastic(msg):
