@@ -26,6 +26,19 @@ _MAPPINGS = config()['global']['mappings']
 _DEFAULT_SEARCH_ALIAS = 'default_search'
 
 
+def _get_index_name(index_name):
+    """
+    Get Index Name, handles any cross index Prefix usage
+    """
+    if '.' in index_name:
+        # already has prefix
+        prefix = index_name.split('.')[0]
+        # make sure prefix is valid
+        return index_name
+    else:
+        return f"{_PREFIX}.{index_name}"
+
+
 def init_indexes():
     """
     Initialize Elasticsearch indexes using the global configuration file.
@@ -51,8 +64,8 @@ def reload_aliases():
         for alias_name in group_aliases:
             try:
                 _create_alias(
-                    f"{_PREFIX}.{alias_name}",
-                    [f"{_PREFIX }.{name}" for name in group_aliases[alias_name]]
+                    _get_index_name(alias_name),
+                    [_get_index_name(name) for name in group_aliases[alias_name]]
                 )
             except RuntimeError as err:
                 names = group_aliases[alias_name]
@@ -173,7 +186,7 @@ def _init_generic_index(msg):
     mappings = {**_GLOBAL_MAPPINGS['ws_auth'], **_GLOBAL_MAPPINGS['ws_object']}
     _init_index(index_name, mappings)
     # Update the 'default_search' alias to include this index
-    _create_alias(_DEFAULT_SEARCH_ALIAS, f"{_PREFIX}.{index_name}")
+    _create_alias(_DEFAULT_SEARCH_ALIAS, _get_index_name(index_name))
 
 
 def _write_to_elastic(data):
@@ -189,7 +202,7 @@ def _write_to_elastic(data):
     json_body = ''
     while data:
         datum = data.pop()
-        idx = f"{_PREFIX}.{datum['index']}"
+        idx = _get_index_name(datum['index'])
         json_body += json.dumps({
             'index': {
                 '_index': idx,
@@ -296,7 +309,7 @@ def _init_index(name, props):
         name - index name
         props - property type mappings
     """
-    index_name = f"{_PREFIX}.{name}"
+    index_name = _get_index_name(name)
     status = _create_index(index_name)
     if status == Status.CREATED:
         logger.info(f"index {index_name} created.")
