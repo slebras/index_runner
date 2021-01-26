@@ -9,7 +9,6 @@ latest_versions:
 aliases:
   narrative:
     - narrative_2
-    - narrative_1
 
 # Generic, global type mappings. These can be reused in any index mappings below.
 global_mappings:
@@ -37,22 +36,6 @@ global_mappings:
 
 # All ES type mappings
 mappings:
-  "narrative_1":
-    global_mappings: [ws_auth, ws_object]
-    properties:
-      narrative_title: {type: text, copy_to: agg_fields}
-      data_objects:
-        type: nested
-        properties:
-          name: {type: keyword, copy_to: agg_fields}
-          obj_type: {type: keyword, copy_to: agg_fields}
-      cells:
-        type: object
-        properties:
-          desc: {type: text, copy_to: agg_fields}
-          cell_type: {type: keyword}
-      total_cells: {type: short}
-
   "narrative_2":
     global_mappings: [ws_auth, ws_object]
     properties:
