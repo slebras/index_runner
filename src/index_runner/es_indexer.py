@@ -32,7 +32,7 @@ def _get_index_name(index_name):
     """
     if '.' in index_name:
         # already has prefix
-        prefix = index_name.split('.')[0]
+        # prefix = index_name.split('.')[0]
         # make sure prefix is valid
         return index_name
     else:
