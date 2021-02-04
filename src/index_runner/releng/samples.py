@@ -26,11 +26,6 @@ SAMPLE_ONTOLOGY_COLL = 'sample_ontology_link'
 # This should be information retrieved from the 'metadata_validation.yml'
 # file in the sample_service_validator_config
 SAMPLE_ONTOLOGY_VALIDATED_TERMS = config()['sample_ontology_config']
-# SAMPLE_ONTOLOGY_VALIDATED_TERMS = [
-#     ('biome', 'ENVO_terms'),
-#     ('feature', 'ENVO_terms'),
-#     ('ENIGMA:material', 'ENVO_terms')
-# ]
 
 
 def process_sample_set(obj_ver_key: str, obj_data: dict) -> None:
