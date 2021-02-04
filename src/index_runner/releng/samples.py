@@ -7,7 +7,7 @@ import datetime as _datetime
 from typing import List, Dict
 # from collections import defaultdict as _defaultdict
 # import itertools as _itertools
-
+from src.utils.config import config
 from src.utils.logger import logger
 from src.utils.re_client import stored_query as _stored_query
 from src.utils.re_client import save as _save
@@ -25,11 +25,12 @@ SAMPLE_ONTOLOGY_COLL = 'sample_ontology_link'
 
 # This should be information retrieved from the 'metadata_validation.yml'
 # file in the sample_service_validator_config
-SAMPLE_ONTOLOGY_VALIDATED_TERMS = [
-    ('biome', 'ENVO_terms'),
-    ('feature', 'ENVO_terms'),
-    ('ENIGMA:material', 'ENVO_terms')
-]
+SAMPLE_ONTOLOGY_VALIDATED_TERMS = config()['sample_ontology_config']
+# SAMPLE_ONTOLOGY_VALIDATED_TERMS = [
+#     ('biome', 'ENVO_terms'),
+#     ('feature', 'ENVO_terms'),
+#     ('ENIGMA:material', 'ENVO_terms')
+# ]
 
 
 def process_sample_set(obj_ver_key: str, obj_data: dict) -> None:
@@ -102,7 +103,8 @@ def _generate_link_information(sample: dict, sample_version_uuid: str, edges: li
         node_key = f"{sample['id']}_{sample_version_uuid}_{node_uuid}"
         node_doc_id = f"{SAMPLE_NODE_COLL}/{node_key}"
         # find terms we know are ontology terms
-        for metadata_term, ontology_collection in SAMPLE_ONTOLOGY_VALIDATED_TERMS:
+        for metadata_term in SAMPLE_ONTOLOGY_VALIDATED_TERMS:
+            ontology_collection = SAMPLE_ONTOLOGY_VALIDATED_TERMS[metadata_term][0].get('ontology_collection')
             if node['meta_controlled'].get(metadata_term):
                 # for now, this is the only way that ontology_terms are stored
                 ontology_id = node['meta_controlled'][metadata_term]['value']
