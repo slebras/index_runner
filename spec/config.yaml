@@ -116,26 +116,21 @@ aliases:
     - annotated_metagenome_assembly_2
   narrative:
     - narrative_2
-    - narrative_1
   reads:
     - reads_2
     - reads_1
   assembly:
     - assembly_2
-    - assembly_1
   genome:
     - genome_2
-    - genome_1
   genome_features:
     - genome_features_3
-    - genome_features_2
   pangenome:
     - pangenome_1
   pangenome_orthologfamily:
     - pangenome_orthologfamily_1
   taxon:
     - taxon_2
-    - taxon_1
   tree:
     - tree_1
   matrix:
@@ -150,10 +145,8 @@ aliases:
     - indexer_messages_1
   annotated_metagenome_assembly:
     - annotated_metagenome_assembly_2
-    - annotated_metagenome_assembly_1
   annotated_metagenome_assembly_version:
     - annotated_metagenome_assembly_version_2
-    - annotated_metagenome_assembly_version_1
   sample_set:
     - sample_set_1
   sample_set_version:
