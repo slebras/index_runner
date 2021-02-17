@@ -89,6 +89,11 @@ class Config:
             sample_service_release = os.environ.get('SAMPLE_SERVICE_RELEASE', 'dev')
             sample_service_url = _get_sample_service_url(service_wizard_url, sample_service_release)
         config_url = os.environ.get('GLOBAL_CONFIG_URL', f"file://{os.getcwd()}/spec/config.yaml")
+        sample_ontology_config_url = os.environ.get(
+            'SAMPLE_ONTOLOGY_CONFIG_URL',
+            "https://github.com/kbase/sample_service_validator_config/releases/download/0.4/ontology_validators.yml"
+        )
+        sample_ontology_config = _fetch_global_config(sample_ontology_config_url)
         global_config = _fetch_global_config(config_url)
         skip_indices = _get_comma_delimited_env('SKIP_INDICES')
         allow_indices = _get_comma_delimited_env('ALLOW_INDICES')
@@ -116,6 +121,8 @@ class Config:
             're_api_url': re_api_url,
             're_api_token': os.environ['RE_API_TOKEN'],
             'sample_service_url': sample_service_url,
+            'sample_ontology_config_url': sample_ontology_config_url,
+            'sample_ontology_config': sample_ontology_config,
             'elasticsearch_host': es_host,
             'elasticsearch_port': es_port,
             'elasticsearch_url': f"http://{es_host}:{es_port}",

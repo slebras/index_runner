@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.18] - 2021-02-04
+### Added
+- Configuration update for sample releng indexer.
+
 ## [1.9.17] - 2021-01-26
 ### Added
 - Handle SET_PERMISSION events and update the "shared_users" field
