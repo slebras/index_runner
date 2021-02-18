@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- adding narrative_config.yaml spec file for separating narrative indexing.
+
 ## [1.9.18] - 2021-02-04
 ### Added
 - Configuration update for sample releng indexer.
