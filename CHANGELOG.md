@@ -6,9 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.9.17] - 2021-01-20
+## [1.9.19] - 2021-02-18
 ### Added
 - adding narrative_config.yaml spec file for separating narrative indexing.
+
+## [1.9.18] - 2021-02-04
+### Added
+- Configuration update for sample releng indexer.
+
+## [1.9.17] - 2021-01-26
+### Added
+- Handle SET_PERMISSION events and update the "shared_users" field
+
+### Changed
+- Don't throw a RuntimeError on an unhandled event; only log a warning
 
 ## [1.9.16] - 2021-01-20
 ### Fixed
