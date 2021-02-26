@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - adding narrative_config.yaml spec file for separating narrative indexing.
 
+## [1.9.19] - 2021-02-26
+### Fixed
+- Fixing Samples Releng indexer to work with RE api time-travel.
+
 ## [1.9.18] - 2021-02-04
 ### Added
 - Configuration update for sample releng indexer.
