@@ -29,6 +29,6 @@ def test_generate_sample_set_edges():
     assert len(edges) == 2
     node_id = _hash("node_id")
     for e in edges:
-        assert "_from" in e
-        assert "_to" in e
-        assert e["_from"] == f"samples_nodes/sample-uuid_sample-version-uuid_{node_id}"
+        assert "from" in e
+        assert "to" in e
+        assert e["from"] == f"samples_nodes/sample-uuid_sample-version-uuid_{node_id}"
