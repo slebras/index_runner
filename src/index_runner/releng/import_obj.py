@@ -53,6 +53,7 @@ def import_object(obj, ws_info):
         # this could use a lot of memory. There's a bunch of code in the workspace for
         # dealing with this situation, but that'd have to be ported to Python and it's pretty
         # complex, so YAGNI for now.
+        logger.debug(f'Using releng indexer for "{type_}" workspace type for ws_object with key {key}')
         resp = config()['ws_client'].admin_req('getObjects', {
             'objects': [{
                 'ref': obj_ver_key.replace(':', '/'),

@@ -16,7 +16,6 @@ from src.utils.re_client import clean_key as _clean_key
 from src.utils.sample_utils import get_sample as _get_sample
 from src.utils.re_client import MAX_ADB_INTEGER as _MAX_ADB_INTEGER
 
-
 # EXTREMELY HACKY FOR NOW. SHOULD BE RETRIEVED (?) FROM THE SAMPLE_SERVICE
 SAMPLE_COLL = 'samples_sample'
 SAMPLE_VER_COLL = 'samples_version'
@@ -122,8 +121,8 @@ def _generate_link_information(sample: dict, sample_version_uuid: str, edges: li
                 # ontology_doc_id contains the source ontology
                 ontology_collection, ontology_doc_key = ontology_doc_id.split('/')
                 edge = {
-                    "from": node_doc_id,
-                    "to": ontology_doc_id,
+                    "_from": node_doc_id,
+                    "_to": ontology_doc_id,
                     "_key": _clean_key(f"{node_uuid}_{ontology_doc_key}"),  # placeholder _key for now.
                     "createdby": "kbase_RE_indexer",  # Should be owner of sample (?)
                     "expired": _MAX_ADB_INTEGER,
